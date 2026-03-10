@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SlabIQ — Card Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --orange: #ff6200; --orange-dark: #d95300; --orange-light: #fff2eb; --orange-mid: #ff7a2a;
+  --dark: #252525; --dark2: #2e2e2e; --dark3: #3a3a3a;
+  --bg: #faf9f7; --surface: #fff; --border: #ede9e3; --border2: #ddd9d2;
+  --text: #1a1a1a; --text-mid: #555; --text-dim: #888; --text-faint: #bbb;
+  --green: #1a8c45; --green-bg: #edf7f2; --green-border: #a8dfc0;
+  --red: #cc2200; --red-bg: #fff0ee; --red-border: #ffb8ad;
+  --yellow: #c07800; --yellow-bg: #fffbeb; --yellow-border: #fde68a;
+  --blue: #1a4fcc; --blue-bg: #eff4ff; --blue-border: #bdd0ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.5; }
+
+/* ── HEADER ── */
+header { background: var(--dark); border-bottom: 3px solid var(--orange); height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.logo-mark { width: 36px; height: 36px; background: var(--orange); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.logo-mark svg { width: 18px; height: 18px; }
+.logo-name { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+.logo-name span { color: var(--orange); }
+.logo-sub { font-size: 9px; color: #666; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.header-links { display: flex; align-items: center; gap: 4px; }
+.hlink { display: flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 6px; border: 1px solid var(--dark3); font-size: 11px; font-weight: 500; color: #888; text-decoration: none; transition: all .15s; white-space: nowrap; }
+.hlink:hover { border-color: var(--orange); color: var(--orange); background: #ff620012; }
+.hlink-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.live-badge { display: flex; align-items: center; gap: 6px; padding: 5px 12px; background: #1a8c4520; border: 1px solid #1a8c4540; border-radius: 20px; font-size: 10px; font-weight: 700; color: #2acc6a; letter-spacing: 1px; margin-left: 8px; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #2acc6a; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── HERO ── */
+.hero { background: var(--dark); padding: 56px 40px 52px; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 50%, #ff620008 0%, transparent 60%), radial-gradient(circle at 80% 50%, #ff620006 0%, transparent 60%); pointer-events: none; }
+.hero-inner { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; }
+.hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: #ff620015; border: 1px solid #ff620035; color: var(--orange-mid); font-size: 10px; font-weight: 700; letter-spacing: 3px; padding: 5px 14px; border-radius: 3px; margin-bottom: 18px; text-transform: uppercase; }
+.hero-title { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(40px, 6vw, 64px); font-weight: 900; color: #fff; line-height: .95; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+.hero-title span { color: var(--orange); }
+.hero-sub { font-size: 14px; color: #888; margin-bottom: 32px; line-height: 1.6; max-width: 480px; margin-left: auto; margin-right: auto; }
+.search-wrap { background: #fff; border-radius: 10px; display: flex; max-width: 560px; margin: 0 auto; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,.35); }
+.grader-tabs { display: flex; border-right: 1px solid #eee; flex-shrink: 0; }
+.gtab { padding: 0 14px; height: 52px; display: flex; align-items: center; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; color: #bbb; cursor: pointer; letter-spacing: 1px; transition: all .15s; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.gtab.active { color: var(--orange); border-bottom-color: var(--orange); }
+.search-input { flex: 1; border: none; outline: none; padding: 0 18px; font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); height: 52px; background: transparent; }
+.search-input::placeholder { color: #ccc; }
+.search-btn { height: 52px; padding: 0 28px; background: var(--orange); border: none; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; transition: background .15s; white-space: nowrap; }
+.search-btn:hover { background: var(--orange-dark); }
+.search-btn:disabled { opacity: .4; cursor: not-allowed; }
+.demo-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
+.toggle { width: 36px; height: 20px; background: #ffffff20; border: 1px solid #ffffff30; border-radius: 10px; cursor: pointer; position: relative; transition: all .2s; flex-shrink: 0; }
+.toggle.on { background: #ff620030; border-color: var(--orange); }
+.knob { width: 14px; height: 14px; background: #fff4; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left .2s; }
+.toggle.on .knob { left: 20px; background: var(--orange); }
+.demo-lbl { font-size: 11px; color: #666; font-weight: 500; }
+.err { background: var(--orange-light); border: 1px solid #ffd0b5; border-radius: 6px; padding: 11px 16px; color: var(--orange-dark); font-size: 13px; max-width: 520px; margin: 12px auto 0; text-align: center; }
+
+/* ── STATS BAR ── */
+.stats-bar { background: var(--dark2); border-bottom: 1px solid var(--dark3); padding: 0 40px; display: flex; align-items: center; overflow-x: auto; }
+.stat-item { display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-right: 1px solid var(--dark3); white-space: nowrap; flex-shrink: 0; }
+.stat-icon { font-size: 14px; }
+.stat-text { font-size: 11px; font-weight: 500; color: #888; letter-spacing: .5px; }
+.stat-text strong { color: #ccc; }
+
+/* ── CONTENT ── */
+.content { max-width: 1040px; margin: 0 auto; padding: 32px 40px 80px; }
+
+/* ── LOADING ── */
+.loading-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 20px; }
+.term-bar { background: #f5f5f5; border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 7px; }
+.tdot { width: 10px; height: 10px; border-radius: 50%; }
+.term-body { padding: 16px 20px; height: 200px; overflow-y: auto; font-family: 'DM Mono', monospace; font-size: 11px; line-height: 2; background: #fafafa; }
+.tline { color: #ccc; }
+.tline.done { color: var(--green); }
+.tline.active { color: var(--orange); font-weight: 500; }
+.tline.warn { color: #c07800; }
+.prog-wrap { padding: 12px 20px; border-top: 1px solid var(--border); background: #fafafa; }
+.prog-track { height: 4px; background: var(--border); border-radius: 2px; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--orange-mid)); border-radius: 2px; transition: width .5s ease; }
+.prog-labels { display: flex; justify-content: space-between; margin-top: 6px; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dim); }
+
+/* ── RESULT HERO ── */
+.result-hero { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,.07); margin-bottom: 18px; }
+.result-stripe { height: 4px; background: linear-gradient(90deg, var(--orange), var(--orange-mid)); }
+.result-body { padding: 24px 28px; display: grid; grid-template-columns: 140px 1fr 190px; gap: 24px; align-items: start; }
+.card-img { width: 140px; height: 196px; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,.10); flex-shrink: 0; }
+.card-img img { width: 100%; height: 100%; object-fit: cover; }
+.card-img-ph { font-size: 44px; opacity: .15; }
+.card-sport { display: inline-block; background: var(--orange-light); color: var(--orange); border: 1px solid #ffd0b5; border-radius: 4px; padding: 3px 10px; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 900; color: var(--text); line-height: 1.05; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.card-set { font-size: 13px; color: var(--text-mid); margin-bottom: 3px; }
+.card-cert { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-faint); margin-bottom: 16px; }
+.badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+.grade-pill { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800; padding: 4px 16px; border-radius: 6px; letter-spacing: 1px; text-transform: uppercase; }
+.grade-pill.psa { background: #e8efff; border: 2px solid #003087; color: #003087; }
+.grade-pill.bgs { background: #e8f2ff; border: 2px solid #1565c0; color: #1565c0; }
+.grade-pill.sgc { background: #fff2e8; border: 2px solid #d46b08; color: #d46b08; }
+.tag { padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; border: 1px solid; letter-spacing: 1px; }
+.tag-green { color: var(--green); border-color: var(--green-border); background: var(--green-bg); }
+.tag-grey { color: var(--text-mid); border-color: var(--border2); background: var(--bg); }
+.tag-orange { color: var(--orange-dark); border-color: #ffd0b5; background: var(--orange-light); }
+.prices { display: flex; gap: 20px; flex-wrap: wrap; }
+.price-block .lbl { font-size: 9px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; font-weight: 600; }
+.val { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; letter-spacing: .5px; }
+.val.main { font-size: 34px; color: var(--text); line-height: 1; }
+.val.lo { font-size: 20px; color: var(--green); }
+.val.hi { font-size: 20px; color: #c0750a; }
+.val.med { font-size: 20px; color: var(--text-mid); }
+
+/* ── IQ SCORE PANEL ── */
+.iq-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px 16px; text-align: center; }
+.iq-label-top { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+.iq-score { font-family: 'Barlow Condensed', sans-serif; font-size: 72px; font-weight: 900; line-height: 1; }
+.iq-denom { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-faint); margin-bottom: 6px; }
+.iq-verdict { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+.iq-sub-scores { display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 10px 0; }
+.iq-sub { text-align: center; }
+.iq-sub-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; }
+.iq-sub-lbl { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 1px; }
+.iq-hold { font-size: 11px; color: var(--text-mid); line-height: 1.5; }
+.iq-hold strong { color: var(--text); }
+
+/* ── SECTION CARDS ── */
+.sc { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,.04); margin-bottom: 16px; }
+.sc-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.sc-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ── AI ANALYST ── */
+.analyst-wrap { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); border-radius: 16px; padding: 24px; margin-bottom: 16px; border: 1px solid #ffffff12; box-shadow: 0 4px 24px rgba(0,0,0,.15); }
+.analyst-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.analyst-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--orange), #ff3e00); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 12px #ff620030; }
+.analyst-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+.analyst-sub { font-size: 10px; color: #ffffff50; letter-spacing: 2px; font-family: 'DM Mono', monospace; }
+.analyst-fresh { display: flex; align-items: center; gap: 5px; margin-left: auto; background: #ffffff10; border: 1px solid #ffffff20; border-radius: 20px; padding: 4px 10px; font-size: 9px; color: #ffffff70; font-family: 'DM Mono', monospace; letter-spacing: 1px; white-space: nowrap; }
+.fresh-dot { width: 5px; height: 5px; border-radius: 50%; background: #2acc6a; animation: pulse 2s ease-in-out infinite; }
+
+/* Risk Flags */
+.risk-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.risk-flag { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.risk-flag.green { background: #1a8c4515; border-color: #1a8c4540; color: #2acc6a; }
+.risk-flag.yellow { background: #c0780015; border-color: #c0780040; color: #fbbf24; }
+.risk-flag.red { background: #cc220015; border-color: #cc220040; color: #ff6b6b; }
+.risk-flag .flag-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* Analyst Body */
+.analyst-body { font-size: 13px; color: #ffffffcc; line-height: 1.8; margin-bottom: 16px; }
+.analyst-body p { margin-bottom: 12px; }
+.analyst-body p:last-child { margin-bottom: 0; }
+.analyst-body strong { color: #fff; }
+.analyst-body em { color: var(--orange-mid); font-style: normal; font-weight: 600; }
+
+/* Hold window + price target */
+.analyst-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px; background: #ffffff08; border-radius: 10px; border: 1px solid #ffffff10; }
+.am-item { text-align: center; }
+.am-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; color: #fff; line-height: 1; }
+.am-lbl { font-family: 'DM Mono', monospace; font-size: 8px; color: #ffffff50; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+
+/* Thinking animation */
+.thinking { display: flex; align-items: center; gap: 10px; padding: 20px; color: #ffffff60; font-size: 12px; font-family: 'DM Mono', monospace; }
+.thinking-dots { display: flex; gap: 4px; }
+.thinking-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); animation: bounce 1.2s ease-in-out infinite; }
+.thinking-dots span:nth-child(2) { animation-delay: .2s; }
+.thinking-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce { 0%,100%{transform:translateY(0);opacity:.4} 50%{transform:translateY(-6px);opacity:1} }
+
+/* ── RARITY ENGINE ── */
+.rarity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+.rarity-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.rarity-item.highlight { background: var(--orange-light); border-color: #ffd0b5; }
+.ri-lbl { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.rarity-item.highlight .ri-lbl { color: var(--orange); }
+.ri-val { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 900; color: var(--text); line-height: 1; }
+.rarity-item.highlight .ri-val { color: var(--orange-dark); }
+.ri-sub { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
+
+.rarity-bar-row { display: flex; flex-direction: column; gap: 8px; }
+.rb-item { display: flex; align-items: center; gap: 10px; }
+.rb-label { font-size: 11px; color: var(--text-mid); width: 120px; flex-shrink: 0; }
+.rb-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.rb-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+.rb-score { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; width: 28px; text-align: right; flex-shrink: 0; }
+
+/* ── PLAYER INTEL ── */
+.player-intel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pi-stat { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.pi-lbl { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.pi-val { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--text); line-height: 1; }
+.pi-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+/* Events */
+.event-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; }
+.event-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); width: 80px; flex-shrink: 0; }
+.event-name { font-size: 12px; font-weight: 600; color: var(--text); flex: 1; }
+.event-impact { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; }
+.impact-high { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.impact-med { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.impact-low { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border2); }
+
+/* ── NEWS FEED ── */
+.news-item { display: flex; gap: 12px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; text-decoration: none; transition: border-color .15s; }
+.news-item:hover { border-color: var(--orange); }
+.news-sentiment { width: 4px; border-radius: 2px; flex-shrink: 0; }
+.news-body { flex: 1; min-width: 0; }
+.news-headline { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.news-meta { font-size: 10px; color: var(--text-dim); }
+.news-tag { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 1px; }
+
+/* ── SALES ── */
+.sale-row { display: grid; grid-template-columns: 90px 1fr 90px 80px; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; margin-bottom: 6px; transition: border-color .15s; }
+.sale-row:hover { border-color: var(--orange); }
+.sale-src { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 8px; border-radius: 4px; border: 1px solid; text-align: center; text-transform: uppercase; }
+.sale-title { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sale-date { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-faint); text-align: right; }
+.sale-price { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 900; color: var(--text); text-align: right; }
+
+/* Chart */
+.chart-area { width: 100%; height: 88px; }
+.chart-area svg { width: 100%; height: 100%; overflow: visible; }
+
+/* External links */
+.ext-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ext-card { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; transition: all .15s; }
+.ext-card:hover { border-color: var(--orange); background: var(--orange-light); transform: translateY(-1px); box-shadow: 0 4px 12px #ff620015; }
+.ext-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.ext-name { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+.ext-desc { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 72px 32px; }
+.empty-icon { width: 76px; height: 76px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 34px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.empty-title { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; }
+.empty-sub { font-size: 13px; color: var(--text-dim); max-width: 340px; margin: 0 auto 24px; line-height: 1.6; }
+.chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.chip { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border2); font-size: 11px; color: var(--text-mid); font-weight: 600; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.au  { animation: fadeUp .35s ease forwards; }
+.au2 { animation: fadeUp .35s ease .1s forwards; opacity: 0; }
+.au3 { animation: fadeUp .35s ease .2s forwards; opacity: 0; }
+.au4 { animation: fadeUp .35s ease .3s forwards; opacity: 0; }
+
+footer { background: var(--dark); color: #555; text-align: center; padding: 22px 40px; font-size: 11px; letter-spacing: 1px; border-top: 2px solid var(--orange); }
+footer span { color: var(--orange); }
+
+@media(max-width:768px) {
+  header { padding: 0 16px; }
+  .header-links { display: none; }
+  .hero { padding: 36px 16px 32px; }
+  .content { padding: 20px 16px 60px; }
+  .result-body { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .rarity-grid { grid-template-columns: repeat(2,1fr); }
+  .player-intel { grid-template-columns: 1fr 1fr; }
+  .ext-grid { grid-template-columns: 1fr 1fr; }
+  .analyst-metrics { grid-template-columns: repeat(3,1fr); }
+  .sale-row { grid-template-columns: 80px 1fr 70px; }
+  .sale-date { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+        <rect x="3" y="2" width="14" height="18" rx="2"/>
+        <path d="M7 7h6M7 11h6M7 15h3"/>
+        <circle cx="18" cy="18" r="5" fill="#ff6200" stroke="white" stroke-width="1.5"/>
+        <path d="M16.2 18l1.3 1.3L20 16" stroke="white" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-name">SLAB<span>IQ</span></div>
+      <div class="logo-sub">Card Intelligence</div>
+    </div>
+  </a>
+  <div class="header-links">
+    <a class="hlink" href="https://www.psacard.com/cert/" target="_blank"><div class="hlink-dot" style="background:#003087"></div>PSA</a>
+    <a class="hlink" href="https://www.beckett.com/grading" target="_blank"><div class="hlink-dot" style="background:#1565c0"></div>BGS</a>
+    <a class="hlink" href="https://www.ebay.com/sch/i.html?LH_Sold=1" target="_blank"><div class="hlink-dot" style="background:#e53238"></div>eBay</a>
+    <a class="hlink" href="https://goldin.co" target="_blank"><div class="hlink-dot" style="background:#c9a84c"></div>Goldin</a>
+    <a class="hlink" href="https://130point.com/sales/" target="_blank"><div class="hlink-dot" style="background:#555"></div>130pt</a>
+    <a class="hlink" href="https://www.pricecharting.com/category/sports-cards" target="_blank"><div class="hlink-dot" style="background:#27ae60"></div>PriceCharting</a>
+    <div class="live-badge" id="liveBadge"><div class="live-dot"></div>LIVE</div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">⚡ AI-powered card intelligence</div>
+    <h1 class="hero-title">Know What Your Card<br/>Is <span>Really Worth</span></h1>
+    <p class="hero-sub">Enter any PSA, BGS or SGC cert — get live comps, print run analysis, player intelligence and an AI analyst verdict with hold window and risk flags.</p>
+    <div class="search-wrap">
+      <div class="grader-tabs">
+        <div class="gtab active" data-g="PSA" onclick="setGrader('PSA')">PSA</div>
+        <div class="gtab" data-g="BGS" onclick="setGrader('BGS')">BGS</div>
+        <div class="gtab" data-g="SGC" onclick="setGrader('SGC')">SGC</div>
+      </div>
+      <input id="certIn" class="search-input" placeholder="Enter cert number…" autocomplete="off" onkeydown="if(event.key==='Enter')doLookup()"/>
+      <button class="search-btn" id="searchBtn" onclick="doLookup()">Analyse</button>
+    </div>
+    <div class="demo-row">
+      <div class="toggle" id="demoToggle" onclick="toggleDemo()"><div class="knob"></div></div>
+      <span class="demo-lbl" id="demoLbl">Demo mode — try Yamal Megacracks</span>
+    </div>
+    <div class="err" id="errBox" style="display:none"></div>
+  </div>
+</section>
+
+<div class="stats-bar">
+  <div class="stat-item"><span class="stat-icon">🤖</span><span class="stat-text"><strong>AI Analyst</strong> Verdict</span></div>
+  <div class="stat-item"><span class="stat-icon">📰</span><span class="stat-text"><strong>Live News</strong> Risk Scan</span></div>
+  <div class="stat-item"><span class="stat-icon">💎</span><span class="stat-text"><strong>Print Run</strong> Rarity Engine</span></div>
+  <div class="stat-item"><span class="stat-icon">📈</span><span class="stat-text"><strong>Hold Window</strong> & Price Target</span></div>
+  <div class="stat-item"><span class="stat-icon">⚠️</span><span class="stat-text"><strong>Risk Flags</strong> Scored</span></div>
+  <div class="stat-item"><span class="stat-icon">🏆</span><span class="stat-text"><strong>Player Trajectory</strong> Model</span></div>
+</div>
+
+<div class="content">
+  <div id="loadWrap" style="display:none">
+    <div class="loading-card">
+      <div class="term-bar">
+        <div class="tdot" style="background:#ff5f57"></div>
+        <div class="tdot" style="background:#febc2e"></div>
+        <div class="tdot" style="background:#28c840"></div>
+        <span style="margin-left:8px;font-family:'DM Mono',monospace;font-size:10px;color:#999">slabiq — intelligence engine v2</span>
+      </div>
+      <div class="term-body" id="termBody"></div>
+      <div class="prog-wrap">
+        <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        <div class="prog-labels"><span id="progLbl">Starting…</span><span id="progPct">0%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultsWrap" style="display:none"></div>
+
+  <div id="emptyWrap">
+    <div class="empty">
+      <div class="empty-icon">🧠</div>
+      <div class="empty-title">AI Card Intelligence</div>
+      <div class="empty-sub">Enter a cert number to get an AI-generated analyst report covering rarity, player trajectory, live news risks, hold window and a 1–10 IQ score.</div>
+      <div class="chips">
+        <span class="chip">Print Run Analysis</span>
+        <span class="chip">Live News Risk Scan</span>
+        <span class="chip">Hold Window Forecast</span>
+        <span class="chip">Buy / Sell / Hold Verdict</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer><span>SLABIQ</span> · AI Card Intelligence · PSA · BGS · eBay · Goldin · 130point · Fanatics · Live News</footer>
+
+<script>
+const API = 'http://localhost:8000';
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+
+// ── STAGE DEFINITIONS ──
+const STAGES = [
+  { i: '🔍', l: 'Fetching cert from grading company…' },
+  { i: '💎', l: 'Analysing print run & rarity tier…' },
+  { i: '🛒', l: 'Pulling sold comps from eBay & 130point…' },
+  { i: '🏆', l: 'Checking auction house results…' },
+  { i: '📰', l: 'Scanning live news for risk signals…' },
+  { i: '📊', l: 'Building player trajectory model…' },
+  { i: '🤖', l: 'AI Analyst writing investment verdict…' },
+  { i: '⚡', l: 'Compiling Intelligence Report…' },
+];
+
+const SRC = {
+  'eBay':     { c: '#e53238', bg: '#fff0f0' },
+  'Goldin':   { c: '#b8922a', bg: '#fdf8ee' },
+  'Heritage': { c: '#8b1a1a', bg: '#fdf0f0' },
+  '130point': { c: '#3355aa', bg: '#f0f3ff' },
+  'Fanatics': { c: '#cc2200', bg: '#fff0ee' },
+  'PSA':      { c: '#003087', bg: '#eef3ff' },
+};
+
+// ── RARITY SCORING ──
+const PARALLEL_SCORES = {
+  '1/1': 10, 'superfractor': 10, 'printing plate': 9.8,
+  'auto': 9.2, 'autograph': 9.2,
+  '/5': 9.5, '/10': 9.2, '/15': 9.0, '/25': 8.8, '/49': 8.5, '/50': 8.4,
+  '/75': 8.0, '/99': 7.8, '/149': 7.5, '/199': 7.2,
+  '/299': 6.8, '/399': 6.5, '/499': 6.2,
+  'gold': 7.5, 'black': 8.0, 'red': 7.2, 'blue': 6.5,
+  'refractor': 6.0, 'prizm': 5.8, 'silver': 5.5,
+  'base': 4.0, 'limitada': 7.0, 'bis': 6.5, 'rookie': 5.0
+};
+
+function getRarityScore(card) {
+  const v = (card.variety || '').toLowerCase();
+  const brand = (card.brand || '').toLowerCase();
+  let score = 4.0;
+
+  // Serial numbered — hard data from cert
+  if (card.pop_higher === 0 && card.grade === '10') score += 1.5;
+
+  // Check variety for parallel markers
+  for (const [key, val] of Object.entries(PARALLEL_SCORES)) {
+    if (v.includes(key) || brand.includes(key)) {
+      score = Math.max(score, val);
+      break;
+    }
+  }
+
+  // Megacracks specific — Spanish mass market but gem pops are rare
+  if (brand.includes('megacracks')) {
+    score = Math.max(score, 6.5); // high base print, hard to gem
+    if (v.includes('bis') || v.includes('limitada')) score = Math.max(score, 7.5);
+  }
+
+  // Pop pressure: few PSA 10s relative to estimated print run = rarer
+  const pop = card.pop || 0;
+  if (pop < 10) score = Math.min(10, score + 1.5);
+  else if (pop < 50) score = Math.min(10, score + 1.0);
+  else if (pop < 200) score = Math.min(10, score + 0.5);
+  else if (pop > 1000) score = Math.max(1, score - 0.5);
+
+  return Math.min(10, Math.max(1, Math.round(score * 10) / 10));
+}
+
+function getEstimatedPrintRun(card) {
+  const brand = (card.brand || '').toLowerCase();
+  const v = (card.variety || '').toLowerCase();
+
+  if (v.includes('/1') || v.includes('1/1')) return 1;
+  if (v.includes('/5'))   return 5;
+  if (v.includes('/10'))  return 10;
+  if (v.includes('/25'))  return 25;
+  if (v.includes('/49') || v.includes('/50')) return 50;
+  if (v.includes('/99'))  return 99;
+  if (v.includes('/199')) return 199;
+  if (v.includes('/299')) return 299;
+  if (v.includes('/499')) return 499;
+
+  // Estimate based on brand
+  if (brand.includes('megacracks')) {
+    if (v.includes('limitada')) return 2500;
+    if (v.includes('bis')) return 50000;
+    return 200000;
+  }
+  if (brand.includes('topps chrome')) return 5000;
+  if (brand.includes('topps finest')) return 3000;
+  if (brand.includes('topps now')) return 15000;
+  if (brand.includes('prizm')) return 8000;
+  if (brand.includes('select')) return 6000;
+  if (brand.includes('national treasures')) return 99;
+  if (brand.includes('flawless')) return 25;
+  if (brand.includes('immaculate')) return 99;
+  if (brand.includes('optic')) return 10000;
+  if (brand.includes('donruss')) return 20000;
+  if (brand.includes('panini')) return 15000;
+  if (brand.includes('topps')) return 12000;
+
+  return 10000; // default estimate
+}
+
+function getParallelTier(card) {
+  const v = (card.variety || '').toLowerCase();
+  if (v.includes('1/1') || v.includes('superfractor')) return { tier: '1/1', color: '#ffd700', score: 10 };
+  if (v.includes('auto') || v.includes('autograph'))   return { tier: 'AUTO', color: '#ff4500', score: 9.2 };
+  if (/\/[1-9]\b/.test(v))  return { tier: 'NUMBERED', color: '#e83e8c', score: 8.5 };
+  if (v.includes('gold'))   return { tier: 'GOLD', color: '#ffd700', score: 7.5 };
+  if (v.includes('black'))  return { tier: 'BLACK', color: '#333', score: 8.0 };
+  if (v.includes('red'))    return { tier: 'RED', color: '#cc2200', score: 7.2 };
+  if (v.includes('limitada') || v.includes('limited')) return { tier: 'LIMITED', color: '#8b5cf6', score: 7.0 };
+  if (v.includes('refractor') || v.includes('prizm'))  return { tier: 'REFRACTOR', color: '#00a8ff', score: 6.0 };
+  if (v.includes('bis'))    return { tier: 'BIS', color: '#ff6200', score: 6.5 };
+  if (v.includes('rookie') || v.includes('rc'))        return { tier: 'ROOKIE', color: '#00cc66', score: 5.5 };
+  return { tier: 'BASE', color: '#888', score: 4.0 };
+}
+
+// ── DEMO DATA (Yamal Megacracks) ──
+const MOCK = {
+  cert_number: '85028490',
+  grading_company: 'PSA',
+  card_details: {
+    grade: '10', full_grade: 'GEM MT 10',
+    subject: 'LAMINE YAMAL',
+    year: '2023',
+    brand: 'PANINI MEGACRACKS LALIGA EA SPORTS',
+    variety: 'BIS ROOKIE',
+    card_number: '108',
+    category: 'Soccer',
+    pop: 12,
+    pop_higher: 0,
+    image_url: ''
+  },
+  sales_data: [
+    { source: 'eBay', title: '2023-24 Panini Megacracks Lamine Yamal #108 Bis PSA 10', price: 8700, date: '2025-10-03', url: 'https://ebay.com' },
+    { source: 'eBay', title: 'Lamine Yamal Megacracks #108 Bis PSA 10 Gem Mint LaLiga', price: 8600, date: '2025-09-23', url: 'https://ebay.com' },
+    { source: 'Heritage', title: '2023-24 Panini Megacracks Yamal Bis PSA 10', price: 9500, date: '2025-09-16', url: 'https://ha.com' },
+    { source: 'eBay', title: 'Lamine Yamal PSA 10 Megacracks 108 Bis Rookie Barcelona', price: 8100, date: '2025-09-11', url: 'https://ebay.com' },
+    { source: 'Goldin', title: '2023-24 Megacracks Yamal #108 Bis PSA 10 GEM MT', price: 7800, date: '2025-08-02', url: 'https://goldin.co' },
+    { source: '130point', title: 'Yamal Megacracks Bis 108 PSA 10', price: 6500, date: '2025-06-14', url: 'https://130point.com' },
+  ],
+  market_summary: {
+    avg_price: 8200, median_price: 8350, low_price: 6500, high_price: 9500,
+    total_sales_found: 6, sources_checked: 4
+  }
+};
+
+let grader = 'PSA', demo = false;
+
+// ── HEALTH CHECK ──
+(async () => {
+  try {
+    const r = await fetch(`${API}/health`, { signal: AbortSignal.timeout(3000) });
+    if (!r.ok) throw 0;
+  } catch {
+    const b = document.getElementById('liveBadge');
+    b.style.background = '#88888818'; b.style.borderColor = '#333'; b.style.color = '#555';
+    b.innerHTML = '<div style="width:6px;height:6px;border-radius:50%;background:#555"></div>OFFLINE';
+  }
+})();
+
+function setGrader(g) {
+  grader = g;
+  document.querySelectorAll('.gtab').forEach(t => t.classList.toggle('active', t.dataset.g === g));
+}
+
+function toggleDemo() {
+  demo = !demo;
+  document.getElementById('demoToggle').classList.toggle('on', demo);
+  const lbl = document.getElementById('demoLbl');
+  lbl.style.color = demo ? 'var(--orange)' : '#666';
+  document.getElementById('certIn').placeholder = demo ? 'Type anything — using Yamal demo data' : 'Enter cert number…';
+}
+
+// ── MAIN LOOKUP ──
+async function doLookup() {
+  const cert = document.getElementById('certIn').value.trim();
+  if (!cert) return;
+  setErr('');
+  show('emptyWrap', false); show('resultsWrap', false); show('loadWrap', true);
+  document.getElementById('searchBtn').disabled = true;
+
+  const lines = []; let idx = 0; let stageTimer;
+  function tick() {
+    if (idx < STAGES.length) {
+      lines.push(STAGES[idx]); renderTerm(lines, idx); idx++;
+      stageTimer = setTimeout(tick, 680);
+    }
+  }
+  tick();
+
+  try {
+    let cardData;
+    if (demo) {
+      await new Promise(r => setTimeout(r, STAGES.length * 700));
+      cardData = MOCK;
+    } else {
+      const r = await fetch(`${API}/lookup/${grader}/${cert}`);
+      if (!r.ok) throw new Error(`Server error: ${r.status}`);
+      cardData = await r.json();
+    }
+
+    clearTimeout(stageTimer);
+    renderTerm(lines, STAGES.length - 1);
+    await new Promise(r => setTimeout(r, 300));
+
+    show('loadWrap', false);
+    show('resultsWrap', true);
+    await renderFull(cardData);
+
+  } catch (e) {
+    clearTimeout(stageTimer);
+    show('loadWrap', false); show('emptyWrap', true);
+    if (e.message?.includes('fetch') || e.message?.includes('Failed'))
+      setErr('Cannot reach backend. Start your server or enable Demo Mode.');
+    else setErr(e.message || 'Unknown error');
+  } finally {
+    document.getElementById('searchBtn').disabled = false;
+  }
+}
+
+function renderTerm(lines, activeIdx) {
+  const body = document.getElementById('termBody');
+  body.innerHTML = lines.map((l, i) => {
+    const done = i < lines.length - 1;
+    return `<div class="tline ${done ? 'done' : 'active'}">${done ? '✓' : '→'} ${l.i} ${l.l}${!done ? '<span id="dots"></span>' : ''}</div>`;
+  }).join('');
+  body.scrollTop = body.scrollHeight;
+  const pct = Math.round(((activeIdx + 1) / STAGES.length) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progLbl').textContent = `${activeIdx + 1}/${STAGES.length} modules`;
+  document.getElementById('progPct').textContent = pct + '%';
+  clearInterval(window._dt); let d = 0;
+  window._dt = setInterval(() => { const e = document.getElementById('dots'); if (e) e.textContent = '.'.repeat((d++ % 3) + 1); }, 380);
+}
+
+// ── OUTLIER FILTER ──
+function filterOutlierSales(sales) {
+  const prices = sales.filter(s => s.price && s.price > 5).map(s => s.price).sort((a,b) => a - b);
+  if (prices.length < 3) return { filtered: sales, stats: null };
+  const median = prices[Math.floor(prices.length / 2)];
+  const cap = median * 10;
+  const filtered = sales.filter(s => !s.price || s.price <= cap);
+  const fp = filtered.filter(s => s.price && s.price > 5).map(s => s.price).sort((a,b) => a - b);
+  if (!fp.length) return { filtered: sales, stats: null };
+  const n = fp.length;
+  return {
+    filtered,
+    stats: {
+      avg_price: Math.round(fp.reduce((a,b) => a+b, 0) / n * 100) / 100,
+      median_price: fp[Math.floor(n / 2)],
+      low_price: fp[0],
+      high_price: fp[n - 1],
+      total_sales: n,
+      outliers_removed: sales.length - filtered.length,
+    }
+  };
+}
+
+// ── FULL RENDER ──
+async function renderFull(data) {
+  const card = data.card_details || {};
+  const rawSales = data.sales_data || [];
+  const rawSum = data.market_summary;
+  const gc = data.grading_company || grader;
+
+  // Filter outlier sales (>10x median) for realistic averages
+  const { filtered: sales, stats: filteredStats } = filterOutlierSales(rawSales);
+  const sum = rawSum ? {
+    ...rawSum,
+    avg_price: filteredStats?.avg_price ?? rawSum.avg_price,
+    low_price: filteredStats?.low_price ?? rawSum.low_price,
+    high_price: filteredStats?.high_price ?? rawSum.high_price,
+    median_price: filteredStats?.median_price ?? rawSum.median_price,
+    total_sales_found: filteredStats?.total_sales ?? rawSum.total_sales_found,
+  } : null;
+
+  const rarityScore = getRarityScore(card);
+  const printRun = getEstimatedPrintRun(card);
+  const parallelTier = getParallelTier(card);
+  const popRatio = card.pop && printRun ? ((card.pop / printRun) * 100).toFixed(1) : null;
+
+  const q = encodeURIComponent(`${card.subject || ''} ${card.year || ''} ${gc} ${card.grade || ''}`);
+
+  const ext = [
+    { href: `https://www.psacard.com/auctionprices/`, icon: '🔵', name: 'PSA Auctions', desc: 'Historic auction prices', c: '#003087' },
+    { href: `https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, icon: '🛒', name: 'eBay Sold', desc: 'Live sold comps', c: '#e53238' },
+    { href: `https://goldin.co/browse/all?q=${q}`, icon: '🏆', name: 'Goldin', desc: 'Auction results', c: '#b8922a' },
+    { href: `https://130point.com/sales/?s=${q}`, icon: '📊', name: '130point', desc: 'Multi-source comps', c: '#3355aa' },
+    { href: `https://www.tcdb.com/Search.cfm/search/${encodeURIComponent(card.subject || '')}`, icon: '📋', name: 'TCDB', desc: 'Set checklists & print runs', c: '#16a34a' },
+    { href: `https://www.pricecharting.com/search-products?q=${q}`, icon: '💹', name: 'PriceCharting', desc: 'Grade-specific pricing', c: '#7c3aed' },
+  ];
+
+  // ── RENDER SKELETON (instant) ──
+  document.getElementById('resultsWrap').innerHTML = `
+    <!-- CARD HERO -->
+    <div class="result-hero au">
+      <div class="result-stripe"></div>
+      <div class="result-body">
+        <div class="card-img">
+          ${card.image_url
+            ? `<img src="${card.image_url}" alt="${card.subject}" onerror="this.parentNode.innerHTML='<div class=card-img-ph>🃏</div>'"/>`
+            : '<div class="card-img-ph">🃏</div>'}
+        </div>
+        <div>
+          <div class="card-sport">${card.category || gc + ' GRADED'}</div>
+          <div class="card-name">${card.subject || 'Unknown Card'}</div>
+          <div class="card-set">${[card.year, card.brand, card.variety].filter(Boolean).join(' · ')}</div>
+          <div class="card-cert">CERT #${data.cert_number}${card.card_number ? ' · #' + card.card_number : ''}</div>
+          <div class="badges">
+            <div class="grade-pill ${gc.toLowerCase()}">${gc} ${card.grade || '?'}</div>
+            <span class="tag" style="color:${parallelTier.color};border-color:${parallelTier.color}44;background:${parallelTier.color}12">${parallelTier.tier}</span>
+            ${card.pop != null ? `<span class="tag tag-grey">POP ${card.grade}: ${(card.pop || 0).toLocaleString()}</span>` : ''}
+            ${card.pop_higher === 0 && card.grade === '10' ? '<span class="tag tag-green">HIGHEST GRADE</span>' : ''}
+          </div>
+          ${sum ? `<div class="prices">
+            <div class="price-block"><div class="lbl">Avg Sale</div><div class="val main">$${sum.avg_price?.toLocaleString()}</div></div>
+            <div class="price-block"><div class="lbl">Low</div><div class="val lo">$${sum.low_price?.toLocaleString()}</div></div>
+            <div class="price-block"><div class="lbl">High</div><div class="val hi">$${sum.high_price?.toLocaleString()}</div></div>
+            <div class="price-block"><div class="lbl">Median</div><div class="val med">$${sum.median_price?.toLocaleString()}</div></div>
+          </div>` : '<div style="color:var(--text-dim);font-size:13px;margin-top:8px">Add eBay API key to unlock live pricing</div>'}
+        </div>
+        <div class="iq-panel" id="iqPanel">
+          <div class="iq-label-top">SlabIQ Score</div>
+          <div class="iq-score" style="color:#ddd">—</div>
+          <div class="iq-denom">out of 10</div>
+          <div class="iq-verdict" style="color:#bbb">ANALYSING…</div>
+          <div class="iq-sub-scores">
+            <div class="iq-sub"><div class="iq-sub-val" style="color:#ddd">—</div><div class="iq-sub-lbl">RARITY</div></div>
+            <div class="iq-sub"><div class="iq-sub-val" style="color:#ddd">—</div><div class="iq-sub-lbl">UPSIDE</div></div>
+            <div class="iq-sub"><div class="iq-sub-val" style="color:#ddd">—</div><div class="iq-sub-lbl">MARKET</div></div>
+          </div>
+          <div class="iq-hold" id="iqHold">AI analyst loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI ANALYST (placeholder while loading) -->
+    <div class="analyst-wrap au2" id="analystWrap">
+      <div class="analyst-header">
+        <div class="analyst-icon">🤖</div>
+        <div>
+          <div class="analyst-title">AI Investment Analyst</div>
+          <div class="analyst-sub">SLABIQ · LIVE INTELLIGENCE</div>
+        </div>
+        <div class="analyst-fresh" id="analystFresh">
+          <div class="fresh-dot"></div>
+          <span>LIVE SEARCH IN PROGRESS</span>
+        </div>
+      </div>
+      <div id="analystContent">
+        <div class="thinking">
+          <div class="thinking-dots"><span></span><span></span><span></span></div>
+          Searching live news · Analysing player data · Writing verdict…
+        </div>
+      </div>
+    </div>
+
+    <!-- RARITY ENGINE -->
+    <div class="sc au2">
+      <div class="sc-title">💎 Rarity Engine</div>
+      <div class="rarity-grid">
+        <div class="rarity-item highlight">
+          <div class="ri-lbl">Rarity Score</div>
+          <div class="ri-val">${rarityScore}<span style="font-size:14px">/10</span></div>
+          <div class="ri-sub">${parallelTier.tier} tier</div>
+        </div>
+        <div class="rarity-item">
+          <div class="ri-lbl">Est. Print Run</div>
+          <div class="ri-val">${printRun >= 1000 ? (printRun >= 100000 ? Math.round(printRun/1000)+'k+' : printRun.toLocaleString()) : printRun}</div>
+          <div class="ri-sub">${printRun < 100 ? 'Serial numbered' : printRun < 5000 ? 'Short print' : printRun < 50000 ? 'Limited' : 'Mass market'}</div>
+        </div>
+        <div class="rarity-item">
+          <div class="ri-lbl">PSA ${card.grade} Pop</div>
+          <div class="ri-val">${(card.pop || 0).toLocaleString()}</div>
+          <div class="ri-sub">${popRatio ? `~${popRatio}% of print graded` : 'Unknown ratio'}</div>
+        </div>
+        <div class="rarity-item">
+          <div class="ri-lbl">Pop Higher</div>
+          <div class="ri-val">${card.pop_higher ?? '—'}</div>
+          <div class="ri-sub">${card.pop_higher === 0 ? '🏆 Highest grade' : `${card.pop_higher} copies above`}</div>
+        </div>
+        <div class="rarity-item">
+          <div class="ri-lbl">Parallel Tier</div>
+          <div class="ri-val" style="font-size:16px;color:${parallelTier.color}">${parallelTier.tier}</div>
+          <div class="ri-sub">Score: ${parallelTier.score}/10</div>
+        </div>
+        <div class="rarity-item">
+          <div class="ri-lbl">Supply Pressure</div>
+          <div class="ri-val" style="font-size:16px">${popRatio ? (parseFloat(popRatio) < 1 ? '🔥 SCARCE' : parseFloat(popRatio) < 5 ? '⚡ LOW' : parseFloat(popRatio) < 20 ? '📊 MED' : '📉 HIGH') : '—'}</div>
+          <div class="ri-sub">${popRatio ? parseFloat(popRatio) < 5 ? 'Demand likely exceeds supply' : 'Monitor pop growth' : 'Calculating…'}</div>
+        </div>
+      </div>
+      <div class="rarity-bar-row">
+        ${[
+          { label: 'Serial / Print Run', score: printRun <= 1 ? 10 : printRun <= 10 ? 9.5 : printRun <= 50 ? 8.5 : printRun <= 99 ? 7.8 : printRun <= 500 ? 7 : printRun <= 5000 ? 5 : printRun <= 50000 ? 3.5 : 2, color: '#ff6200' },
+          { label: 'PSA Pop Pressure', score: (card.pop || 0) <= 5 ? 9.5 : (card.pop || 0) <= 20 ? 8 : (card.pop || 0) <= 100 ? 6.5 : (card.pop || 0) <= 500 ? 5 : 3, color: '#1a8c45' },
+          { label: 'Parallel Prestige', score: parallelTier.score, color: parallelTier.color },
+          { label: 'Grade Scarcity (10s)', score: card.grade === '10' ? (card.pop_higher === 0 ? 9 : 7) : 5, color: '#003087' },
+          { label: 'Overall Rarity', score: rarityScore, color: '#8b5cf6' },
+        ].map(b => `
+          <div class="rb-item">
+            <span class="rb-label">${b.label}</span>
+            <div class="rb-track">
+              <div class="rb-fill" style="width:${b.score * 10}%;background:${b.color}"></div>
+            </div>
+            <span class="rb-score" style="color:${b.color}">${b.score.toFixed(1)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- SALES + CHART -->
+    ${sum ? `
+    <div class="sc au3">
+      <div class="sc-title">📈 Price History</div>
+      <div class="chart-area">${buildChart(sales)}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-faint)">${sales[sales.length - 1]?.date || ''}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-faint)">${sales[0]?.date || ''}</span>
+      </div>
+    </div>
+    <div class="sc au3">
+      <div class="sc-title">🛒 Recent Sales (${sales.length})</div>
+      ${sales.map(s => {
+        const k = (s.source || '').split('(')[0].trim();
+        const sc = SRC[k] || { c: '#555', bg: '#f5f5f5' };
+        return `<a class="sale-row" href="${s.url || '#'}" target="_blank">
+          <div class="sale-src" style="color:${sc.c};border-color:${sc.c}44;background:${sc.bg}">${s.source}</div>
+          <div class="sale-title">${s.title}</div>
+          <div class="sale-date">${s.date}</div>
+          <div class="sale-price">$${s.price?.toLocaleString()}</div>
+        </a>`;
+      }).join('')}
+    </div>` : ''}
+
+    <!-- EXTERNAL LINKS -->
+    <div class="sc au4">
+      <div class="sc-title">🔗 Verify & Research</div>
+      <div class="ext-grid">
+        ${ext.map(l => `<a href="${l.href}" target="_blank" class="ext-card">
+          <div class="ext-icon" style="background:${l.c}15">${l.icon}</div>
+          <div>
+            <div class="ext-name" style="color:${l.c}">${l.name}</div>
+            <div class="ext-desc">${l.desc}</div>
+          </div>
+        </a>`).join('')}
+      </div>
+    </div>
+  `;
+
+  // ── NOW FIRE THE AI ANALYST ──
+  await runAIAnalyst(card, sales, sum, gc, rarityScore, printRun, parallelTier, popRatio);
+}
+
+// ── AI ANALYST ENGINE ──
+async function runAIAnalyst(card, sales, sum, gc, rarityScore, printRun, parallelTier, popRatio) {
+  const avgPrice = sum?.avg_price || 0;
+  const playerName = card.subject || 'Unknown Player';
+  const cardDesc = `${card.year} ${card.brand} ${card.variety} #${card.card_number} - ${playerName} - ${gc} ${card.grade}`;
+  const sport = card.category || 'Sports';
+
+  const systemPrompt = `You are SlabIQ's elite sports card investment analyst. You provide brutally honest, data-driven investment verdicts. You use real news, player data and market dynamics to give specific, actionable analysis. Never be generic. Always reference specific real facts, stats, and news events. Format your response as JSON only.`;
+
+  const userPrompt = `Analyse this sports card as an investment:
+
+CARD: ${cardDesc}
+SPORT/CATEGORY: ${sport}
+CURRENT MARKET: Avg sale $${avgPrice.toLocaleString()}, Range $${sum?.low_price?.toLocaleString() || 'N/A'} - $${sum?.high_price?.toLocaleString() || 'N/A'}, ${sum?.total_sales_found || 0} recent sales
+RARITY DATA: Print run est. ${printRun.toLocaleString()} copies, PSA ${card.grade} pop: ${card.pop || 'Unknown'}, Parallel: ${parallelTier.tier}, Pop higher: ${card.pop_higher ?? 'Unknown'}
+RARITY SCORE: ${rarityScore}/10
+
+Use your web search tool to find:
+1. Latest news about ${playerName} in the last 3 months (injuries, controversies, achievements, contract news)
+2. Upcoming major sporting events that could impact this card's value
+3. Current season stats if available
+4. Any market trends for this specific card
+
+Then respond ONLY with valid JSON in this exact format:
+{
+  "iq_score": <number 1-10, one decimal>,
+  "rarity_score": ${rarityScore},
+  "upside_score": <number 1-10>,
+  "market_score": <number 1-10>,
+  "verdict": "<STRONG BUY|BUY|HOLD|CAUTION|SELL>",
+  "verdict_color": "<hex color>",
+  "hold_window": "<e.g. 3-5 years>",
+  "entry_price": "<e.g. Under $6,500>",
+  "price_target": "<e.g. $15,000-20,000>",
+  "risk_flags": [
+    {"label": "<risk name>", "level": "<green|yellow|red>", "detail": "<one sentence>"}
+  ],
+  "news_items": [
+    {"headline": "<headline>", "sentiment": "<positive|negative|neutral>", "impact": "<HIGH|MED|LOW>", "date": "<date or 'Recent'>"}
+  ],
+  "player_stats": {
+    "age": <number or null>,
+    "season_goals": <number or null>,
+    "season_assists": <number or null>,
+    "career_stage": "<Rising Star|Peak|Veteran|Declining>",
+    "award_trajectory": "<e.g. Ballon d'Or contender 2026-2028>"
+  },
+  "upcoming_events": [
+    {"name": "<event>", "date": "<date>", "impact": "<HIGH|MED|LOW>", "reason": "<why it matters for this card>"}
+  ],
+  "analyst_verdict": "<3-4 paragraph detailed investment analysis. Be specific, reference actual news and stats. Include why this is or isn't a good investment, what the upside case is, what the risks are, and a clear recommendation. Do NOT be generic.>",
+  "bull_case": "<one sentence bull case>",
+  "bear_case": "<one sentence bear case>"
+}`;
+
+  try {
+    const response = await fetch(`${API}/ai/analyse`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system: systemPrompt,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    const data = await response.json();
+
+    // Extract text from response (handle tool use blocks)
+    let rawText = '';
+    if (data.content) {
+      for (const block of data.content) {
+        if (block.type === 'text') rawText += block.text;
+      }
+    }
+
+    // Parse JSON
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON in response');
+    const analysis = JSON.parse(jsonMatch[0]);
+
+    renderAnalystPanel(analysis, card);
+    updateIQPanel(analysis);
+
+  } catch (err) {
+    console.error('AI Analyst error:', err);
+    // Fallback to computed scores
+    renderAnalystFallback(card, rarityScore, printRun, parallelTier, avgPrice);
+  }
+}
+
+function renderAnalystPanel(a, card) {
+  const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+  document.getElementById('analystFresh').innerHTML = `<div class="fresh-dot"></div><span>LIVE · ${now}</span>`;
+
+  const riskHTML = (a.risk_flags || []).map(f => `
+    <div class="risk-flag ${f.level}">
+      <div class="flag-dot" style="background:${f.level === 'green' ? '#2acc6a' : f.level === 'yellow' ? '#fbbf24' : '#ff6b6b'}"></div>
+      <strong>${f.label}</strong> — ${f.detail}
+    </div>
+  `).join('');
+
+  const newsHTML = (a.news_items || []).map(n => {
+    const sentColor = n.sentiment === 'positive' ? '#1a8c45' : n.sentiment === 'negative' ? '#cc2200' : '#888';
+    const impactClass = n.impact === 'HIGH' ? 'impact-high' : n.impact === 'MED' ? 'impact-med' : 'impact-low';
+    return `<div class="news-item">
+      <div class="news-sentiment" style="background:${sentColor}"></div>
+      <div class="news-body">
+        <div class="news-headline">${n.headline}</div>
+        <div class="news-meta">${n.date} · <span class="news-tag ${impactClass}">${n.impact} IMPACT</span></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const eventsHTML = (a.upcoming_events || []).map(e => {
+    const impactClass = e.impact === 'HIGH' ? 'impact-high' : e.impact === 'MED' ? 'impact-med' : 'impact-low';
+    return `<div class="event-row">
+      <div class="event-date">${e.date}</div>
+      <div class="event-name"><strong>${e.name}</strong><br/><span style="font-size:10px;color:var(--text-dim)">${e.reason}</span></div>
+      <div class="event-impact ${impactClass}">${e.impact}</div>
+    </div>`;
+  }).join('');
+
+  const statsHTML = a.player_stats ? `
+    <div class="player-intel">
+      ${a.player_stats.age ? `<div class="pi-stat"><div class="pi-lbl">Age</div><div class="pi-val">${a.player_stats.age}</div><div class="pi-sub">${a.player_stats.career_stage}</div></div>` : ''}
+      ${a.player_stats.season_goals != null ? `<div class="pi-stat"><div class="pi-lbl">Goals This Season</div><div class="pi-val">${a.player_stats.season_goals}</div><div class="pi-sub">Current season</div></div>` : ''}
+      ${a.player_stats.season_assists != null ? `<div class="pi-stat"><div class="pi-lbl">Assists This Season</div><div class="pi-val">${a.player_stats.season_assists}</div><div class="pi-sub">Current season</div></div>` : ''}
+      ${a.player_stats.award_trajectory ? `<div class="pi-stat" style="grid-column:1/-1"><div class="pi-lbl">Award Trajectory</div><div style="font-size:14px;font-weight:600;color:var(--orange);margin-top:4px">${a.player_stats.award_trajectory}</div></div>` : ''}
+    </div>
+  ` : '';
+
+  // Format analyst verdict paragraphs
+  const verdictParagraphs = (a.analyst_verdict || '')
+    .split('\n').filter(p => p.trim())
+    .map(p => `<p>${p}</p>`).join('');
+
+  document.getElementById('analystContent').innerHTML = `
+    <div class="risk-row">${riskHTML}</div>
+
+    <div class="analyst-body">${verdictParagraphs}</div>
+
+    <div class="analyst-metrics">
+      <div class="am-item"><div class="am-val">${a.hold_window || '—'}</div><div class="am-lbl">Hold Window</div></div>
+      <div class="am-item"><div class="am-val" style="color:var(--orange)">${a.entry_price || '—'}</div><div class="am-lbl">Entry Target</div></div>
+      <div class="am-item"><div class="am-val" style="color:#2acc6a">${a.price_target || '—'}</div><div class="am-lbl">Price Target</div></div>
+    </div>
+
+    ${a.bull_case || a.bear_case ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+      ${a.bull_case ? `<div style="background:#1a8c4515;border:1px solid #1a8c4530;border-radius:8px;padding:12px"><div style="font-size:9px;color:#2acc6a;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:6px">🐂 BULL CASE</div><div style="font-size:12px;color:#ffffffcc">${a.bull_case}</div></div>` : ''}
+      ${a.bear_case ? `<div style="background:#cc220015;border:1px solid #cc220030;border-radius:8px;padding:12px"><div style="font-size:9px;color:#ff6b6b;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:6px">🐻 BEAR CASE</div><div style="font-size:12px;color:#ffffffcc">${a.bear_case}</div></div>` : ''}
+    </div>` : ''}
+
+    ${newsHTML ? `<div style="margin-top:14px"><div style="font-size:10px;color:#ffffff60;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:8px">📰 LIVE NEWS SIGNALS</div>${newsHTML}</div>` : ''}
+
+    ${statsHTML ? `<div style="margin-top:14px"><div style="font-size:10px;color:#ffffff60;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:8px">📊 PLAYER INTELLIGENCE</div>${statsHTML}</div>` : ''}
+
+    ${eventsHTML ? `<div style="margin-top:14px"><div style="font-size:10px;color:#ffffff60;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:8px">🗓 UPCOMING CATALYST EVENTS</div>${eventsHTML}</div>` : ''}
+  `;
+}
+
+function updateIQPanel(a) {
+  const iqColor = a.verdict === 'STRONG BUY' ? '#2acc6a' : a.verdict === 'BUY' ? '#4ade80' : a.verdict === 'HOLD' ? '#fbbf24' : a.verdict === 'CAUTION' ? '#fb923c' : '#ff6b6b';
+  document.getElementById('iqPanel').innerHTML = `
+    <div class="iq-label-top">SlabIQ Score</div>
+    <div class="iq-score" style="color:${iqColor}">${a.iq_score || '—'}</div>
+    <div class="iq-denom">out of 10</div>
+    <div class="iq-verdict" style="color:${iqColor}">${a.verdict || '—'}</div>
+    <div class="iq-sub-scores">
+      <div class="iq-sub"><div class="iq-sub-val" style="color:var(--orange)">${a.rarity_score || '—'}</div><div class="iq-sub-lbl">RARITY</div></div>
+      <div class="iq-sub"><div class="iq-sub-val" style="color:#2acc6a">${a.upside_score || '—'}</div><div class="iq-sub-lbl">UPSIDE</div></div>
+      <div class="iq-sub"><div class="iq-sub-val" style="color:#60a5fa">${a.market_score || '—'}</div><div class="iq-sub-lbl">MARKET</div></div>
+    </div>
+    <div class="iq-hold"><strong>Hold:</strong> ${a.hold_window || '—'}<br/><strong>Target:</strong> ${a.price_target || '—'}</div>
+  `;
+}
+
+function renderAnalystFallback(card, rarityScore, printRun, parallelTier, avgPrice) {
+  // Simple computed fallback if AI call fails
+  const upside = card.pop_higher === 0 ? 7.5 : 6.0;
+  const market = avgPrice > 0 ? 6.5 : 5.0;
+  const iq = Math.round(((rarityScore * 0.4 + upside * 0.35 + market * 0.25)) * 10) / 10;
+
+  document.getElementById('analystFresh').innerHTML = `<div class="fresh-dot" style="background:#fbbf24"></div><span>COMPUTED (AI offline)</span>`;
+  document.getElementById('analystContent').innerHTML = `
+    <div class="risk-row">
+      <div class="risk-flag yellow"><div class="flag-dot" style="background:#fbbf24"></div><strong>AI Offline</strong> — Backend not reachable. Showing computed scores only.</div>
+    </div>
+    <div class="analyst-body">
+      <p>AI Analyst requires your backend server to be running. Start it with <code style="background:#ffffff20;padding:2px 6px;border-radius:3px">uvicorn main:app --reload --port 8000</code> to get live news analysis, player stats and the full written verdict.</p>
+      <p>Computed rarity score: <strong>${rarityScore}/10</strong> based on ${printRun.toLocaleString()} estimated print run and PSA pop of ${card.pop || 0}.</p>
+    </div>
+    <div class="analyst-metrics">
+      <div class="am-item"><div class="am-val">2-5 yrs</div><div class="am-lbl">Est. Hold</div></div>
+      <div class="am-item"><div class="am-val" style="color:var(--orange)">Market dip</div><div class="am-lbl">Entry</div></div>
+      <div class="am-item"><div class="am-val" style="color:#2acc6a">—</div><div class="am-lbl">Target</div></div>
+    </div>
+  `;
+
+  document.getElementById('iqPanel').innerHTML = `
+    <div class="iq-label-top">SlabIQ Score</div>
+    <div class="iq-score" style="color:#fbbf24">${iq}</div>
+    <div class="iq-denom">out of 10</div>
+    <div class="iq-verdict" style="color:#fbbf24">HOLD</div>
+    <div class="iq-sub-scores">
+      <div class="iq-sub"><div class="iq-sub-val" style="color:var(--orange)">${rarityScore}</div><div class="iq-sub-lbl">RARITY</div></div>
+      <div class="iq-sub"><div class="iq-sub-val" style="color:#2acc6a">${upside}</div><div class="iq-sub-lbl">UPSIDE</div></div>
+      <div class="iq-sub"><div class="iq-sub-val" style="color:#60a5fa">${market}</div><div class="iq-sub-lbl">MARKET</div></div>
+    </div>
+    <div class="iq-hold">Start backend for full analysis</div>
+  `;
+}
+
+function buildChart(sales) {
+  const v = sales.filter(s => s.price).slice().reverse();
+  if (v.length < 2) return '<div style="text-align:center;color:var(--text-faint);font-size:12px;padding:28px 0">Not enough data</div>';
+  const px = v.map(s => s.price);
+  const mx = Math.max(...px), mn = Math.min(...px);
+  const W = 100, H = 100;
+  const pts = v.map((s, i) => [(i / (v.length - 1)) * W, H - ((s.price - mn) / (mx - mn || 1)) * (H - 10) - 5]);
+  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ');
+  const area = `${path} L${W} ${H} L0 ${H}Z`;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff6200" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ff6200" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${area}" fill="url(#cg)"/>
+    <path d="${path}" fill="none" stroke="#ff6200" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="#ff6200" stroke="white" stroke-width="1"/>`).join('')}
+  </svg>`;
+}
+
+function show(id, v) { document.getElementById(id).style.display = v ? 'block' : 'none'; }
+function setErr(m) { const e = document.getElementById('errBox'); e.style.display = m ? 'block' : 'none'; e.textContent = m; }
+</script>
+</body>
+</html>
