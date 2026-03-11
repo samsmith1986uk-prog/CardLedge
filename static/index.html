@@ -762,20 +762,69 @@ function handleSearchInput(e) {
 
 async function fetchAutocomplete(q) {
   try {
-    const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(8000) });
+    // Use Card Ladder player search for real card data
+    const r = await fetch(`${API}/search/players?q=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(10000) });
     if (!r.ok) return;
     const data = await r.json();
-    if (data.results && data.results.length > 0) {
-      showAC(data.results.slice(0, 12));
+    window._playerSearchData = data;
+    if (data.cards && data.cards.length > 0) {
+      showAC(data);
     } else {
-      hideAC();
+      // Fallback to 130point search
+      const r2 = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(8000) });
+      if (r2.ok) {
+        const d2 = await r2.json();
+        if (d2.results?.length > 0) showACLegacy(d2.results.slice(0, 12));
+        else hideAC();
+      } else hideAC();
     }
   } catch {
     hideAC();
   }
 }
 
-function showAC(items) {
+function showAC(data) {
+  const dd = document.getElementById('acDropdown');
+  const pi = data.player_index;
+  const cards = data.cards || [];
+
+  // Player header if we have index data
+  let headerHTML = '';
+  if (pi) {
+    const pct = pi.pct_change || {};
+    const monthPct = pct.monthly != null ? (pct.monthly * 100).toFixed(1) : null;
+    const annualPct = pct.annual != null ? (pct.annual * 100).toFixed(1) : null;
+    headerHTML = `
+      <div style="padding:10px 16px;background:var(--dark);border-bottom:2px solid var(--orange)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;color:#fff;letter-spacing:1px">${escHtml(pi.name)}</div>
+            <div style="font-size:9px;color:#888">${pi.category || ''} · ${pi.total_cards} cards tracked · Card Ladder Index</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:var(--orange)">${fmtPrice(pi.daily_index)}</div>
+            <div style="font-size:9px;color:${monthPct > 0 ? '#2acc6a' : monthPct < 0 ? '#ff4444' : '#888'}">${monthPct != null ? (monthPct > 0 ? '+' : '') + monthPct + '% 30d' : ''} ${annualPct != null ? '· ' + (annualPct > 0 ? '+' : '') + annualPct + '% 1y' : ''}</div>
+          </div>
+        </div>
+        ${pi.key_card ? `<div style="font-size:9px;color:#aaa;margin-top:4px">Key Card: ${escHtml(pi.key_card.label)} — ${fmtPrice(pi.key_card.value)}</div>` : ''}
+      </div>`;
+  }
+
+  dd.innerHTML = headerHTML + cards.map((card, i) => `
+    <div class="ac-item" onclick="selectCLCard(${i})">
+      ${card.image ? `<img class="ac-thumb" src="${card.image}" onerror="this.style.display='none'"/>` : '<div class="ac-thumb" style="display:flex;align-items:center;justify-content:center;font-size:16px;color:#ccc">🃏</div>'}
+      <div class="ac-info">
+        <div class="ac-title">${escHtml(card.label)}</div>
+        <div class="ac-meta">Pop ${card.pop || '?'} · ${card.num_sales || 0} sales · ${card.condition || ''}</div>
+      </div>
+      <div class="ac-price">${card.current_value ? fmtPrice(card.current_value) : '—'}</div>
+    </div>
+  `).join('');
+  dd.style.display = 'block';
+  window._clCards = cards;
+}
+
+function showACLegacy(items) {
   const dd = document.getElementById('acDropdown');
   dd.innerHTML = items.map((item, i) => `
     <div class="ac-item" onclick="selectACItem(${i})">
@@ -795,21 +844,33 @@ function hideAC() {
   document.getElementById('acDropdown').style.display = 'none';
 }
 
+function selectCLCard(idx) {
+  const card = window._clCards?.[idx];
+  if (!card) return;
+  hideAC();
+  // Extract grading company and set up cert lookup
+  const condition = card.condition || '';
+  const gcM = condition.match(/(PSA|BGS|SGC|CGC)/i);
+  if (gcM) setGrader(gcM[1].toUpperCase());
+  // Show card info and prompt for cert
+  document.getElementById('certIn').value = '';
+  document.getElementById('certIn').placeholder = `Enter ${gcM ? gcM[1] : 'PSA'} cert # for ${card.player} ${card.year} ${card.set}…`;
+  setErr(`${card.label} — Card Ladder Value: ${card.current_value ? fmtPrice(card.current_value) : 'N/A'} | Pop: ${card.pop || '?'} | ${card.num_sales || 0} sales tracked. Enter a cert number to get full analysis.`);
+  setSearchMode('cert');
+}
+
 function selectACItem(idx) {
   const item = window._acItems?.[idx];
   if (!item) return;
   hideAC();
-  // Extract cert/grade info from title and switch to cert lookup
   const certM = item.title.match(/(?:PSA|BGS|SGC)\s*([\d.]+)/i);
   if (certM) {
     const gc = item.title.match(/(PSA|BGS|SGC)/i);
     if (gc) setGrader(gc[1].toUpperCase());
   }
-  // Put the title in search and look it up as a player search result
   document.getElementById('certIn').value = item.title;
   setSearchMode('cert');
-  // Try to find cert # in the data — otherwise just show the title info
-  setErr('Select result noted. Enter a cert # to get full analysis, or use the title as reference.');
+  setErr('Select result noted. Enter a cert # to get full analysis.');
 }
 
 function handleSearchKey(e) {
@@ -826,6 +887,13 @@ document.addEventListener('click', (e) => {
 async function doLookup() {
   const cert = document.getElementById('certIn').value.trim();
   if (!cert) return;
+
+  // In player mode, trigger autocomplete instead of cert lookup
+  if (searchMode === 'player') {
+    fetchAutocomplete(cert);
+    return;
+  }
+
   setErr('');
   show('emptyWrap', false); show('resultsWrap', false); show('loadWrap', true);
   document.getElementById('searchBtn').disabled = true;
@@ -988,6 +1056,8 @@ async function renderFull(data) {
   const fairValue = data.fair_value || {};
   const priceDist = data.price_distribution || {};
   const timing = data.timing || {};
+  const playerIndex = data.player_index || null;
+  const clMatch = data.cardladder_match || null;
 
   // Store current card data for portfolio
   window._currentCard = {
@@ -1116,6 +1186,49 @@ async function renderFull(data) {
         </div>
       </div>
     </div>
+
+    <!-- PLAYER INDEX (Card Ladder) -->
+    ${playerIndex ? `<div class="sc au2">
+      <div class="sc-title">📊 Player Market Index <span style="font-size:9px;color:var(--text-faint);font-weight:400;margin-left:6px">via Card Ladder</span></div>
+      <div class="intel-row">
+        <div class="intel-card">
+          <div class="intel-card-lbl">Index Value</div>
+          <div class="intel-card-val" style="color:var(--orange)">${fmtPrice(playerIndex.daily_index)}</div>
+          <div class="intel-card-sub">${playerIndex.category || ''} · ${playerIndex.total_cards} cards tracked</div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">Total Market Cap</div>
+          <div class="intel-card-val" style="color:var(--text)">${playerIndex.total_market_cap ? '$' + (playerIndex.total_market_cap >= 1e6 ? (playerIndex.total_market_cap / 1e6).toFixed(1) + 'M' : playerIndex.total_market_cap.toLocaleString()) : '—'}</div>
+          <div class="intel-card-sub">${playerIndex.daily_sales_count || 0} sales today · $${Math.round(playerIndex.daily_sales_volume || 0).toLocaleString()} vol</div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">30-Day Change</div>
+          ${(() => { const m = playerIndex.pct_change?.monthly; const p = m != null ? (m * 100).toFixed(1) : null; return `
+            <div class="intel-card-val" style="color:${p > 0 ? 'var(--green)' : p < 0 ? 'var(--red)' : 'var(--text-dim)'}">${p != null ? (p > 0 ? '+' : '') + p + '%' : '—'}</div>`;
+          })()}
+          <div class="intel-card-sub">
+            ${(() => { const pc = playerIndex.pct_change; return [
+              pc?.weekly != null ? (pc.weekly * 100).toFixed(1) + '% 7d' : '',
+              pc?.quarterly != null ? (pc.quarterly * 100).toFixed(1) + '% 90d' : '',
+              pc?.annual != null ? (pc.annual * 100).toFixed(1) + '% 1y' : '',
+            ].filter(Boolean).join(' · '); })()}
+          </div>
+        </div>
+      </div>
+      ${playerIndex.key_card ? `<div style="display:flex;align-items:center;gap:10px;margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+        ${playerIndex.key_card.image ? `<img src="${playerIndex.key_card.image}" style="width:36px;height:36px;border-radius:6px;object-fit:cover" onerror="this.style.display='none'"/>` : ''}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:10px;color:var(--text-dim)">KEY CARD</div>
+          <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${playerIndex.key_card.label}</div>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:var(--orange)">${fmtPrice(playerIndex.key_card.value)}</div>
+      </div>` : ''}
+      ${clMatch ? `<div style="display:flex;align-items:center;gap:10px;margin-top:4px;padding:6px 10px;background:var(--orange-light);border-radius:8px;border:1px solid #ffd0b5">
+        <div style="font-size:10px;color:var(--orange-dark);font-weight:700">CL MATCH</div>
+        <div style="flex:1;font-size:11px;font-weight:500">${clMatch.label}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;color:var(--orange)">${clMatch.current_value ? fmtPrice(clMatch.current_value) : '—'}</div>
+      </div>` : ''}
+    </div>` : ''}
 
     <!-- MARKET INTELLIGENCE -->
     ${sum ? `<div class="sc au2">
@@ -1751,8 +1864,8 @@ function renderPortfolioModal() {
     : portfolio.map(p => `
     <div class="pf-card-row">
       <div class="pf-card-info">
-        <div class="pf-card-name">${p.name || 'Unknown'}</div>
-        <div class="pf-card-meta">${p.year || ''} · ${p.gc} ${p.grade} · Cert #${p.cert}</div>
+        <div class="pf-card-name">${escHtml(p.name || 'Unknown')}</div>
+        <div class="pf-card-meta">${escHtml(p.year || '')} · ${escHtml(p.gc || '')} ${escHtml(p.grade || '')} · Cert #${escHtml(p.cert || '')}</div>
       </div>
       <div class="pf-card-val">
         <div class="pf-card-price">${fmtCurr(p.avgPrice)}</div>

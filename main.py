@@ -21,9 +21,10 @@ from scrapers.psa import scrape_psa_cert
 from scrapers.card_resolver import resolve_card, build_card_identity, resolve_sales_data, BROWSER_HEADERS
 from scrapers.beckett import scrape_beckett_cert
 from scrapers.sgc import scrape_sgc_cert
+from scrapers.cardladder import search_player, search_cards_by_player, match_card as match_card_ladder
 
 
-app = FastAPI(title="SLABIQ API", version="4.0.0")
+app = FastAPI(title="SLABIQ API", version="6.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -123,33 +124,78 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
             "sources": stats.get("sources", []),
         }
 
-    # Step 4: Compute momentum
-    result["momentum"] = _compute_momentum(all_sales)
+    # Steps 4-11: Analytics (wrapped to never crash the lookup)
+    try:
+        result["momentum"] = _compute_momentum(all_sales)
+    except Exception as e:
+        print(f"[analytics] momentum error: {e}")
+        result["momentum"] = {"direction": "unknown", "pct_change": 0, "label": "Error"}
 
-    # Step 5: Compute liquidity
-    result["liquidity"] = _compute_liquidity(all_sales)
+    try:
+        result["liquidity"] = _compute_liquidity(all_sales)
+    except Exception as e:
+        print(f"[analytics] liquidity error: {e}")
+        result["liquidity"] = {"avg_days_between": None, "score": 0, "label": "Error"}
 
-    # Step 6: Compute market efficiency (Card Ladder-style)
-    result["market_efficiency"] = _compute_market_efficiency(all_sales)
+    try:
+        result["market_efficiency"] = _compute_market_efficiency(all_sales)
+    except Exception as e:
+        print(f"[analytics] efficiency error: {e}")
+        result["market_efficiency"] = {"score": 0, "label": "Error"}
 
-    # Step 7: Compute deal scores for each sale
     if result["market_summary"]:
         avg = result["market_summary"].get("avg_price", 0)
         median = result["market_summary"].get("median_price", 0)
         for sale in all_sales:
-            sale["deal_score"] = _compute_deal_score(sale.get("price", 0), avg, median)
+            try:
+                sale["deal_score"] = _compute_deal_score(sale.get("price", 0), avg, median)
+            except Exception:
+                pass
 
-    # Step 8: Compute investment metrics
-    result["investment"] = _compute_investment_metrics(all_sales, result["market_summary"], result["momentum"], result["liquidity"], result.get("card_details", {}))
+    try:
+        result["investment"] = _compute_investment_metrics(all_sales, result["market_summary"], result["momentum"], result["liquidity"], result.get("card_details", {}))
+    except Exception as e:
+        print(f"[analytics] investment error: {e}")
+        result["investment"] = {}
 
-    # Step 9: Fair value estimate (regression-based)
-    result["fair_value"] = _compute_fair_value(all_sales)
+    try:
+        result["fair_value"] = _compute_fair_value(all_sales)
+    except Exception as e:
+        print(f"[analytics] fair_value error: {e}")
+        result["fair_value"] = {}
 
-    # Step 10: Price distribution buckets
-    result["price_distribution"] = _compute_price_distribution(all_sales)
+    try:
+        result["price_distribution"] = _compute_price_distribution(all_sales)
+    except Exception as e:
+        print(f"[analytics] distribution error: {e}")
+        result["price_distribution"] = {"buckets": []}
 
-    # Step 11: Best time to buy/sell
-    result["timing"] = _compute_timing_signal(all_sales, result["momentum"], result["market_summary"])
+    try:
+        result["timing"] = _compute_timing_signal(all_sales, result["momentum"], result["market_summary"])
+    except Exception as e:
+        print(f"[analytics] timing error: {e}")
+        result["timing"] = {"signal": "hold", "reason": "Error"}
+
+    # Step 12: Card Ladder enrichment (player index + card match)
+    try:
+        card = result.get("card_details") or {}
+        subject = card.get("subject", "")
+        if subject:
+            cl_player, cl_card = await asyncio.gather(
+                search_player(subject),
+                match_card_ladder(
+                    subject, card.get("year", ""), card.get("brand", ""),
+                    card.get("card_number", ""), card.get("grade", ""),
+                    grading_company.lower(),
+                ),
+                return_exceptions=True,
+            )
+            if isinstance(cl_player, dict):
+                result["player_index"] = cl_player
+            if isinstance(cl_card, dict):
+                result["cardladder_match"] = cl_card
+    except Exception as e:
+        print(f"[analytics] cardladder error: {e}")
 
     _cache_set(ck, result)
     return result
@@ -258,6 +304,32 @@ async def search_suggest(q: str = Query(..., min_length=2)):
     return {"suggestions": []}
 
 
+# ── PLAYER SEARCH (Card Ladder + 130point) ──
+@app.get("/search/players")
+async def search_players(q: str = Query(..., min_length=2, description="Player name")):
+    """Search for a player and get their cards with real pricing data from Card Ladder."""
+    player_name = q.strip()
+
+    # Parallel: Card Ladder player index + cards + 130point search
+    cl_player_task = search_player(player_name)
+    cl_cards_task = search_cards_by_player(player_name, limit=15)
+    results = await asyncio.gather(cl_player_task, cl_cards_task, return_exceptions=True)
+
+    player_index = results[0] if isinstance(results[0], dict) else None
+    cl_cards = results[1] if isinstance(results[1], list) else []
+
+    # Sort cards by num_sales descending (most traded first)
+    cl_cards.sort(key=lambda c: c.get("num_sales", 0), reverse=True)
+
+    return {
+        "query": player_name,
+        "player_index": player_index,
+        "cards": cl_cards[:15],
+        "total_cards": player_index.get("total_cards", 0) if player_index else len(cl_cards),
+        "source": "Card Ladder",
+    }
+
+
 # ── GRADE COMPARISON ──
 @app.get("/grades/compare")
 async def grade_comparison(
@@ -360,6 +432,34 @@ def _extract_player_from_title(title: str) -> str:
     return ' '.join(name_words) if name_words else ""
 
 
+def _parse_sale_date(d: str):
+    """Parse a date string to timezone-aware datetime. Returns None on failure."""
+    from datetime import datetime, timezone
+    if not d:
+        return None
+    # Try ISO format first (YYYY-MM-DD)
+    try:
+        return datetime.strptime(d[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    except Exception:
+        pass
+    # Try RFC 2822 (from 130point: "Wed 14 Jan 2026 08:00:10 GMT")
+    try:
+        from email.utils import parsedate_to_datetime
+        dt = parsedate_to_datetime(d)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except Exception:
+        pass
+    # Try common formats
+    for fmt in ("%b %d, %Y", "%B %d, %Y", "%m/%d/%Y", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(d.strip(), fmt).replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+    return None
+
+
 def _compute_momentum(sales: list) -> dict:
     """Compute 30-day price momentum from sales data."""
     from datetime import datetime, timedelta, timezone
@@ -376,16 +476,9 @@ def _compute_momentum(sales: list) -> dict:
         d = s.get("date", "")
         if not p or p < 5:
             continue
-        try:
-            dt = datetime.strptime(d[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
-        except Exception:
-            try:
-                from email.utils import parsedate_to_datetime
-                dt = parsedate_to_datetime(d)
-                if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc)
-            except Exception:
-                continue
+        dt = _parse_sale_date(d)
+        if not dt:
+            continue
         if dt >= cutoff:
             recent.append(p)
         else:
@@ -425,25 +518,11 @@ def _compute_momentum(sales: list) -> dict:
 
 def _compute_liquidity(sales: list) -> dict:
     """Compute average days between sales."""
-    from datetime import datetime, timezone
-
     dates = []
     for s in sales:
-        d = s.get("date", "")
-        if not d:
-            continue
-        try:
-            dt = datetime.strptime(d[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        dt = _parse_sale_date(s.get("date", ""))
+        if dt:
             dates.append(dt)
-        except Exception:
-            try:
-                from email.utils import parsedate_to_datetime
-                dt = parsedate_to_datetime(d)
-                if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc)
-                dates.append(dt)
-            except Exception:
-                continue
 
     if len(dates) < 2:
         return {"avg_days_between": None, "score": 0, "label": "No data"}
@@ -557,7 +636,10 @@ def _compute_investment_metrics(sales: list, summary: dict, momentum: dict, liqu
     high = summary.get("high_price", 0) or 0
 
     # Market cap estimate (avg price * estimated pop at this grade)
-    pop = card.get("pop", 0) or 0
+    try:
+        pop = int(card.get("pop", 0) or 0)
+    except (ValueError, TypeError):
+        pop = 0
     market_cap = round(avg * pop) if pop and avg else None
 
     # 30-day ROI: if you bought at median 30 days ago vs current avg
@@ -782,7 +864,7 @@ async def cache_clear():
 # ── HEALTH ──
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "4.0.0", "cache_entries": len(_cache)}
+    return {"status": "ok", "version": "6.0.0", "cache_entries": len(_cache)}
 
 
 # ── AI ANALYST PROXY ──
