@@ -21,149 +21,175 @@
 body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.5; }
 
 /* ── HEADER ── */
-header { background: var(--dark); border-bottom: 3px solid var(--orange); height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: sticky; top: 0; z-index: 100; }
-.logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-.logo-mark { width: 36px; height: 36px; background: var(--orange); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
-.logo-mark svg { width: 18px; height: 18px; }
-.logo-name { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+header { background: var(--dark); border-bottom: 3px solid var(--orange); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-mark { width: 32px; height: 32px; background: var(--orange); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.logo-mark svg { width: 16px; height: 16px; }
+.logo-name { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
 .logo-name span { color: var(--orange); }
-.logo-sub { font-size: 9px; color: #666; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.logo-sub { font-size: 8px; color: #666; letter-spacing: 2px; text-transform: uppercase; margin-top: 1px; }
 .header-links { display: flex; align-items: center; gap: 4px; }
-.hlink { display: flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 6px; border: 1px solid var(--dark3); font-size: 11px; font-weight: 500; color: #888; text-decoration: none; transition: all .15s; white-space: nowrap; }
+.hlink { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--dark3); font-size: 10px; font-weight: 500; color: #888; text-decoration: none; transition: all .15s; white-space: nowrap; }
 .hlink:hover { border-color: var(--orange); color: var(--orange); background: #ff620012; }
 .hlink-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.live-badge { display: flex; align-items: center; gap: 6px; padding: 5px 12px; background: #1a8c4520; border: 1px solid #1a8c4540; border-radius: 20px; font-size: 10px; font-weight: 700; color: #2acc6a; letter-spacing: 1px; margin-left: 8px; }
+.live-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: #1a8c4520; border: 1px solid #1a8c4540; border-radius: 20px; font-size: 9px; font-weight: 700; color: #2acc6a; letter-spacing: 1px; margin-left: 6px; }
 .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #2acc6a; animation: pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
 /* ── HERO ── */
-.hero { background: var(--dark); padding: 56px 40px 52px; text-align: center; position: relative; overflow: hidden; }
+.hero { background: var(--dark); padding: 40px 24px 36px; text-align: center; position: relative; overflow: hidden; }
 .hero::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 50%, #ff620008 0%, transparent 60%), radial-gradient(circle at 80% 50%, #ff620006 0%, transparent 60%); pointer-events: none; }
 .hero-inner { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; }
-.hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: #ff620015; border: 1px solid #ff620035; color: var(--orange-mid); font-size: 10px; font-weight: 700; letter-spacing: 3px; padding: 5px 14px; border-radius: 3px; margin-bottom: 18px; text-transform: uppercase; }
-.hero-title { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(40px, 6vw, 64px); font-weight: 900; color: #fff; line-height: .95; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+.hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: #ff620015; border: 1px solid #ff620035; color: var(--orange-mid); font-size: 10px; font-weight: 700; letter-spacing: 3px; padding: 4px 12px; border-radius: 3px; margin-bottom: 14px; text-transform: uppercase; }
+.hero-title { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(36px, 6vw, 56px); font-weight: 900; color: #fff; line-height: .95; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
 .hero-title span { color: var(--orange); }
-.hero-sub { font-size: 14px; color: #888; margin-bottom: 32px; line-height: 1.6; max-width: 480px; margin-left: auto; margin-right: auto; }
-.search-wrap { background: #fff; border-radius: 10px; display: flex; max-width: 560px; margin: 0 auto; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,.35); }
+.hero-sub { font-size: 13px; color: #888; margin-bottom: 24px; line-height: 1.6; max-width: 460px; margin-left: auto; margin-right: auto; }
+
+/* Search */
+.search-wrap { background: #fff; border-radius: 10px; display: flex; max-width: 560px; margin: 0 auto; overflow: visible; box-shadow: 0 8px 40px rgba(0,0,0,.35); position: relative; }
 .grader-tabs { display: flex; border-right: 1px solid #eee; flex-shrink: 0; }
 .gtab { padding: 0 14px; height: 52px; display: flex; align-items: center; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; color: #bbb; cursor: pointer; letter-spacing: 1px; transition: all .15s; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .gtab.active { color: var(--orange); border-bottom-color: var(--orange); }
-.search-input { flex: 1; border: none; outline: none; padding: 0 18px; font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); height: 52px; background: transparent; }
+.search-input-wrap { flex: 1; position: relative; }
+.search-input { width: 100%; border: none; outline: none; padding: 0 18px; font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); height: 52px; background: transparent; }
 .search-input::placeholder { color: #ccc; }
-.search-btn { height: 52px; padding: 0 28px; background: var(--orange); border: none; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; transition: background .15s; white-space: nowrap; }
+.search-btn { height: 52px; padding: 0 24px; background: var(--orange); border: none; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 900; color: #fff; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; transition: background .15s; white-space: nowrap; }
 .search-btn:hover { background: var(--orange-dark); }
 .search-btn:disabled { opacity: .4; cursor: not-allowed; }
-.demo-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
+
+/* Search mode toggle */
+.mode-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 12px; }
+.mode-btn { padding: 4px 14px; border-radius: 20px; border: 1px solid #ffffff20; font-size: 11px; font-weight: 600; color: #888; cursor: pointer; transition: all .15s; background: transparent; }
+.mode-btn.active { background: #ff620025; border-color: var(--orange); color: var(--orange); }
+
+/* Autocomplete dropdown */
+.ac-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; max-height: 320px; overflow-y: auto; z-index: 200; box-shadow: 0 12px 32px rgba(0,0,0,.18); display: none; }
+.ac-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #f5f3f0; transition: background .1s; }
+.ac-item:hover { background: var(--orange-light); }
+.ac-item:last-child { border-bottom: none; }
+.ac-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: #f0ece4; flex-shrink: 0; }
+.ac-info { flex: 1; min-width: 0; }
+.ac-title { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ac-meta { font-size: 10px; color: var(--text-dim); }
+.ac-price { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: var(--text); white-space: nowrap; }
+
+.demo-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
 .toggle { width: 36px; height: 20px; background: #ffffff20; border: 1px solid #ffffff30; border-radius: 10px; cursor: pointer; position: relative; transition: all .2s; flex-shrink: 0; }
 .toggle.on { background: #ff620030; border-color: var(--orange); }
 .knob { width: 14px; height: 14px; background: #fff4; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left .2s; }
 .toggle.on .knob { left: 20px; background: var(--orange); }
 .demo-lbl { font-size: 11px; color: #666; font-weight: 500; }
-.err { background: var(--orange-light); border: 1px solid #ffd0b5; border-radius: 6px; padding: 11px 16px; color: var(--orange-dark); font-size: 13px; max-width: 520px; margin: 12px auto 0; text-align: center; }
+.err { background: var(--orange-light); border: 1px solid #ffd0b5; border-radius: 6px; padding: 10px 14px; color: var(--orange-dark); font-size: 12px; max-width: 520px; margin: 10px auto 0; text-align: center; }
 
 /* ── STATS BAR ── */
-.stats-bar { background: var(--dark2); border-bottom: 1px solid var(--dark3); padding: 0 40px; display: flex; align-items: center; overflow-x: auto; }
-.stat-item { display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-right: 1px solid var(--dark3); white-space: nowrap; flex-shrink: 0; }
-.stat-icon { font-size: 14px; }
-.stat-text { font-size: 11px; font-weight: 500; color: #888; letter-spacing: .5px; }
+.stats-bar { background: var(--dark2); border-bottom: 1px solid var(--dark3); padding: 0 24px; display: flex; align-items: center; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.stats-bar::-webkit-scrollbar { display: none; }
+.stat-item { display: flex; align-items: center; gap: 6px; padding: 10px 18px; border-right: 1px solid var(--dark3); white-space: nowrap; flex-shrink: 0; }
+.stat-icon { font-size: 13px; }
+.stat-text { font-size: 10px; font-weight: 500; color: #888; letter-spacing: .5px; }
 .stat-text strong { color: #ccc; }
 
 /* ── CONTENT ── */
-.content { max-width: 1040px; margin: 0 auto; padding: 32px 40px 80px; }
+.content { max-width: 1040px; margin: 0 auto; padding: 24px 24px 60px; }
 
 /* ── LOADING ── */
-.loading-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 20px; }
-.term-bar { background: #f5f5f5; border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 7px; }
-.tdot { width: 10px; height: 10px; border-radius: 50%; }
-.term-body { padding: 16px 20px; height: 200px; overflow-y: auto; font-family: 'DM Mono', monospace; font-size: 11px; line-height: 2; background: #fafafa; }
+.loading-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 16px; }
+.term-bar { background: #f5f5f5; border-bottom: 1px solid var(--border); padding: 8px 14px; display: flex; align-items: center; gap: 6px; }
+.tdot { width: 9px; height: 9px; border-radius: 50%; }
+.term-body { padding: 14px 18px; height: 180px; overflow-y: auto; font-family: 'DM Mono', monospace; font-size: 11px; line-height: 2; background: #fafafa; }
 .tline { color: #ccc; }
 .tline.done { color: var(--green); }
 .tline.active { color: var(--orange); font-weight: 500; }
-.tline.warn { color: #c07800; }
-.prog-wrap { padding: 12px 20px; border-top: 1px solid var(--border); background: #fafafa; }
+.prog-wrap { padding: 10px 18px; border-top: 1px solid var(--border); background: #fafafa; }
 .prog-track { height: 4px; background: var(--border); border-radius: 2px; }
 .prog-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--orange-mid)); border-radius: 2px; transition: width .5s ease; }
-.prog-labels { display: flex; justify-content: space-between; margin-top: 6px; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dim); }
+.prog-labels { display: flex; justify-content: space-between; margin-top: 5px; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dim); }
 
 /* ── RESULT HERO ── */
-.result-hero { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,.07); margin-bottom: 18px; }
+.result-hero { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,.07); margin-bottom: 14px; }
 .result-stripe { height: 4px; background: linear-gradient(90deg, var(--orange), var(--orange-mid)); }
-.result-body { padding: 24px 28px; display: grid; grid-template-columns: 140px 1fr 190px; gap: 24px; align-items: start; }
-.card-img { width: 140px; height: 196px; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,.10); flex-shrink: 0; }
+.result-body { padding: 20px 24px; display: grid; grid-template-columns: 130px 1fr 180px; gap: 20px; align-items: start; }
+.card-img { width: 130px; height: 182px; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,.10); flex-shrink: 0; }
 .card-img img { width: 100%; height: 100%; object-fit: cover; }
-.card-img-ph { font-size: 44px; opacity: .15; }
-.card-sport { display: inline-block; background: var(--orange-light); color: var(--orange); border: 1px solid #ffd0b5; border-radius: 4px; padding: 3px 10px; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
-.card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 900; color: var(--text); line-height: 1.05; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
-.card-set { font-size: 13px; color: var(--text-mid); margin-bottom: 3px; }
-.card-cert { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-faint); margin-bottom: 16px; }
-.badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
-.grade-pill { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800; padding: 4px 16px; border-radius: 6px; letter-spacing: 1px; text-transform: uppercase; }
+.card-img-ph { font-size: 40px; opacity: .15; }
+.card-sport { display: inline-block; background: var(--orange-light); color: var(--orange); border: 1px solid #ffd0b5; border-radius: 4px; padding: 2px 8px; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--text); line-height: 1.05; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+.card-set { font-size: 12px; color: var(--text-mid); margin-bottom: 2px; }
+.card-cert { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-faint); margin-bottom: 12px; }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.grade-pill { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 800; padding: 3px 14px; border-radius: 6px; letter-spacing: 1px; text-transform: uppercase; }
 .grade-pill.psa { background: #e8efff; border: 2px solid #003087; color: #003087; }
 .grade-pill.bgs { background: #e8f2ff; border: 2px solid #1565c0; color: #1565c0; }
 .grade-pill.sgc { background: #fff2e8; border: 2px solid #d46b08; color: #d46b08; }
-.tag { padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; border: 1px solid; letter-spacing: 1px; }
+.tag { padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700; border: 1px solid; letter-spacing: 1px; }
 .tag-green { color: var(--green); border-color: var(--green-border); background: var(--green-bg); }
 .tag-grey { color: var(--text-mid); border-color: var(--border2); background: var(--bg); }
 .tag-orange { color: var(--orange-dark); border-color: #ffd0b5; background: var(--orange-light); }
-.prices { display: flex; gap: 20px; flex-wrap: wrap; }
-.price-block .lbl { font-size: 9px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; font-weight: 600; }
+.prices { display: flex; gap: 16px; flex-wrap: wrap; }
+.price-block .lbl { font-size: 8px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1px; font-weight: 600; }
 .val { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; letter-spacing: .5px; }
-.val.main { font-size: 34px; color: var(--text); line-height: 1; }
-.val.lo { font-size: 20px; color: var(--green); }
-.val.hi { font-size: 20px; color: #c0750a; }
-.val.med { font-size: 20px; color: var(--text-mid); }
+.val.main { font-size: 30px; color: var(--text); line-height: 1; }
+.val.lo { font-size: 18px; color: var(--green); }
+.val.hi { font-size: 18px; color: #c0750a; }
+.val.med { font-size: 18px; color: var(--text-mid); }
 
 /* ── IQ SCORE PANEL ── */
-.iq-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px 16px; text-align: center; }
-.iq-label-top { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
-.iq-score { font-family: 'Barlow Condensed', sans-serif; font-size: 72px; font-weight: 900; line-height: 1; }
-.iq-denom { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-faint); margin-bottom: 6px; }
-.iq-verdict { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
-.iq-sub-scores { display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 10px 0; }
+.iq-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; text-align: center; }
+.iq-label-top { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+.iq-score { font-family: 'Barlow Condensed', sans-serif; font-size: 64px; font-weight: 900; line-height: 1; }
+.iq-denom { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-faint); margin-bottom: 4px; }
+.iq-verdict { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+.iq-sub-scores { display: flex; justify-content: space-around; padding: 8px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 8px 0; }
 .iq-sub { text-align: center; }
-.iq-sub-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; }
-.iq-sub-lbl { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 1px; }
+.iq-sub-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; }
+.iq-sub-lbl { font-family: 'DM Mono', monospace; font-size: 7px; color: var(--text-faint); letter-spacing: 1px; }
 .iq-hold { font-size: 11px; color: var(--text-mid); line-height: 1.5; }
 .iq-hold strong { color: var(--text); }
+.iq-last-sale { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.iq-last-sale-lbl { font-family: 'DM Mono', monospace; font-size: 7px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; }
+.iq-last-sale-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; line-height: 1.2; }
+.iq-last-sale-date { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-faint); }
 
 /* ── SECTION CARDS ── */
-.sc { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 6px rgba(0,0,0,.04); margin-bottom: 16px; }
-.sc-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.sc { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: 0 1px 6px rgba(0,0,0,.04); margin-bottom: 14px; }
+.sc-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 800; color: var(--text); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
 .sc-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
 /* ── AI ANALYST ── */
-.analyst-wrap { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); border-radius: 16px; padding: 24px; margin-bottom: 16px; border: 1px solid #ffffff12; box-shadow: 0 4px 24px rgba(0,0,0,.15); }
-.analyst-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.analyst-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--orange), #ff3e00); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 12px #ff620030; }
-.analyst-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
-.analyst-sub { font-size: 10px; color: #ffffff50; letter-spacing: 2px; font-family: 'DM Mono', monospace; }
-.analyst-fresh { display: flex; align-items: center; gap: 5px; margin-left: auto; background: #ffffff10; border: 1px solid #ffffff20; border-radius: 20px; padding: 4px 10px; font-size: 9px; color: #ffffff70; font-family: 'DM Mono', monospace; letter-spacing: 1px; white-space: nowrap; }
+.analyst-wrap { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); border-radius: 14px; padding: 20px; margin-bottom: 14px; border: 1px solid #ffffff12; box-shadow: 0 4px 24px rgba(0,0,0,.15); }
+.analyst-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.analyst-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--orange), #ff3e00); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 4px 12px #ff620030; }
+.analyst-title { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+.analyst-sub { font-size: 9px; color: #ffffff50; letter-spacing: 2px; font-family: 'DM Mono', monospace; }
+.analyst-fresh { display: flex; align-items: center; gap: 5px; margin-left: auto; background: #ffffff10; border: 1px solid #ffffff20; border-radius: 20px; padding: 3px 9px; font-size: 8px; color: #ffffff70; font-family: 'DM Mono', monospace; letter-spacing: 1px; white-space: nowrap; }
 .fresh-dot { width: 5px; height: 5px; border-radius: 50%; background: #2acc6a; animation: pulse 2s ease-in-out infinite; }
 
 /* Risk Flags */
-.risk-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-.risk-flag { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.risk-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.risk-flag { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; border: 1px solid; }
 .risk-flag.green { background: #1a8c4515; border-color: #1a8c4540; color: #2acc6a; }
 .risk-flag.yellow { background: #c0780015; border-color: #c0780040; color: #fbbf24; }
 .risk-flag.red { background: #cc220015; border-color: #cc220040; color: #ff6b6b; }
-.risk-flag .flag-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.risk-flag .flag-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
 /* Analyst Body */
-.analyst-body { font-size: 13px; color: #ffffffcc; line-height: 1.8; margin-bottom: 16px; }
-.analyst-body p { margin-bottom: 12px; }
+.analyst-body { font-size: 13px; color: #ffffffcc; line-height: 1.7; margin-bottom: 14px; }
+.analyst-body ul { margin: 0 0 10px 16px; padding: 0; }
+.analyst-body li { margin-bottom: 5px; font-size: 12px; line-height: 1.5; }
+.analyst-body p { margin-bottom: 8px; font-size: 12px; }
 .analyst-body p:last-child { margin-bottom: 0; }
 .analyst-body strong { color: #fff; }
 .analyst-body em { color: var(--orange-mid); font-style: normal; font-weight: 600; }
 
 /* Hold window + price target */
-.analyst-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px; background: #ffffff08; border-radius: 10px; border: 1px solid #ffffff10; }
+.analyst-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px; background: #ffffff08; border-radius: 10px; border: 1px solid #ffffff10; }
 .am-item { text-align: center; }
-.am-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; color: #fff; line-height: 1; }
-.am-lbl { font-family: 'DM Mono', monospace; font-size: 8px; color: #ffffff50; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+.am-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; color: #fff; line-height: 1; }
+.am-lbl { font-family: 'DM Mono', monospace; font-size: 7px; color: #ffffff50; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
 
 /* Thinking animation */
-.thinking { display: flex; align-items: center; gap: 10px; padding: 20px; color: #ffffff60; font-size: 12px; font-family: 'DM Mono', monospace; }
+.thinking { display: flex; align-items: center; gap: 10px; padding: 16px; color: #ffffff60; font-size: 11px; font-family: 'DM Mono', monospace; }
 .thinking-dots { display: flex; gap: 4px; }
 .thinking-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); animation: bounce 1.2s ease-in-out infinite; }
 .thinking-dots span:nth-child(2) { animation-delay: .2s; }
@@ -171,98 +197,162 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 @keyframes bounce { 0%,100%{transform:translateY(0);opacity:.4} 50%{transform:translateY(-6px);opacity:1} }
 
 /* ── RARITY ENGINE ── */
-.rarity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
-.rarity-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.rarity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.rarity-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
 .rarity-item.highlight { background: var(--orange-light); border-color: #ffd0b5; }
-.ri-lbl { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.ri-lbl { font-family: 'DM Mono', monospace; font-size: 7px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
 .rarity-item.highlight .ri-lbl { color: var(--orange); }
-.ri-val { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 900; color: var(--text); line-height: 1; }
+.ri-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; color: var(--text); line-height: 1; }
 .rarity-item.highlight .ri-val { color: var(--orange-dark); }
-.ri-sub { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
+.ri-sub { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
 
-.rarity-bar-row { display: flex; flex-direction: column; gap: 8px; }
-.rb-item { display: flex; align-items: center; gap: 10px; }
-.rb-label { font-size: 11px; color: var(--text-mid); width: 120px; flex-shrink: 0; }
-.rb-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.rarity-bar-row { display: flex; flex-direction: column; gap: 6px; }
+.rb-item { display: flex; align-items: center; gap: 8px; }
+.rb-label { font-size: 10px; color: var(--text-mid); width: 110px; flex-shrink: 0; }
+.rb-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
 .rb-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
-.rb-score { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; width: 28px; text-align: right; flex-shrink: 0; }
+.rb-score { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 900; width: 28px; text-align: right; flex-shrink: 0; }
+
+/* ── GRADE COMPARISON TABLE ── */
+.grade-table { width: 100%; border-collapse: collapse; }
+.grade-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 8px 10px; text-align: center; border-bottom: 2px solid var(--border); color: var(--text-mid); }
+.grade-table th.current { color: var(--orange); border-bottom-color: var(--orange); }
+.grade-table td { font-family: 'Barlow Condensed', sans-serif; padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--border); }
+.grade-table td.current { background: var(--orange-light); font-weight: 900; }
+.grade-table .grade-lbl { font-size: 9px; color: var(--text-faint); font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+.grade-table .grade-price { font-size: 20px; font-weight: 900; color: var(--text); line-height: 1.2; }
+.grade-table .grade-count { font-size: 9px; color: var(--text-dim); font-family: 'DM Mono', monospace; }
+.grade-table .grade-no-data { font-size: 12px; color: var(--text-faint); }
 
 /* ── PLAYER INTEL ── */
-.player-intel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.pi-stat { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
-.pi-lbl { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-.pi-val { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--text); line-height: 1; }
-.pi-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.player-intel { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pi-stat { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+.pi-lbl { font-family: 'DM Mono', monospace; font-size: 7px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
+.pi-val { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 900; color: var(--text); line-height: 1; }
+.pi-sub { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
 
 /* Events */
-.event-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; }
-.event-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); width: 80px; flex-shrink: 0; }
-.event-name { font-size: 12px; font-weight: 600; color: var(--text); flex: 1; }
-.event-impact { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; }
+.event-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 5px; }
+.event-date { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dim); width: 72px; flex-shrink: 0; }
+.event-name { font-size: 11px; font-weight: 600; color: var(--text); flex: 1; }
+.event-impact { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
 .impact-high { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
 .impact-med { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
 .impact-low { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border2); }
 
 /* ── NEWS FEED ── */
-.news-item { display: flex; gap: 12px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; text-decoration: none; transition: border-color .15s; }
+.news-item { display: flex; gap: 10px; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; text-decoration: none; transition: border-color .15s; }
 .news-item:hover { border-color: var(--orange); }
-.news-sentiment { width: 4px; border-radius: 2px; flex-shrink: 0; }
+.news-sentiment { width: 3px; border-radius: 2px; flex-shrink: 0; }
 .news-body { flex: 1; min-width: 0; }
-.news-headline { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.news-meta { font-size: 10px; color: var(--text-dim); }
-.news-tag { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 1px; }
+.news-headline { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.news-meta { font-size: 9px; color: var(--text-dim); }
+.news-tag { font-size: 8px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: 1px; }
 
 /* ── SALES ── */
-.sale-row { display: grid; grid-template-columns: 90px 1fr 90px 80px; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; margin-bottom: 6px; transition: border-color .15s; }
+.sale-row { display: grid; grid-template-columns: 80px 1fr 80px 75px; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; margin-bottom: 5px; transition: border-color .15s; }
 .sale-row:hover { border-color: var(--orange); }
-.sale-src { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 8px; border-radius: 4px; border: 1px solid; text-align: center; text-transform: uppercase; }
-.sale-title { font-size: 11px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sale-src { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; border: 1px solid; text-align: center; text-transform: uppercase; }
+.sale-title { font-size: 10px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sale-date { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-faint); text-align: right; }
-.sale-price { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 900; color: var(--text); text-align: right; }
+.sale-price { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: var(--text); text-align: right; }
+.show-more-btn { display: block; width: 100%; padding: 9px; margin-top: 6px; background: var(--bg); border: 1px dashed var(--border2); border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--orange); cursor: pointer; text-transform: uppercase; transition: all .15s; }
+.show-more-btn:hover { background: var(--orange-light); border-color: var(--orange); }
+
+/* ── MOMENTUM / LIQUIDITY ── */
+.intel-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.intel-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+.intel-card-lbl { font-family: 'DM Mono', monospace; font-size: 7px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
+.intel-card-val { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; line-height: 1; margin-bottom: 2px; }
+.intel-card-sub { font-size: 9px; color: var(--text-dim); }
+.momentum-up { color: var(--green); }
+.momentum-down { color: var(--red); }
+.momentum-stable { color: var(--yellow); }
+.cached-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); padding: 2px 7px; border-radius: 4px; font-size: 8px; font-weight: 700; letter-spacing: 1px; font-family: 'DM Mono', monospace; margin-left: 6px; }
 
 /* Chart */
-.chart-area { width: 100%; height: 88px; }
+.chart-area { width: 100%; height: 100px; }
 .chart-area svg { width: 100%; height: 100%; overflow: visible; }
 
 /* External links */
-.ext-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.ext-card { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; transition: all .15s; }
+.ext-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ext-card { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; transition: all .15s; }
 .ext-card:hover { border-color: var(--orange); background: var(--orange-light); transform: translateY(-1px); box-shadow: 0 4px 12px #ff620015; }
-.ext-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-.ext-name { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
-.ext-desc { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+.ext-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.ext-name { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+.ext-desc { font-size: 9px; color: var(--text-dim); margin-top: 1px; }
 
 /* ── EMPTY ── */
-.empty { text-align: center; padding: 72px 32px; }
-.empty-icon { width: 76px; height: 76px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 34px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
-.empty-title { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; }
-.empty-sub { font-size: 13px; color: var(--text-dim); max-width: 340px; margin: 0 auto 24px; line-height: 1.6; }
-.chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.chip { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border2); font-size: 11px; color: var(--text-mid); font-weight: 600; }
+.empty { text-align: center; padding: 56px 24px; }
+.empty-icon { width: 68px; height: 68px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.empty-title { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 900; text-transform: uppercase; margin-bottom: 6px; }
+.empty-sub { font-size: 12px; color: var(--text-dim); max-width: 320px; margin: 0 auto 20px; line-height: 1.6; }
+.chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.chip { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border2); font-size: 10px; color: var(--text-mid); font-weight: 600; }
 
 /* ── ANIMATIONS ── */
 @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-.au  { animation: fadeUp .35s ease forwards; }
-.au2 { animation: fadeUp .35s ease .1s forwards; opacity: 0; }
-.au3 { animation: fadeUp .35s ease .2s forwards; opacity: 0; }
-.au4 { animation: fadeUp .35s ease .3s forwards; opacity: 0; }
+.au  { animation: fadeUp .3s ease forwards; }
+.au2 { animation: fadeUp .3s ease .1s forwards; opacity: 0; }
+.au3 { animation: fadeUp .3s ease .2s forwards; opacity: 0; }
+.au4 { animation: fadeUp .3s ease .3s forwards; opacity: 0; }
 
-footer { background: var(--dark); color: #555; text-align: center; padding: 22px 40px; font-size: 11px; letter-spacing: 1px; border-top: 2px solid var(--orange); }
+footer { background: var(--dark); color: #555; text-align: center; padding: 18px 24px; font-size: 10px; letter-spacing: 1px; border-top: 2px solid var(--orange); }
 footer span { color: var(--orange); }
 
+/* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px) {
-  header { padding: 0 16px; }
+  header { padding: 0 12px; height: 50px; }
   .header-links { display: none; }
-  .hero { padding: 36px 16px 32px; }
-  .content { padding: 20px 16px 60px; }
-  .result-body { grid-template-columns: 1fr; }
+  .logo-name { font-size: 20px; }
+  .hero { padding: 28px 14px 24px; }
+  .hero-title { font-size: 32px; }
+  .hero-sub { font-size: 12px; margin-bottom: 18px; }
+  .search-wrap { flex-wrap: wrap; border-radius: 10px; }
+  .grader-tabs { width: 100%; border-right: none; border-bottom: 1px solid #eee; justify-content: center; }
+  .gtab { height: 40px; font-size: 13px; flex: 1; justify-content: center; }
+  .search-input { height: 46px; font-size: 16px; /* prevent zoom on iOS */ }
+  .search-btn { height: 46px; width: 100%; font-size: 14px; }
+  .search-input-wrap { width: 100%; }
+  .mode-row { gap: 8px; }
+  .mode-btn { font-size: 10px; padding: 3px 10px; }
+  .content { padding: 14px 12px 40px; }
+  .result-body { grid-template-columns: 1fr; text-align: center; }
+  .card-img { margin: 0 auto; }
+  .iq-panel { margin-top: 4px; }
+  .prices { justify-content: center; }
+  .badges { justify-content: center; }
   .two-col { grid-template-columns: 1fr; }
-  .rarity-grid { grid-template-columns: repeat(2,1fr); }
-  .player-intel { grid-template-columns: 1fr 1fr; }
+  .rarity-grid { grid-template-columns: repeat(2, 1fr); }
+  .intel-row { grid-template-columns: 1fr; }
+  .player-intel { grid-template-columns: 1fr; }
   .ext-grid { grid-template-columns: 1fr 1fr; }
-  .analyst-metrics { grid-template-columns: repeat(3,1fr); }
-  .sale-row { grid-template-columns: 80px 1fr 70px; }
+  .analyst-metrics { grid-template-columns: repeat(3, 1fr); font-size: 12px; }
+  .am-val { font-size: 16px; }
+  .sale-row { grid-template-columns: 60px 1fr 65px; }
   .sale-date { display: none; }
+  .sale-src { font-size: 8px; padding: 2px 4px; }
+  .sale-price { font-size: 14px; }
+  .sc { padding: 14px 12px; }
+  .analyst-wrap { padding: 14px 12px; }
+  .analyst-header { flex-wrap: wrap; }
+  .analyst-fresh { margin-left: 0; margin-top: 4px; }
+  .card-name { font-size: 24px; }
+  .val.main { font-size: 26px; }
+  .grade-table td { padding: 6px 4px; }
+  .grade-table .grade-price { font-size: 16px; }
+  .stats-bar { padding: 0 12px; }
+  .stat-item { padding: 8px 12px; }
+  footer { padding: 14px 12px; }
+}
+
+@media(max-width:480px) {
+  .rarity-grid { grid-template-columns: 1fr 1fr; }
+  .ext-grid { grid-template-columns: 1fr; }
+  .result-body { padding: 14px 12px; }
+  .grade-table .grade-price { font-size: 14px; }
+  .hero-title { font-size: 28px; }
+  .iq-score { font-size: 52px; }
 }
 </style>
 </head>
@@ -289,24 +379,30 @@ footer span { color: var(--orange); }
     <a class="hlink" href="https://www.ebay.com/sch/i.html?LH_Sold=1" target="_blank"><div class="hlink-dot" style="background:#e53238"></div>eBay</a>
     <a class="hlink" href="https://goldin.co" target="_blank"><div class="hlink-dot" style="background:#c9a84c"></div>Goldin</a>
     <a class="hlink" href="https://130point.com/sales/" target="_blank"><div class="hlink-dot" style="background:#555"></div>130pt</a>
-    <a class="hlink" href="https://www.pricecharting.com/category/sports-cards" target="_blank"><div class="hlink-dot" style="background:#27ae60"></div>PriceCharting</a>
     <div class="live-badge" id="liveBadge"><div class="live-dot"></div>LIVE</div>
   </div>
 </header>
 
 <section class="hero">
   <div class="hero-inner">
-    <div class="hero-eyebrow">⚡ AI-powered card intelligence</div>
+    <div class="hero-eyebrow">AI-powered card intelligence</div>
     <h1 class="hero-title">Know What Your Card<br/>Is <span>Really Worth</span></h1>
-    <p class="hero-sub">Enter any PSA, BGS or SGC cert — get live comps, print run analysis, player intelligence and an AI analyst verdict with hold window and risk flags.</p>
-    <div class="search-wrap">
-      <div class="grader-tabs">
+    <p class="hero-sub">Enter any PSA, BGS or SGC cert number — or search by player name. Get live comps, grade comparisons, AI analyst verdicts and market intelligence.</p>
+    <div class="search-wrap" id="searchWrap">
+      <div class="grader-tabs" id="graderTabs">
         <div class="gtab active" data-g="PSA" onclick="setGrader('PSA')">PSA</div>
         <div class="gtab" data-g="BGS" onclick="setGrader('BGS')">BGS</div>
         <div class="gtab" data-g="SGC" onclick="setGrader('SGC')">SGC</div>
       </div>
-      <input id="certIn" class="search-input" placeholder="Enter cert number…" autocomplete="off" onkeydown="if(event.key==='Enter')doLookup()"/>
+      <div class="search-input-wrap">
+        <input id="certIn" class="search-input" placeholder="Enter cert number…" autocomplete="off" onkeydown="handleSearchKey(event)" oninput="handleSearchInput(event)"/>
+        <div class="ac-dropdown" id="acDropdown"></div>
+      </div>
       <button class="search-btn" id="searchBtn" onclick="doLookup()">Analyse</button>
+    </div>
+    <div class="mode-row">
+      <button class="mode-btn active" id="modeCert" onclick="setSearchMode('cert')">Cert #</button>
+      <button class="mode-btn" id="modePlayer" onclick="setSearchMode('player')">Player Search</button>
     </div>
     <div class="demo-row">
       <div class="toggle" id="demoToggle" onclick="toggleDemo()"><div class="knob"></div></div>
@@ -318,11 +414,11 @@ footer span { color: var(--orange); }
 
 <div class="stats-bar">
   <div class="stat-item"><span class="stat-icon">🤖</span><span class="stat-text"><strong>AI Analyst</strong> Verdict</span></div>
-  <div class="stat-item"><span class="stat-icon">📰</span><span class="stat-text"><strong>Live News</strong> Risk Scan</span></div>
-  <div class="stat-item"><span class="stat-icon">💎</span><span class="stat-text"><strong>Print Run</strong> Rarity Engine</span></div>
-  <div class="stat-item"><span class="stat-icon">📈</span><span class="stat-text"><strong>Hold Window</strong> & Price Target</span></div>
-  <div class="stat-item"><span class="stat-icon">⚠️</span><span class="stat-text"><strong>Risk Flags</strong> Scored</span></div>
-  <div class="stat-item"><span class="stat-icon">🏆</span><span class="stat-text"><strong>Player Trajectory</strong> Model</span></div>
+  <div class="stat-item"><span class="stat-icon">📊</span><span class="stat-text"><strong>Grade Compare</strong> PSA 7-10</span></div>
+  <div class="stat-item"><span class="stat-icon">💎</span><span class="stat-text"><strong>Print Run</strong> Rarity</span></div>
+  <div class="stat-item"><span class="stat-icon">📈</span><span class="stat-text"><strong>Momentum</strong> & Liquidity</span></div>
+  <div class="stat-item"><span class="stat-icon">🔍</span><span class="stat-text"><strong>Player Search</strong> Autocomplete</span></div>
+  <div class="stat-item"><span class="stat-icon">🏆</span><span class="stat-text"><strong>Player Intel</strong> & News</span></div>
 </div>
 
 <div class="content">
@@ -332,7 +428,7 @@ footer span { color: var(--orange); }
         <div class="tdot" style="background:#ff5f57"></div>
         <div class="tdot" style="background:#febc2e"></div>
         <div class="tdot" style="background:#28c840"></div>
-        <span style="margin-left:8px;font-family:'DM Mono',monospace;font-size:10px;color:#999">slabiq — intelligence engine v2</span>
+        <span style="margin-left:8px;font-family:'DM Mono',monospace;font-size:10px;color:#999">slabiq — intelligence engine v3</span>
       </div>
       <div class="term-body" id="termBody"></div>
       <div class="prog-wrap">
@@ -348,31 +444,31 @@ footer span { color: var(--orange); }
     <div class="empty">
       <div class="empty-icon">🧠</div>
       <div class="empty-title">AI Card Intelligence</div>
-      <div class="empty-sub">Enter a cert number to get an AI-generated analyst report covering rarity, player trajectory, live news risks, hold window and a 1–10 IQ score.</div>
+      <div class="empty-sub">Enter a cert number or search by player name to get AI-generated analyst reports covering rarity, grade comparisons, market momentum and investment verdicts.</div>
       <div class="chips">
-        <span class="chip">Print Run Analysis</span>
-        <span class="chip">Live News Risk Scan</span>
-        <span class="chip">Hold Window Forecast</span>
-        <span class="chip">Buy / Sell / Hold Verdict</span>
+        <span class="chip">Grade Comparison</span>
+        <span class="chip">Player Autocomplete</span>
+        <span class="chip">Price Trend Lines</span>
+        <span class="chip">Buy / Sell / Hold</span>
       </div>
     </div>
   </div>
 </div>
 
-<footer><span>SLABIQ</span> · AI Card Intelligence · PSA · BGS · eBay · Goldin · 130point · Fanatics · Live News</footer>
+<footer><span>SLABIQ</span> v3 · AI Card Intelligence · PSA · BGS · SGC · eBay · Goldin · 130point</footer>
 
 <script>
-const API = 'http://localhost:8000';
-const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  ? `${location.protocol}//${location.hostname}:8000`
+  : '';
 
-// ── STAGE DEFINITIONS ──
 const STAGES = [
   { i: '🔍', l: 'Fetching cert from grading company…' },
   { i: '💎', l: 'Analysing print run & rarity tier…' },
   { i: '🛒', l: 'Pulling sold comps from eBay & 130point…' },
   { i: '🏆', l: 'Checking auction house results…' },
   { i: '📰', l: 'Scanning live news for risk signals…' },
-  { i: '📊', l: 'Building player trajectory model…' },
+  { i: '📊', l: 'Building grade comparison model…' },
   { i: '🤖', l: 'AI Analyst writing investment verdict…' },
   { i: '⚡', l: 'Compiling Intelligence Report…' },
 ];
@@ -384,6 +480,7 @@ const SRC = {
   '130point': { c: '#3355aa', bg: '#f0f3ff' },
   'Fanatics': { c: '#cc2200', bg: '#fff0ee' },
   'PSA':      { c: '#003087', bg: '#eef3ff' },
+  'MySlabs':  { c: '#6b21a8', bg: '#faf5ff' },
 };
 
 // ── RARITY SCORING ──
@@ -402,38 +499,25 @@ function getRarityScore(card) {
   const v = (card.variety || '').toLowerCase();
   const brand = (card.brand || '').toLowerCase();
   let score = 4.0;
-
-  // Serial numbered — hard data from cert
   if (card.pop_higher === 0 && card.grade === '10') score += 1.5;
-
-  // Check variety for parallel markers
   for (const [key, val] of Object.entries(PARALLEL_SCORES)) {
-    if (v.includes(key) || brand.includes(key)) {
-      score = Math.max(score, val);
-      break;
-    }
+    if (v.includes(key) || brand.includes(key)) { score = Math.max(score, val); break; }
   }
-
-  // Megacracks specific — Spanish mass market but gem pops are rare
   if (brand.includes('megacracks')) {
-    score = Math.max(score, 6.5); // high base print, hard to gem
+    score = Math.max(score, 6.5);
     if (v.includes('bis') || v.includes('limitada')) score = Math.max(score, 7.5);
   }
-
-  // Pop pressure: few PSA 10s relative to estimated print run = rarer
   const pop = card.pop || 0;
   if (pop < 10) score = Math.min(10, score + 1.5);
   else if (pop < 50) score = Math.min(10, score + 1.0);
   else if (pop < 200) score = Math.min(10, score + 0.5);
   else if (pop > 1000) score = Math.max(1, score - 0.5);
-
   return Math.min(10, Math.max(1, Math.round(score * 10) / 10));
 }
 
 function getEstimatedPrintRun(card) {
   const brand = (card.brand || '').toLowerCase();
   const v = (card.variety || '').toLowerCase();
-
   if (v.includes('/1') || v.includes('1/1')) return 1;
   if (v.includes('/5'))   return 5;
   if (v.includes('/10'))  return 10;
@@ -443,8 +527,6 @@ function getEstimatedPrintRun(card) {
   if (v.includes('/199')) return 199;
   if (v.includes('/299')) return 299;
   if (v.includes('/499')) return 499;
-
-  // Estimate based on brand
   if (brand.includes('megacracks')) {
     if (v.includes('limitada')) return 2500;
     if (v.includes('bis')) return 50000;
@@ -462,8 +544,7 @@ function getEstimatedPrintRun(card) {
   if (brand.includes('donruss')) return 20000;
   if (brand.includes('panini')) return 15000;
   if (brand.includes('topps')) return 12000;
-
-  return 10000; // default estimate
+  return 10000;
 }
 
 function getParallelTier(card) {
@@ -481,21 +562,13 @@ function getParallelTier(card) {
   return { tier: 'BASE', color: '#888', score: 4.0 };
 }
 
-// ── DEMO DATA (Yamal Megacracks) ──
+// ── DEMO DATA ──
 const MOCK = {
-  cert_number: '85028490',
-  grading_company: 'PSA',
+  cert_number: '85028490', grading_company: 'PSA',
   card_details: {
-    grade: '10', full_grade: 'GEM MT 10',
-    subject: 'LAMINE YAMAL',
-    year: '2023',
-    brand: 'PANINI MEGACRACKS LALIGA EA SPORTS',
-    variety: 'BIS ROOKIE',
-    card_number: '108',
-    category: 'Soccer',
-    pop: 12,
-    pop_higher: 0,
-    image_url: ''
+    grade: '10', full_grade: 'GEM MT 10', subject: 'LAMINE YAMAL',
+    year: '2023', brand: 'PANINI MEGACRACKS LALIGA EA SPORTS', variety: 'BIS ROOKIE',
+    card_number: '108', category: 'Soccer', pop: 12, pop_higher: 0, image_url: ''
   },
   sales_data: [
     { source: 'eBay', title: '2023-24 Panini Megacracks Lamine Yamal #108 Bis PSA 10', price: 8700, date: '2025-10-03', url: 'https://ebay.com' },
@@ -504,14 +577,20 @@ const MOCK = {
     { source: 'eBay', title: 'Lamine Yamal PSA 10 Megacracks 108 Bis Rookie Barcelona', price: 8100, date: '2025-09-11', url: 'https://ebay.com' },
     { source: 'Goldin', title: '2023-24 Megacracks Yamal #108 Bis PSA 10 GEM MT', price: 7800, date: '2025-08-02', url: 'https://goldin.co' },
     { source: '130point', title: 'Yamal Megacracks Bis 108 PSA 10', price: 6500, date: '2025-06-14', url: 'https://130point.com' },
+    { source: 'eBay', title: 'Megacracks Yamal 108 Bis PSA 9 Near Mint', price: 2200, date: '2025-09-28', url: 'https://ebay.com' },
+    { source: 'eBay', title: 'Yamal Megacracks Bis PSA 8 NM-MT', price: 950, date: '2025-09-20', url: 'https://ebay.com' },
+    { source: '130point', title: 'Yamal Megacracks 108 Bis PSA 7 NM', price: 450, date: '2025-08-15', url: 'https://130point.com' },
+    { source: 'eBay', title: 'Lamine Yamal Megacracks PSA 10 #108 Bis RC', price: 7200, date: '2025-05-20', url: 'https://ebay.com' },
+    { source: 'Goldin', title: 'Yamal Megacracks Bis 108 PSA 10 Gem', price: 5800, date: '2025-04-10', url: 'https://goldin.co' },
+    { source: 'eBay', title: 'Megacracks Yamal PSA 10 108 Bis Rookie', price: 6100, date: '2025-03-28', url: 'https://ebay.com' },
   ],
-  market_summary: {
-    avg_price: 8200, median_price: 8350, low_price: 6500, high_price: 9500,
-    total_sales_found: 6, sources_checked: 4
-  }
+  market_summary: { avg_price: 8200, median_price: 8350, low_price: 6500, high_price: 9500, total_sales_found: 6, sources_checked: 4 },
+  momentum: { direction: 'up', pct_change: 15.2, label: '+15.2% trending up', recent_avg: 8600, older_avg: 7200, recent_count: 4 },
+  liquidity: { avg_days_between: 12.5, total_sales: 12, score: 6, label: 'Liquid' },
 };
 
-let grader = 'PSA', demo = false;
+let grader = 'PSA', demo = false, searchMode = 'cert';
+let acTimer = null;
 
 // ── HEALTH CHECK ──
 (async () => {
@@ -530,13 +609,103 @@ function setGrader(g) {
   document.querySelectorAll('.gtab').forEach(t => t.classList.toggle('active', t.dataset.g === g));
 }
 
+function setSearchMode(mode) {
+  searchMode = mode;
+  document.getElementById('modeCert').classList.toggle('active', mode === 'cert');
+  document.getElementById('modePlayer').classList.toggle('active', mode === 'player');
+  const input = document.getElementById('certIn');
+  const tabs = document.getElementById('graderTabs');
+  if (mode === 'player') {
+    input.placeholder = 'Search player name (e.g. Yamal, Wembanyama)…';
+    tabs.style.display = 'none';
+    document.getElementById('searchBtn').textContent = 'SEARCH';
+  } else {
+    input.placeholder = 'Enter cert number…';
+    tabs.style.display = 'flex';
+    document.getElementById('searchBtn').textContent = 'ANALYSE';
+  }
+  input.value = '';
+  hideAC();
+}
+
 function toggleDemo() {
   demo = !demo;
   document.getElementById('demoToggle').classList.toggle('on', demo);
   const lbl = document.getElementById('demoLbl');
   lbl.style.color = demo ? 'var(--orange)' : '#666';
-  document.getElementById('certIn').placeholder = demo ? 'Type anything — using Yamal demo data' : 'Enter cert number…';
+  document.getElementById('certIn').placeholder = demo ? 'Type anything — using Yamal demo data' : (searchMode === 'player' ? 'Search player name…' : 'Enter cert number…');
 }
+
+// ── AUTOCOMPLETE ──
+function handleSearchInput(e) {
+  if (searchMode !== 'player') { hideAC(); return; }
+  const q = e.target.value.trim();
+  if (q.length < 2) { hideAC(); return; }
+  clearTimeout(acTimer);
+  acTimer = setTimeout(() => fetchAutocomplete(q), 300);
+}
+
+async function fetchAutocomplete(q) {
+  try {
+    const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data.results && data.results.length > 0) {
+      showAC(data.results.slice(0, 12));
+    } else {
+      hideAC();
+    }
+  } catch {
+    hideAC();
+  }
+}
+
+function showAC(items) {
+  const dd = document.getElementById('acDropdown');
+  dd.innerHTML = items.map((item, i) => `
+    <div class="ac-item" onclick="selectACItem(${i})">
+      ${item.image_url ? `<img class="ac-thumb" src="${item.image_url}" onerror="this.style.display='none'"/>` : '<div class="ac-thumb" style="display:flex;align-items:center;justify-content:center;font-size:16px;color:#ccc">🃏</div>'}
+      <div class="ac-info">
+        <div class="ac-title">${escHtml(item.title)}</div>
+        <div class="ac-meta">${item.grade || ''} ${item.date ? '· ' + fmtDate(item.date) : ''}</div>
+      </div>
+      <div class="ac-price">${fmtPrice(item.price)}</div>
+    </div>
+  `).join('');
+  dd.style.display = 'block';
+  window._acItems = items;
+}
+
+function hideAC() {
+  document.getElementById('acDropdown').style.display = 'none';
+}
+
+function selectACItem(idx) {
+  const item = window._acItems?.[idx];
+  if (!item) return;
+  hideAC();
+  // Extract cert/grade info from title and switch to cert lookup
+  const certM = item.title.match(/(?:PSA|BGS|SGC)\s*([\d.]+)/i);
+  if (certM) {
+    const gc = item.title.match(/(PSA|BGS|SGC)/i);
+    if (gc) setGrader(gc[1].toUpperCase());
+  }
+  // Put the title in search and look it up as a player search result
+  document.getElementById('certIn').value = item.title;
+  setSearchMode('cert');
+  // Try to find cert # in the data — otherwise just show the title info
+  setErr('Select result noted. Enter a cert # to get full analysis, or use the title as reference.');
+}
+
+function handleSearchKey(e) {
+  if (e.key === 'Enter') { hideAC(); doLookup(); }
+  if (e.key === 'Escape') hideAC();
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-wrap')) hideAC();
+});
 
 // ── MAIN LOOKUP ──
 async function doLookup() {
@@ -600,6 +769,28 @@ function renderTerm(lines, activeIdx) {
   window._dt = setInterval(() => { const e = document.getElementById('dots'); if (e) e.textContent = '.'.repeat((d++ % 3) + 1); }, 380);
 }
 
+// ── HELPERS ──
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function cleanTitle(t) {
+  if (!t) return '';
+  return t.replace(/&nbsp;?/gi, ' ').replace(/Opens in a new window or tab/gi, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const parsed = new Date(d);
+  if (!isNaN(parsed.getTime())) {
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${parsed.getDate()} ${m[parsed.getMonth()]} ${parsed.getFullYear()}`;
+  }
+  return d;
+}
+
+function fmtPrice(p) {
+  if (p == null) return '—';
+  return '$' + Number(p).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 // ── OUTLIER FILTER ──
 function filterOutlierSales(sales) {
   const prices = sales.filter(s => s.price && s.price > 5).map(s => s.price).sort((a,b) => a - b);
@@ -623,6 +814,34 @@ function filterOutlierSales(sales) {
   };
 }
 
+// ── GRADE COMPARISON (from sales data) ──
+function extractGradeComps(sales) {
+  const gradeMap = {};
+  for (const s of sales) {
+    if (!s.price || s.price < 5) continue;
+    const title = (s.title || '').toUpperCase();
+    // Match "PSA 10", "BGS 9.5", "SGC 10" etc.
+    const m = title.match(/(?:PSA|BGS|SGC|BVG)\s*([\d.]+)/);
+    if (!m) continue;
+    const grade = m[1];
+    if (!gradeMap[grade]) gradeMap[grade] = [];
+    gradeMap[grade].push(s.price);
+  }
+
+  const result = {};
+  for (const [grade, prices] of Object.entries(gradeMap)) {
+    prices.sort((a, b) => a - b);
+    const n = prices.length;
+    result[grade] = {
+      avg: Math.round(prices.reduce((a, b) => a + b, 0) / n),
+      low: prices[0],
+      high: prices[n - 1],
+      count: n,
+    };
+  }
+  return result;
+}
+
 // ── FULL RENDER ──
 async function renderFull(data) {
   const card = data.card_details || {};
@@ -630,8 +849,8 @@ async function renderFull(data) {
   const rawSum = data.market_summary;
   const gc = data.grading_company || grader;
 
-  // Filter outlier sales (>10x median) for realistic averages
   const { filtered: sales, stats: filteredStats } = filterOutlierSales(rawSales);
+  window._allSales = sales;
   const sum = rawSum ? {
     ...rawSum,
     avg_price: filteredStats?.avg_price ?? rawSum.avg_price,
@@ -641,10 +860,17 @@ async function renderFull(data) {
     total_sales_found: filteredStats?.total_sales ?? rawSum.total_sales_found,
   } : null;
 
+  const momentum = data.momentum || {};
+  const liquidity = data.liquidity || {};
+  const isCached = data._cached || false;
+
   const rarityScore = getRarityScore(card);
   const printRun = getEstimatedPrintRun(card);
   const parallelTier = getParallelTier(card);
   const popRatio = card.pop && printRun ? ((card.pop / printRun) * 100).toFixed(1) : null;
+
+  // Grade comparison from sales data
+  const gradeComps = extractGradeComps(rawSales);
 
   const q = encodeURIComponent(`${card.subject || ''} ${card.year || ''} ${gc} ${card.grade || ''}`);
 
@@ -653,11 +879,43 @@ async function renderFull(data) {
     { href: `https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, icon: '🛒', name: 'eBay Sold', desc: 'Live sold comps', c: '#e53238' },
     { href: `https://goldin.co/browse/all?q=${q}`, icon: '🏆', name: 'Goldin', desc: 'Auction results', c: '#b8922a' },
     { href: `https://130point.com/sales/?s=${q}`, icon: '📊', name: '130point', desc: 'Multi-source comps', c: '#3355aa' },
-    { href: `https://www.tcdb.com/Search.cfm/search/${encodeURIComponent(card.subject || '')}`, icon: '📋', name: 'TCDB', desc: 'Set checklists & print runs', c: '#16a34a' },
-    { href: `https://www.pricecharting.com/search-products?q=${q}`, icon: '💹', name: 'PriceCharting', desc: 'Grade-specific pricing', c: '#7c3aed' },
+    { href: `https://www.tcdb.com/Search.cfm/search/${encodeURIComponent(card.subject || '')}`, icon: '📋', name: 'TCDB', desc: 'Set checklists', c: '#16a34a' },
+    { href: `https://www.pricecharting.com/search-products?q=${q}`, icon: '💹', name: 'PriceCharting', desc: 'Grade pricing', c: '#7c3aed' },
   ];
 
-  // ── RENDER SKELETON (instant) ──
+  // Build grade comparison table
+  const gradeOrder = ['7', '8', '9', '9.5', '10'];
+  const currentGrade = card.grade || '';
+  let gradeTableHTML = '';
+  const hasGradeData = gradeOrder.some(g => gradeComps[g]);
+  if (hasGradeData) {
+    gradeTableHTML = `
+    <div class="sc au2">
+      <div class="sc-title">📊 Grade Comparison — ${gc} Avg Prices</div>
+      <table class="grade-table">
+        <tr>
+          ${gradeOrder.map(g => `<th class="${g === currentGrade ? 'current' : ''}">${gc} ${g}</th>`).join('')}
+        </tr>
+        <tr>
+          ${gradeOrder.map(g => {
+            const d = gradeComps[g];
+            const isCurrent = g === currentGrade;
+            if (d) {
+              return `<td class="${isCurrent ? 'current' : ''}">
+                <div class="grade-price" style="${isCurrent ? 'color:var(--orange)' : ''}">${fmtPrice(d.avg)}</div>
+                <div class="grade-lbl">AVG</div>
+                <div class="grade-count">${d.count} sale${d.count !== 1 ? 's' : ''}</div>
+                <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${fmtPrice(d.low)} – ${fmtPrice(d.high)}</div>
+              </td>`;
+            }
+            return `<td class="${isCurrent ? 'current' : ''}"><div class="grade-no-data">—</div></td>`;
+          }).join('')}
+        </tr>
+      </table>
+    </div>`;
+  }
+
+  // ── RENDER ──
   document.getElementById('resultsWrap').innerHTML = `
     <!-- CARD HERO -->
     <div class="result-hero au">
@@ -678,13 +936,14 @@ async function renderFull(data) {
             <span class="tag" style="color:${parallelTier.color};border-color:${parallelTier.color}44;background:${parallelTier.color}12">${parallelTier.tier}</span>
             ${card.pop != null ? `<span class="tag tag-grey">POP ${card.grade}: ${(card.pop || 0).toLocaleString()}</span>` : ''}
             ${card.pop_higher === 0 && card.grade === '10' ? '<span class="tag tag-green">HIGHEST GRADE</span>' : ''}
+            ${card.subgrades ? `<span class="tag tag-grey" title="Centering: ${card.subgrades.centering || '?'} | Corners: ${card.subgrades.corners || '?'} | Edges: ${card.subgrades.edges || '?'} | Surface: ${card.subgrades.surface || '?'}">SUBGRADES</span>` : ''}
           </div>
           ${sum ? `<div class="prices">
-            <div class="price-block"><div class="lbl">Avg Sale</div><div class="val main">$${sum.avg_price?.toLocaleString()}</div></div>
-            <div class="price-block"><div class="lbl">Low</div><div class="val lo">$${sum.low_price?.toLocaleString()}</div></div>
-            <div class="price-block"><div class="lbl">High</div><div class="val hi">$${sum.high_price?.toLocaleString()}</div></div>
-            <div class="price-block"><div class="lbl">Median</div><div class="val med">$${sum.median_price?.toLocaleString()}</div></div>
-          </div>` : '<div style="color:var(--text-dim);font-size:13px;margin-top:8px">Add eBay API key to unlock live pricing</div>'}
+            <div class="price-block"><div class="lbl">Avg Sale</div><div class="val main">${fmtPrice(sum.avg_price)}</div></div>
+            <div class="price-block"><div class="lbl">Low</div><div class="val lo">${fmtPrice(sum.low_price)}</div></div>
+            <div class="price-block"><div class="lbl">High</div><div class="val hi">${fmtPrice(sum.high_price)}</div></div>
+            <div class="price-block"><div class="lbl">Median</div><div class="val med">${fmtPrice(sum.median_price)}</div></div>
+          </div>` : '<div style="color:var(--text-dim);font-size:12px;margin-top:6px">No sales data found</div>'}
         </div>
         <div class="iq-panel" id="iqPanel">
           <div class="iq-label-top">SlabIQ Score</div>
@@ -697,11 +956,16 @@ async function renderFull(data) {
             <div class="iq-sub"><div class="iq-sub-val" style="color:#ddd">—</div><div class="iq-sub-lbl">MARKET</div></div>
           </div>
           <div class="iq-hold" id="iqHold">AI analyst loading…</div>
+          ${sales.length > 0 ? `<div class="iq-last-sale">
+            <div class="iq-last-sale-lbl">Last Sale</div>
+            <div class="iq-last-sale-val" style="color:var(--green)">${fmtPrice(sales[0].price)}</div>
+            <div class="iq-last-sale-date">${fmtDate(sales[0].date)}</div>
+          </div>` : ''}
         </div>
       </div>
     </div>
 
-    <!-- AI ANALYST (placeholder while loading) -->
+    <!-- AI ANALYST -->
     <div class="analyst-wrap au2" id="analystWrap">
       <div class="analyst-header">
         <div class="analyst-icon">🤖</div>
@@ -722,13 +986,38 @@ async function renderFull(data) {
       </div>
     </div>
 
+    <!-- MARKET INTELLIGENCE -->
+    ${sum ? `<div class="sc au2">
+      <div class="sc-title">📈 Market Intelligence ${isCached ? '<span class="cached-badge">CACHED</span>' : ''}</div>
+      <div class="intel-row">
+        <div class="intel-card">
+          <div class="intel-card-lbl">Price Momentum</div>
+          <div class="intel-card-val ${momentum.direction === 'up' ? 'momentum-up' : momentum.direction === 'down' ? 'momentum-down' : 'momentum-stable'}">${momentum.pct_change != null ? (momentum.pct_change > 0 ? '+' : '') + momentum.pct_change + '%' : '—'}</div>
+          <div class="intel-card-sub">${momentum.label || 'No data'}</div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">Liquidity Score</div>
+          <div class="intel-card-val" style="color:${liquidity.score >= 7 ? 'var(--green)' : liquidity.score >= 4 ? 'var(--yellow)' : 'var(--red)'}">${liquidity.score || '—'}<span style="font-size:13px">/10</span></div>
+          <div class="intel-card-sub">${liquidity.label || 'No data'}${liquidity.avg_days_between ? ' · ' + liquidity.avg_days_between + 'd avg' : ''}</div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">Sales Volume</div>
+          <div class="intel-card-val" style="color:var(--blue)">${(sum.total_sales_found || 0).toLocaleString()}</div>
+          <div class="intel-card-sub">${sum.sources?.join(' + ') || 'Multiple sources'}</div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <!-- GRADE COMPARISON -->
+    ${gradeTableHTML}
+
     <!-- RARITY ENGINE -->
     <div class="sc au2">
       <div class="sc-title">💎 Rarity Engine</div>
       <div class="rarity-grid">
         <div class="rarity-item highlight">
           <div class="ri-lbl">Rarity Score</div>
-          <div class="ri-val">${rarityScore}<span style="font-size:14px">/10</span></div>
+          <div class="ri-val">${rarityScore}<span style="font-size:13px">/10</span></div>
           <div class="ri-sub">${parallelTier.tier} tier</div>
         </div>
         <div class="rarity-item">
@@ -737,67 +1026,70 @@ async function renderFull(data) {
           <div class="ri-sub">${printRun < 100 ? 'Serial numbered' : printRun < 5000 ? 'Short print' : printRun < 50000 ? 'Limited' : 'Mass market'}</div>
         </div>
         <div class="rarity-item">
-          <div class="ri-lbl">PSA ${card.grade} Pop</div>
+          <div class="ri-lbl">${gc} ${card.grade} Pop</div>
           <div class="ri-val">${(card.pop || 0).toLocaleString()}</div>
-          <div class="ri-sub">${popRatio ? `~${popRatio}% of print graded` : 'Unknown ratio'}</div>
+          <div class="ri-sub">${popRatio ? `~${popRatio}% graded` : 'Unknown ratio'}</div>
         </div>
         <div class="rarity-item">
           <div class="ri-lbl">Pop Higher</div>
           <div class="ri-val">${card.pop_higher ?? '—'}</div>
-          <div class="ri-sub">${card.pop_higher === 0 ? '🏆 Highest grade' : `${card.pop_higher} copies above`}</div>
+          <div class="ri-sub">${card.pop_higher === 0 ? 'Highest grade' : card.pop_higher != null ? `${card.pop_higher} copies above` : '—'}</div>
         </div>
         <div class="rarity-item">
           <div class="ri-lbl">Parallel Tier</div>
-          <div class="ri-val" style="font-size:16px;color:${parallelTier.color}">${parallelTier.tier}</div>
+          <div class="ri-val" style="font-size:15px;color:${parallelTier.color}">${parallelTier.tier}</div>
           <div class="ri-sub">Score: ${parallelTier.score}/10</div>
         </div>
         <div class="rarity-item">
           <div class="ri-lbl">Supply Pressure</div>
-          <div class="ri-val" style="font-size:16px">${popRatio ? (parseFloat(popRatio) < 1 ? '🔥 SCARCE' : parseFloat(popRatio) < 5 ? '⚡ LOW' : parseFloat(popRatio) < 20 ? '📊 MED' : '📉 HIGH') : '—'}</div>
-          <div class="ri-sub">${popRatio ? parseFloat(popRatio) < 5 ? 'Demand likely exceeds supply' : 'Monitor pop growth' : 'Calculating…'}</div>
+          <div class="ri-val" style="font-size:15px">${popRatio ? (parseFloat(popRatio) < 1 ? 'SCARCE' : parseFloat(popRatio) < 5 ? 'LOW' : parseFloat(popRatio) < 20 ? 'MODERATE' : 'HIGH') : '—'}</div>
+          <div class="ri-sub">${popRatio ? parseFloat(popRatio) < 5 ? 'Demand exceeds supply' : 'Monitor pop growth' : '—'}</div>
         </div>
       </div>
       <div class="rarity-bar-row">
         ${[
           { label: 'Serial / Print Run', score: printRun <= 1 ? 10 : printRun <= 10 ? 9.5 : printRun <= 50 ? 8.5 : printRun <= 99 ? 7.8 : printRun <= 500 ? 7 : printRun <= 5000 ? 5 : printRun <= 50000 ? 3.5 : 2, color: '#ff6200' },
-          { label: 'PSA Pop Pressure', score: (card.pop || 0) <= 5 ? 9.5 : (card.pop || 0) <= 20 ? 8 : (card.pop || 0) <= 100 ? 6.5 : (card.pop || 0) <= 500 ? 5 : 3, color: '#1a8c45' },
+          { label: 'Pop Pressure', score: (card.pop || 0) <= 5 ? 9.5 : (card.pop || 0) <= 20 ? 8 : (card.pop || 0) <= 100 ? 6.5 : (card.pop || 0) <= 500 ? 5 : 3, color: '#1a8c45' },
           { label: 'Parallel Prestige', score: parallelTier.score, color: parallelTier.color },
-          { label: 'Grade Scarcity (10s)', score: card.grade === '10' ? (card.pop_higher === 0 ? 9 : 7) : 5, color: '#003087' },
+          { label: 'Grade Scarcity', score: card.grade === '10' ? (card.pop_higher === 0 ? 9 : 7) : 5, color: '#003087' },
           { label: 'Overall Rarity', score: rarityScore, color: '#8b5cf6' },
         ].map(b => `
           <div class="rb-item">
             <span class="rb-label">${b.label}</span>
-            <div class="rb-track">
-              <div class="rb-fill" style="width:${b.score * 10}%;background:${b.color}"></div>
-            </div>
+            <div class="rb-track"><div class="rb-fill" style="width:${b.score * 10}%;background:${b.color}"></div></div>
             <span class="rb-score" style="color:${b.color}">${b.score.toFixed(1)}</span>
           </div>
         `).join('')}
       </div>
     </div>
 
-    <!-- SALES + CHART -->
+    <!-- PRICE CHART + TREND LINE -->
     ${sum ? `
     <div class="sc au3">
-      <div class="sc-title">📈 Price History</div>
+      <div class="sc-title">📈 Price History & Trend</div>
       <div class="chart-area">${buildChart(sales)}</div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px">
-        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-faint)">${sales[sales.length - 1]?.date || ''}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-faint)">${sales[0]?.date || ''}</span>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-faint)">${fmtDate(sales[sales.length - 1]?.date) || ''}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-faint)">${fmtDate(sales[0]?.date) || ''}</span>
       </div>
     </div>
+
+    <!-- RECENT SALES -->
     <div class="sc au3">
       <div class="sc-title">🛒 Recent Sales (${sales.length})</div>
-      ${sales.map(s => {
+      <div id="salesList">
+      ${sales.slice(0, 10).map(s => {
         const k = (s.source || '').split('(')[0].trim();
         const sc = SRC[k] || { c: '#555', bg: '#f5f5f5' };
         return `<a class="sale-row" href="${s.url || '#'}" target="_blank">
           <div class="sale-src" style="color:${sc.c};border-color:${sc.c}44;background:${sc.bg}">${s.source}</div>
-          <div class="sale-title">${s.title}</div>
-          <div class="sale-date">${s.date}</div>
-          <div class="sale-price">$${s.price?.toLocaleString()}</div>
+          <div class="sale-title">${cleanTitle(s.title)}</div>
+          <div class="sale-date">${fmtDate(s.date)}</div>
+          <div class="sale-price">${fmtPrice(s.price)}</div>
         </a>`;
       }).join('')}
+      </div>
+      ${sales.length > 10 ? `<button class="show-more-btn" onclick="window._showAllSales(this)">Show All ${sales.length} Sales</button>` : ''}
     </div>` : ''}
 
     <!-- EXTERNAL LINKS -->
@@ -815,63 +1107,93 @@ async function renderFull(data) {
     </div>
   `;
 
-  // ── NOW FIRE THE AI ANALYST ──
-  await runAIAnalyst(card, sales, sum, gc, rarityScore, printRun, parallelTier, popRatio);
+  // Also try to fetch grade comparison from backend
+  if (card.subject) {
+    fetchGradeComparison(card, gc);
+  }
+
+  // Fire AI Analyst
+  await runAIAnalyst(card, sales, sum, gc, rarityScore, printRun, parallelTier, popRatio, momentum, liquidity);
+}
+
+// ── FETCH GRADE COMPARISON FROM BACKEND ──
+async function fetchGradeComparison(card, gc) {
+  try {
+    const params = new URLSearchParams({
+      player: card.subject || '',
+      year: card.year || '',
+      brand: card.brand || '',
+      card_number: card.card_number || '',
+    });
+    const r = await fetch(`${API}/grades/compare?${params}`, { signal: AbortSignal.timeout(30000) });
+    if (!r.ok) return;
+    const data = await r.json();
+
+    // Update grade table if we got better data
+    const gradeOrder = ['7', '8', '9', '10'];
+    const hasData = gradeOrder.some(g => data.grades[g]?.avg);
+    if (!hasData) return;
+
+    // Find existing grade table or create one
+    let existingTable = document.querySelector('.grade-table');
+    if (existingTable) {
+      // Update existing table with backend data
+      const rows = existingTable.querySelectorAll('td');
+      gradeOrder.forEach((g, i) => {
+        const d = data.grades[g];
+        if (d && d.avg && rows[i]) {
+          const isCurrent = g === (card.grade || '');
+          rows[i].className = isCurrent ? 'current' : '';
+          rows[i].innerHTML = `
+            <div class="grade-price" style="${isCurrent ? 'color:var(--orange)' : ''}">${fmtPrice(d.avg)}</div>
+            <div class="grade-lbl">AVG</div>
+            <div class="grade-count">${d.count} sale${d.count !== 1 ? 's' : ''}</div>
+            <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${fmtPrice(d.low)} – ${fmtPrice(d.high)}</div>
+          `;
+        }
+      });
+    }
+  } catch (e) {
+    console.log('Grade comparison fetch failed:', e);
+  }
 }
 
 // ── AI ANALYST ENGINE ──
-async function runAIAnalyst(card, sales, sum, gc, rarityScore, printRun, parallelTier, popRatio) {
+async function runAIAnalyst(card, sales, sum, gc, rarityScore, printRun, parallelTier, popRatio, momentum, liquidity) {
   const avgPrice = sum?.avg_price || 0;
   const playerName = card.subject || 'Unknown Player';
   const cardDesc = `${card.year} ${card.brand} ${card.variety} #${card.card_number} - ${playerName} - ${gc} ${card.grade}`;
   const sport = card.category || 'Sports';
 
-  const systemPrompt = `You are SlabIQ's elite sports card investment analyst. You provide brutally honest, data-driven investment verdicts. You use real news, player data and market dynamics to give specific, actionable analysis. Never be generic. Always reference specific real facts, stats, and news events. Format your response as JSON only.`;
+  const systemPrompt = `You are SlabIQ's investment analyst. Be punchy, specific, data-driven. No fluff. Reference real facts/stats/news. JSON only.`;
 
-  const userPrompt = `Analyse this sports card as an investment:
+  const userPrompt = `Analyse this card investment. Search for latest news about ${playerName}.
 
 CARD: ${cardDesc}
-SPORT/CATEGORY: ${sport}
-CURRENT MARKET: Avg sale $${avgPrice.toLocaleString()}, Range $${sum?.low_price?.toLocaleString() || 'N/A'} - $${sum?.high_price?.toLocaleString() || 'N/A'}, ${sum?.total_sales_found || 0} recent sales
-RARITY DATA: Print run est. ${printRun.toLocaleString()} copies, PSA ${card.grade} pop: ${card.pop || 'Unknown'}, Parallel: ${parallelTier.tier}, Pop higher: ${card.pop_higher ?? 'Unknown'}
-RARITY SCORE: ${rarityScore}/10
+SPORT: ${sport}
+MARKET: Avg $${avgPrice.toLocaleString()}, Range $${sum?.low_price?.toLocaleString() || '?'}-$${sum?.high_price?.toLocaleString() || '?'}, ${sum?.total_sales_found || 0} sales
+MOMENTUM: ${momentum?.label || 'Unknown'} (${momentum?.pct_change || 0}%)
+LIQUIDITY: ${liquidity?.label || 'Unknown'} (avg ${liquidity?.avg_days_between || '?'} days between sales)
+RARITY: ~${printRun.toLocaleString()} print run, ${gc} ${card.grade} pop ${card.pop || '?'}, ${parallelTier.tier}, pop higher: ${card.pop_higher ?? '?'}
 
-Use your web search tool to find:
-1. Latest news about ${playerName} in the last 3 months (injuries, controversies, achievements, contract news)
-2. Upcoming major sporting events that could impact this card's value
-3. Current season stats if available
-4. Any market trends for this specific card
-
-Then respond ONLY with valid JSON in this exact format:
+Respond ONLY with JSON:
 {
-  "iq_score": <number 1-10, one decimal>,
+  "iq_score": <1-10, one decimal>,
   "rarity_score": ${rarityScore},
-  "upside_score": <number 1-10>,
-  "market_score": <number 1-10>,
+  "upside_score": <1-10>,
+  "market_score": <1-10>,
   "verdict": "<STRONG BUY|BUY|HOLD|CAUTION|SELL>",
-  "verdict_color": "<hex color>",
-  "hold_window": "<e.g. 3-5 years>",
+  "hold_window": "<e.g. 2-4 years>",
   "entry_price": "<e.g. Under $6,500>",
   "price_target": "<e.g. $15,000-20,000>",
-  "risk_flags": [
-    {"label": "<risk name>", "level": "<green|yellow|red>", "detail": "<one sentence>"}
-  ],
-  "news_items": [
-    {"headline": "<headline>", "sentiment": "<positive|negative|neutral>", "impact": "<HIGH|MED|LOW>", "date": "<date or 'Recent'>"}
-  ],
-  "player_stats": {
-    "age": <number or null>,
-    "season_goals": <number or null>,
-    "season_assists": <number or null>,
-    "career_stage": "<Rising Star|Peak|Veteran|Declining>",
-    "award_trajectory": "<e.g. Ballon d'Or contender 2026-2028>"
-  },
-  "upcoming_events": [
-    {"name": "<event>", "date": "<date>", "impact": "<HIGH|MED|LOW>", "reason": "<why it matters for this card>"}
-  ],
-  "analyst_verdict": "<3-4 paragraph detailed investment analysis. Be specific, reference actual news and stats. Include why this is or isn't a good investment, what the upside case is, what the risks are, and a clear recommendation. Do NOT be generic.>",
-  "bull_case": "<one sentence bull case>",
-  "bear_case": "<one sentence bear case>"
+  "risk_flags": [{"label": "<name>", "level": "<green|yellow|red>", "detail": "<1 sentence>"}],
+  "key_bullets": ["<5-7 punchy bullet points covering: why buy/sell, key risks, catalysts, player trajectory, market dynamics>"],
+  "verdict_paragraph": "<ONE tight paragraph: the investment case in 3-4 sentences max. Be specific with numbers and facts.>",
+  "news_items": [{"headline": "<headline>", "sentiment": "<positive|negative|neutral>", "impact": "<HIGH|MED|LOW>", "date": "<date>"}],
+  "player_stats": {"age": null, "career_stage": "<Rising Star|Peak|Veteran|Declining>", "award_trajectory": "<trajectory>"},
+  "upcoming_events": [{"name": "<event>", "date": "<date>", "impact": "<HIGH|MED|LOW>", "reason": "<why>"}],
+  "bull_case": "<1 sentence>",
+  "bear_case": "<1 sentence>"
 }`;
 
   try {
@@ -888,8 +1210,6 @@ Then respond ONLY with valid JSON in this exact format:
     });
 
     const data = await response.json();
-
-    // Extract text from response (handle tool use blocks)
     let rawText = '';
     if (data.content) {
       for (const block of data.content) {
@@ -897,7 +1217,6 @@ Then respond ONLY with valid JSON in this exact format:
       }
     }
 
-    // Parse JSON
     const clean = rawText.replace(/```json|```/g, '').trim();
     const jsonMatch = clean.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON in response');
@@ -908,14 +1227,12 @@ Then respond ONLY with valid JSON in this exact format:
 
   } catch (err) {
     console.error('AI Analyst error:', err);
-    // Fallback to computed scores
     renderAnalystFallback(card, rarityScore, printRun, parallelTier, avgPrice);
   }
 }
 
 function renderAnalystPanel(a, card) {
   const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
   document.getElementById('analystFresh').innerHTML = `<div class="fresh-dot"></div><span>LIVE · ${now}</span>`;
 
   const riskHTML = (a.risk_flags || []).map(f => `
@@ -941,30 +1258,30 @@ function renderAnalystPanel(a, card) {
     const impactClass = e.impact === 'HIGH' ? 'impact-high' : e.impact === 'MED' ? 'impact-med' : 'impact-low';
     return `<div class="event-row">
       <div class="event-date">${e.date}</div>
-      <div class="event-name"><strong>${e.name}</strong><br/><span style="font-size:10px;color:var(--text-dim)">${e.reason}</span></div>
+      <div class="event-name"><strong>${e.name}</strong><br/><span style="font-size:9px;color:var(--text-dim)">${e.reason}</span></div>
       <div class="event-impact ${impactClass}">${e.impact}</div>
     </div>`;
   }).join('');
 
   const statsHTML = a.player_stats ? `
     <div class="player-intel">
-      ${a.player_stats.age ? `<div class="pi-stat"><div class="pi-lbl">Age</div><div class="pi-val">${a.player_stats.age}</div><div class="pi-sub">${a.player_stats.career_stage}</div></div>` : ''}
-      ${a.player_stats.season_goals != null ? `<div class="pi-stat"><div class="pi-lbl">Goals This Season</div><div class="pi-val">${a.player_stats.season_goals}</div><div class="pi-sub">Current season</div></div>` : ''}
-      ${a.player_stats.season_assists != null ? `<div class="pi-stat"><div class="pi-lbl">Assists This Season</div><div class="pi-val">${a.player_stats.season_assists}</div><div class="pi-sub">Current season</div></div>` : ''}
-      ${a.player_stats.award_trajectory ? `<div class="pi-stat" style="grid-column:1/-1"><div class="pi-lbl">Award Trajectory</div><div style="font-size:14px;font-weight:600;color:var(--orange);margin-top:4px">${a.player_stats.award_trajectory}</div></div>` : ''}
+      ${a.player_stats.age ? `<div class="pi-stat"><div class="pi-lbl">Age</div><div class="pi-val">${a.player_stats.age}</div><div class="pi-sub">${a.player_stats.career_stage || ''}</div></div>` : ''}
+      ${a.player_stats.career_stage && !a.player_stats.age ? `<div class="pi-stat"><div class="pi-lbl">Career Stage</div><div class="pi-val" style="font-size:18px">${a.player_stats.career_stage}</div></div>` : ''}
+      ${a.player_stats.award_trajectory ? `<div class="pi-stat" style="grid-column:1/-1"><div class="pi-lbl">Award Trajectory</div><div style="font-size:12px;font-weight:600;color:var(--orange);margin-top:3px">${a.player_stats.award_trajectory}</div></div>` : ''}
     </div>
   ` : '';
 
-  // Format analyst verdict paragraphs
-  const verdictParagraphs = (a.analyst_verdict || '')
-    .split('\n').filter(p => p.trim())
-    .map(p => `<p>${p}</p>`).join('');
+  // Punchy bullets
+  const bullets = a.key_bullets || [];
+  const bulletsHTML = bullets.length ? `<ul>${bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : '';
+
+  // One verdict paragraph
+  const verdictText = a.verdict_paragraph || '';
+  const verdictHTML = verdictText ? `<p style="font-size:13px;color:#ffffffcc;line-height:1.7;margin-bottom:0;border-left:3px solid var(--orange);padding-left:12px">${verdictText}</p>` : '';
 
   document.getElementById('analystContent').innerHTML = `
     <div class="risk-row">${riskHTML}</div>
-
-    <div class="analyst-body">${verdictParagraphs}</div>
-
+    <div class="analyst-body">${bulletsHTML}${verdictHTML}</div>
     <div class="analyst-metrics">
       <div class="am-item"><div class="am-val">${a.hold_window || '—'}</div><div class="am-lbl">Hold Window</div></div>
       <div class="am-item"><div class="am-val" style="color:var(--orange)">${a.entry_price || '—'}</div><div class="am-lbl">Entry Target</div></div>
@@ -972,21 +1289,20 @@ function renderAnalystPanel(a, card) {
     </div>
 
     ${a.bull_case || a.bear_case ? `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-      ${a.bull_case ? `<div style="background:#1a8c4515;border:1px solid #1a8c4530;border-radius:8px;padding:12px"><div style="font-size:9px;color:#2acc6a;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:6px">🐂 BULL CASE</div><div style="font-size:12px;color:#ffffffcc">${a.bull_case}</div></div>` : ''}
-      ${a.bear_case ? `<div style="background:#cc220015;border:1px solid #cc220030;border-radius:8px;padding:12px"><div style="font-size:9px;color:#ff6b6b;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:6px">🐻 BEAR CASE</div><div style="font-size:12px;color:#ffffffcc">${a.bear_case}</div></div>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      ${a.bull_case ? `<div style="background:#1a8c4515;border:1px solid #1a8c4530;border-radius:8px;padding:10px"><div style="font-size:8px;color:#2acc6a;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:4px">BULL CASE</div><div style="font-size:11px;color:#ffffffcc">${a.bull_case}</div></div>` : ''}
+      ${a.bear_case ? `<div style="background:#cc220015;border:1px solid #cc220030;border-radius:8px;padding:10px"><div style="font-size:8px;color:#ff6b6b;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:4px">BEAR CASE</div><div style="font-size:11px;color:#ffffffcc">${a.bear_case}</div></div>` : ''}
     </div>` : ''}
 
-    ${newsHTML ? `<div style="margin-top:14px"><div style="font-size:10px;color:#ffffff60;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:8px">📰 LIVE NEWS SIGNALS</div>${newsHTML}</div>` : ''}
-
-    ${statsHTML ? `<div style="margin-top:14px"><div style="font-size:10px;color:#ffffff60;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:8px">📊 PLAYER INTELLIGENCE</div>${statsHTML}</div>` : ''}
-
-    ${eventsHTML ? `<div style="margin-top:14px"><div style="font-size:10px;color:#ffffff60;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:8px">🗓 UPCOMING CATALYST EVENTS</div>${eventsHTML}</div>` : ''}
+    ${newsHTML ? `<div style="margin-top:12px"><div style="font-size:9px;color:#ffffff60;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:6px">LIVE NEWS SIGNALS</div>${newsHTML}</div>` : ''}
+    ${statsHTML ? `<div style="margin-top:12px"><div style="font-size:9px;color:#ffffff60;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:6px">PLAYER INTELLIGENCE</div>${statsHTML}</div>` : ''}
+    ${eventsHTML ? `<div style="margin-top:12px"><div style="font-size:9px;color:#ffffff60;letter-spacing:2px;font-family:'DM Mono',monospace;margin-bottom:6px">CATALYST EVENTS</div>${eventsHTML}</div>` : ''}
   `;
 }
 
 function updateIQPanel(a) {
   const iqColor = a.verdict === 'STRONG BUY' ? '#2acc6a' : a.verdict === 'BUY' ? '#4ade80' : a.verdict === 'HOLD' ? '#fbbf24' : a.verdict === 'CAUTION' ? '#fb923c' : '#ff6b6b';
+  const lastSale = window._allSales?.[0];
   document.getElementById('iqPanel').innerHTML = `
     <div class="iq-label-top">SlabIQ Score</div>
     <div class="iq-score" style="color:${iqColor}">${a.iq_score || '—'}</div>
@@ -998,11 +1314,15 @@ function updateIQPanel(a) {
       <div class="iq-sub"><div class="iq-sub-val" style="color:#60a5fa">${a.market_score || '—'}</div><div class="iq-sub-lbl">MARKET</div></div>
     </div>
     <div class="iq-hold"><strong>Hold:</strong> ${a.hold_window || '—'}<br/><strong>Target:</strong> ${a.price_target || '—'}</div>
+    ${lastSale ? `<div class="iq-last-sale">
+      <div class="iq-last-sale-lbl">Last Sale</div>
+      <div class="iq-last-sale-val" style="color:var(--green)">${fmtPrice(lastSale.price)}</div>
+      <div class="iq-last-sale-date">${fmtDate(lastSale.date)}</div>
+    </div>` : ''}
   `;
 }
 
 function renderAnalystFallback(card, rarityScore, printRun, parallelTier, avgPrice) {
-  // Simple computed fallback if AI call fails
   const upside = card.pop_higher === 0 ? 7.5 : 6.0;
   const market = avgPrice > 0 ? 6.5 : 5.0;
   const iq = Math.round(((rarityScore * 0.4 + upside * 0.35 + market * 0.25)) * 10) / 10;
@@ -1010,11 +1330,11 @@ function renderAnalystFallback(card, rarityScore, printRun, parallelTier, avgPri
   document.getElementById('analystFresh').innerHTML = `<div class="fresh-dot" style="background:#fbbf24"></div><span>COMPUTED (AI offline)</span>`;
   document.getElementById('analystContent').innerHTML = `
     <div class="risk-row">
-      <div class="risk-flag yellow"><div class="flag-dot" style="background:#fbbf24"></div><strong>AI Offline</strong> — Backend not reachable. Showing computed scores only.</div>
+      <div class="risk-flag yellow"><div class="flag-dot" style="background:#fbbf24"></div><strong>AI Offline</strong> — Showing computed scores only.</div>
     </div>
     <div class="analyst-body">
-      <p>AI Analyst requires your backend server to be running. Start it with <code style="background:#ffffff20;padding:2px 6px;border-radius:3px">uvicorn main:app --reload --port 8000</code> to get live news analysis, player stats and the full written verdict.</p>
-      <p>Computed rarity score: <strong>${rarityScore}/10</strong> based on ${printRun.toLocaleString()} estimated print run and PSA pop of ${card.pop || 0}.</p>
+      <p>Start backend with <code style="background:#ffffff20;padding:2px 6px;border-radius:3px">uvicorn main:app --reload --port 8000</code> for live AI analysis.</p>
+      <p>Computed rarity: <strong>${rarityScore}/10</strong> · Est. print run: ${printRun.toLocaleString()} · Pop: ${card.pop || 0}</p>
     </div>
     <div class="analyst-metrics">
       <div class="am-item"><div class="am-val">2-5 yrs</div><div class="am-lbl">Est. Hold</div></div>
@@ -1023,6 +1343,7 @@ function renderAnalystFallback(card, rarityScore, printRun, parallelTier, avgPri
     </div>
   `;
 
+  const lastSale = window._allSales?.[0];
   document.getElementById('iqPanel').innerHTML = `
     <div class="iq-label-top">SlabIQ Score</div>
     <div class="iq-score" style="color:#fbbf24">${iq}</div>
@@ -1034,28 +1355,79 @@ function renderAnalystFallback(card, rarityScore, printRun, parallelTier, avgPri
       <div class="iq-sub"><div class="iq-sub-val" style="color:#60a5fa">${market}</div><div class="iq-sub-lbl">MARKET</div></div>
     </div>
     <div class="iq-hold">Start backend for full analysis</div>
+    ${lastSale ? `<div class="iq-last-sale">
+      <div class="iq-last-sale-lbl">Last Sale</div>
+      <div class="iq-last-sale-val" style="color:var(--green)">${fmtPrice(lastSale.price)}</div>
+      <div class="iq-last-sale-date">${fmtDate(lastSale.date)}</div>
+    </div>` : ''}
   `;
 }
 
+// ── CHART WITH TREND LINE ──
 function buildChart(sales) {
   const v = sales.filter(s => s.price).slice().reverse();
-  if (v.length < 2) return '<div style="text-align:center;color:var(--text-faint);font-size:12px;padding:28px 0">Not enough data</div>';
+  if (v.length < 2) return '<div style="text-align:center;color:var(--text-faint);font-size:11px;padding:24px 0">Not enough data for chart</div>';
   const px = v.map(s => s.price);
   const mx = Math.max(...px), mn = Math.min(...px);
   const W = 100, H = 100;
-  const pts = v.map((s, i) => [(i / (v.length - 1)) * W, H - ((s.price - mn) / (mx - mn || 1)) * (H - 10) - 5]);
+  const pts = v.map((s, i) => [(i / (v.length - 1)) * W, H - ((s.price - mn) / (mx - mn || 1)) * (H - 12) - 6]);
   const path = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ');
   const area = `${path} L${W} ${H} L0 ${H}Z`;
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-    <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ff6200" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#ff6200" stop-opacity="0"/>
-    </linearGradient></defs>
+
+  // Linear regression for trend line
+  const n = pts.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+  for (let i = 0; i < n; i++) {
+    sumX += pts[i][0];
+    sumY += pts[i][1];
+    sumXY += pts[i][0] * pts[i][1];
+    sumX2 += pts[i][0] * pts[i][0];
+  }
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
+  const trendY1 = intercept;
+  const trendY2 = slope * W + intercept;
+  const trendColor = slope < 0 ? '#1a8c45' : slope > 0 ? '#cc2200' : '#888'; // negative slope = prices going up (y-axis inverted)
+
+  const mxIdx = px.indexOf(mx), mnIdx = px.indexOf(mn);
+  const mxPt = pts[mxIdx], mnPt = pts[mnIdx];
+
+  return `<svg viewBox="-8 -8 ${W+16} ${H+12}" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ff6200" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="#ff6200" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
     <path d="${area}" fill="url(#cg)"/>
     <path d="${path}" fill="none" stroke="#ff6200" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
-    ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="#ff6200" stroke="white" stroke-width="1"/>`).join('')}
+    <!-- Trend line -->
+    <line x1="0" y1="${trendY1}" x2="${W}" y2="${trendY2}" stroke="${trendColor}" stroke-width="1" stroke-dasharray="3,2" opacity="0.7"/>
+    ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2.2" fill="#ff6200" stroke="white" stroke-width="0.8"/>`).join('')}
+    <text x="${mxPt[0]}" y="${mxPt[1] - 5}" text-anchor="middle" font-size="5" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#1a8c45">${fmtPrice(mx)}</text>
+    <text x="${mnPt[0]}" y="${mnPt[1] + 8}" text-anchor="middle" font-size="5" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#cc2200">${fmtPrice(mn)}</text>
+    <!-- Trend label -->
+    <text x="${W - 2}" y="${trendY2 - 3}" text-anchor="end" font-size="4" font-family="DM Mono,monospace" fill="${trendColor}" opacity="0.8">TREND</text>
   </svg>`;
 }
+
+// ── Show More Sales ──
+window._allSales = [];
+window._showAllSales = function(btn) {
+  const list = document.getElementById('salesList');
+  if (!list || !window._allSales.length) return;
+  list.innerHTML = window._allSales.map(s => {
+    const k = (s.source || '').split('(')[0].trim();
+    const sc = SRC[k] || { c: '#555', bg: '#f5f5f5' };
+    return `<a class="sale-row" href="${s.url || '#'}" target="_blank">
+      <div class="sale-src" style="color:${sc.c};border-color:${sc.c}44;background:${sc.bg}">${s.source}</div>
+      <div class="sale-title">${cleanTitle(s.title)}</div>
+      <div class="sale-date">${fmtDate(s.date)}</div>
+      <div class="sale-price">${fmtPrice(s.price)}</div>
+    </a>`;
+  }).join('');
+  btn.remove();
+};
 
 function show(id, v) { document.getElementById(id).style.display = v ? 'block' : 'none'; }
 function setErr(m) { const e = document.getElementById('errBox'); e.style.display = m ? 'block' : 'none'; e.textContent = m; }
