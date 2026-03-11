@@ -292,7 +292,7 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .chart-tab.active { background: var(--orange); color: #fff; border-color: var(--orange); }
 
 /* External links */
-.ext-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ext-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .ext-card { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; transition: all .15s; }
 .ext-card:hover { border-color: var(--orange); background: var(--orange-light); transform: translateY(-1px); box-shadow: 0 4px 12px #ff620015; }
 .ext-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
@@ -587,7 +587,7 @@ body.has-portfolio { padding-bottom: 52px; }
   </div>
 </div>
 
-<footer><span>SLABIQ</span> v4 · AI Card Intelligence · PSA · BGS · SGC · eBay · Goldin · 130point · Alt · Card Ladder</footer>
+<footer><span>SLABIQ</span> v8 · AI Card Intelligence · PSA · BGS · SGC · eBay · Goldin · 130point · TCDB · Card Ladder</footer>
 
 <script>
 const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
@@ -1120,8 +1120,9 @@ async function renderFull(data) {
     { href: `https://www.ebay.com/sch/i.html?_nkw=${ebayQ}&LH_Sold=1&LH_Complete=1`, icon: '🛒', name: 'eBay Sold', desc: 'Live sold comps', c: '#e53238' },
     { href: `https://goldin.co/search?term=${goldinQ}`, icon: '🏆', name: 'Goldin', desc: 'Auction results', c: '#b8922a' },
     { href: `https://130point.com/sales/?search=${pt130Q}`, icon: '📊', name: '130point', desc: 'Multi-source comps', c: '#3355aa' },
-    { href: `https://www.tcdb.com/Search.cfm/search/${encodeURIComponent(subject)}`, icon: '📋', name: 'TCDB', desc: 'Set checklists', c: '#16a34a' },
+    { href: `https://www.tcdb.com/Search.cfm/search/${encodeURIComponent(subject + ' ' + cardYear + ' ' + cardBrand)}`, icon: '📋', name: 'TCDB', desc: 'Card database & images', c: '#16a34a' },
     { href: `https://www.ebay.com/sch/i.html?_nkw=${ebayQ}&_sop=10`, icon: '🛍', name: 'eBay Active', desc: 'Buy now listings', c: '#0654ba' },
+    { href: `https://cardladder.com/search/?q=${encodeURIComponent(subject)}`, icon: '📈', name: 'Card Ladder', desc: 'Index & pop data', c: '#6366f1' },
   ];
 
   // Build grade comparison table
@@ -1509,13 +1510,13 @@ async function renderFull(data) {
 
   // Store chart data globally for tab switching
   window._chartData = {
-    comps: sales,
-    cardladder: (data.cardladder_sales || []).map(s => ({
+    comps: sales.filter(s => s.price && s.price > 0),
+    cardladder: (data.cardladder_sales || []).filter(s => s.price && s.price > 0).map(s => ({
       price: s.price, date: s.date, source: 'Card Ladder', count: s.count
     })),
     combined: [
-      ...sales.map(s => ({ price: s.price, date: s.date, source: s.source || 'Comps' })),
-      ...(data.cardladder_sales || []).map(s => ({ price: s.price, date: s.date, source: 'Card Ladder' })),
+      ...sales.filter(s => s.price > 0).map(s => ({ price: s.price, date: s.date || '', source: s.source || 'Comps' })),
+      ...(data.cardladder_sales || []).filter(s => s.price > 0).map(s => ({ price: s.price, date: s.date || '', source: 'Card Ladder' })),
     ].sort((a, b) => (a.date || '').localeCompare(b.date || '')),
   };
 
@@ -1792,7 +1793,14 @@ function renderInteractiveChart(source) {
   if (!container) return;
 
   const rawData = window._chartData?.[source] || [];
-  const v = rawData.filter(s => s.price && s.price > 0 && s.date).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  // Include sales even without dates — sort by date if available, otherwise keep order
+  const withPrice = rawData.filter(s => s.price && s.price > 0);
+  const v = withPrice.slice().sort((a, b) => {
+    if (a.date && b.date) return (a.date).localeCompare(b.date);
+    if (a.date) return -1;
+    if (b.date) return 1;
+    return 0;
+  });
 
   if (v.length < 2) {
     container.innerHTML = '<div style="text-align:center;color:var(--text-faint);font-size:11px;padding:60px 0">Not enough data for chart</div>';
@@ -1800,7 +1808,11 @@ function renderInteractiveChart(source) {
   }
 
   const px = v.map(s => s.price);
-  const mx = Math.max(...px), mn = Math.min(...px);
+  const actualMxPrice = Math.max(...px), actualMnPrice = Math.min(...px);
+  // Detect if range is extreme (>10x spread) — use log scale
+  const useLog = actualMxPrice > actualMnPrice * 10 && actualMnPrice > 0;
+  const mn = useLog ? Math.log10(Math.max(1, actualMnPrice * 0.8)) : actualMnPrice * 0.9;
+  const mx = useLog ? Math.log10(actualMxPrice * 1.1) : actualMxPrice * 1.05;
   const range = mx - mn || 1;
 
   // Chart dimensions
@@ -1809,9 +1821,13 @@ function renderInteractiveChart(source) {
   const cW = W - padL - padR, cH = H - padT - padB;
 
   // Map data to chart coordinates
+  function priceToY(price) {
+    const val = useLog ? Math.log10(Math.max(1, price)) : price;
+    return padT + cH - ((val - mn) / range) * cH;
+  }
   const pts = v.map((s, i) => ({
     x: padL + (i / (v.length - 1)) * cW,
-    y: padT + cH - ((s.price - mn) / range) * cH,
+    y: Math.max(padT - 2, Math.min(padT + cH + 2, priceToY(s.price))),
     price: s.price,
     date: s.date,
     source: s.source || '',
@@ -1843,23 +1859,30 @@ function renderInteractiveChart(source) {
   let yLabels = '';
   let gridLines = '';
   for (let i = 0; i <= yTicks; i++) {
-    const val = mn + (range * i / yTicks);
+    const rawVal = mn + (range * i / yTicks);
+    const displayVal = useLog ? Math.pow(10, rawVal) : rawVal;
     const y = padT + cH - (i / yTicks) * cH;
-    yLabels += `<text x="${padL - 8}" y="${y + 3}" text-anchor="end" font-size="9" font-family="DM Mono,monospace" fill="#999">${fmtPrice(val)}</text>`;
+    yLabels += `<text x="${padL - 8}" y="${y + 3}" text-anchor="end" font-size="9" font-family="DM Mono,monospace" fill="#999">${fmtPrice(displayVal)}</text>`;
     gridLines += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#ede9e3" stroke-width="0.5"/>`;
   }
 
-  // X-axis labels (show ~5-7 dates evenly)
+  // X-axis labels (show ~5-7 dates evenly, or sale # if no dates)
+  const hasDates = v.filter(s => s.date).length > v.length * 0.3;
   const xCount = Math.min(7, v.length);
   let xLabels = '';
   for (let i = 0; i < xCount; i++) {
     const idx = Math.round(i * (v.length - 1) / (xCount - 1));
     const pt = pts[idx];
     if (pt) {
-      const d = new Date(v[idx].date);
-      const label = !isNaN(d.getTime()) ?
-        d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
-        v[idx].date.slice(0, 10);
+      let label;
+      if (hasDates && v[idx].date) {
+        const d = new Date(v[idx].date);
+        label = !isNaN(d.getTime()) ?
+          d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
+          v[idx].date.slice(0, 10);
+      } else {
+        label = `#${idx + 1}`;
+      }
       xLabels += `<text x="${pt.x}" y="${padT + cH + 18}" text-anchor="middle" font-size="9" font-family="DM Mono,monospace" fill="#999">${label}</text>`;
     }
   }
@@ -1888,8 +1911,9 @@ function renderInteractiveChart(source) {
     return '#ff6200';
   }
 
-  // High/low markers
-  const mxIdx = px.indexOf(mx), mnIdx = px.indexOf(mn);
+  // High/low markers (use actual max/min, not percentile)
+  const actualMx = Math.max(...px), actualMn = Math.min(...px);
+  const mxIdx = px.indexOf(actualMx), mnIdx = px.indexOf(actualMn);
   const mxPt = pts[mxIdx], mnPt = pts[mnIdx];
 
   // Build SVG
@@ -1924,8 +1948,8 @@ function renderInteractiveChart(source) {
     ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${dotColor(p.source)}" stroke="white" stroke-width="1.2" style="cursor:pointer" data-idx="${i}"/>`).join('')}
 
     <!-- High/Low markers -->
-    <text x="${mxPt.x}" y="${Math.max(padT + 8, mxPt.y - 8)}" text-anchor="middle" font-size="10" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#1a8c45">${fmtPrice(mx)}</text>
-    <text x="${mnPt.x}" y="${Math.min(padT + cH - 2, mnPt.y + 14)}" text-anchor="middle" font-size="10" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#cc2200">${fmtPrice(mn)}</text>
+    <text x="${mxPt.x}" y="${Math.max(padT + 8, mxPt.y - 8)}" text-anchor="middle" font-size="10" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#1a8c45">${fmtPrice(actualMx)}</text>
+    <text x="${mnPt.x}" y="${Math.min(padT + cH - 2, mnPt.y + 14)}" text-anchor="middle" font-size="10" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#cc2200">${fmtPrice(actualMn)}</text>
 
     <!-- Invisible hit areas for hover -->
     ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="12" fill="transparent" style="cursor:pointer"

@@ -161,7 +161,24 @@ async def _playwright_extract_ebay(url: str) -> list:
 # ─────────────────────────────────────────────
 
 async def resolve_card_image(identity: dict) -> str:
-    """Try to get a card image from eBay listings."""
+    """Try to get a card image from multiple sources: TCDB first, then eBay."""
+    # Try TCDB first (official card images, no watermarks)
+    try:
+        from scrapers.tcdb import get_tcdb_card_image
+        tcdb_img = await get_tcdb_card_image(
+            player_name=identity.get("subject", ""),
+            year=identity.get("year", ""),
+            brand=identity.get("brand", ""),
+            card_number=identity.get("card_number", ""),
+            sport="",  # will be guessed
+        )
+        if tcdb_img:
+            print(f"[image/tcdb] Found: {tcdb_img[:60]}")
+            return tcdb_img
+    except Exception as e:
+        print(f"[image/tcdb] Error: {e}")
+
+    # Fallback: eBay sold listing images
     url = f"https://www.ebay.com/sch/i.html?_nkw={quote_plus(identity['query_clean'])}&LH_Sold=1&LH_Complete=1&_ipg=5"
     try:
         html = await _playwright_get(url, timeout=20000)
