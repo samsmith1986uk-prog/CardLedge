@@ -297,8 +297,65 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .au3 { animation: fadeUp .3s ease .2s forwards; opacity: 0; }
 .au4 { animation: fadeUp .3s ease .3s forwards; opacity: 0; }
 
+/* ── DEAL SCORE BADGES ── */
+.deal-badge { font-size: 8px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: .5px; text-transform: uppercase; margin-left: 4px; white-space: nowrap; }
+.deal-steal { background: #1a8c4520; color: var(--green); border: 1px solid var(--green-border); }
+.deal-great { background: #1a8c4515; color: #1a8c45; border: 1px solid #a8dfc0; }
+.deal-good { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+.deal-fair { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border2); }
+.deal-above { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.deal-over { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+
+/* ── PORTFOLIO PANEL ── */
+.portfolio-bar { background: var(--dark2); border-top: 1px solid var(--dark3); padding: 8px 24px; display: flex; align-items: center; gap: 16px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; transform: translateY(100%); transition: transform .3s ease; }
+.portfolio-bar.show { transform: translateY(0); }
+.pf-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; color: #fff; }
+.pf-lbl { font-size: 9px; color: #888; font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+.pf-count { font-size: 11px; color: var(--orange); font-weight: 700; }
+.pf-btn { padding: 5px 14px; border-radius: 6px; border: 1px solid var(--orange); background: transparent; color: var(--orange); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: all .15s; }
+.pf-btn:hover { background: var(--orange); color: #fff; }
+.pf-btn.add { background: var(--orange); color: #fff; }
+.pf-btn.add:hover { background: var(--orange-dark); }
+
+/* Portfolio modal */
+.pf-modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 300; display: none; align-items: center; justify-content: center; }
+.pf-modal.show { display: flex; }
+.pf-modal-content { background: var(--surface); border-radius: 16px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,.3); }
+.pf-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.pf-modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+.pf-close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.pf-card-row { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+.pf-card-info { flex: 1; min-width: 0; }
+.pf-card-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-card-meta { font-size: 10px; color: var(--text-dim); }
+.pf-card-val { text-align: right; }
+.pf-card-price { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; }
+.pf-card-change { font-size: 10px; }
+.pf-rm { padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; font-size: 10px; }
+.pf-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px 20px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.pf-sum-item { text-align: center; }
+.pf-sum-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; }
+.pf-sum-lbl { font-size: 8px; color: var(--text-faint); font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+
+/* ── CURRENCY SELECTOR ── */
+.curr-sel { padding: 3px 8px; border-radius: 4px; border: 1px solid var(--dark3); background: var(--dark2); color: #ccc; font-family: 'DM Mono', monospace; font-size: 10px; cursor: pointer; margin-left: 8px; }
+
+/* ── HOT/COLD BADGE ── */
+.temp-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+.temp-hot { background: #ff620020; color: var(--orange); border: 1px solid #ff620040; }
+.temp-warm { background: #fbbf2420; color: #c07800; border: 1px solid #fbbf2440; }
+.temp-neutral { background: #88888815; color: var(--text-dim); border: 1px solid #88888830; }
+.temp-cool { background: #60a5fa20; color: var(--blue); border: 1px solid #60a5fa40; }
+.temp-cold { background: #60a5fa10; color: #6b7280; border: 1px solid #6b728030; }
+
+/* ── ROI CALCULATOR ── */
+.roi-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.roi-input { width: 100px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 12px; background: var(--bg); }
+.roi-result { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; }
+
 footer { background: var(--dark); color: #555; text-align: center; padding: 18px 24px; font-size: 10px; letter-spacing: 1px; border-top: 2px solid var(--orange); }
 footer span { color: var(--orange); }
+body.has-portfolio { padding-bottom: 52px; }
 
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px) {
@@ -415,10 +472,12 @@ footer span { color: var(--orange); }
 <div class="stats-bar">
   <div class="stat-item"><span class="stat-icon">🤖</span><span class="stat-text"><strong>AI Analyst</strong> Verdict</span></div>
   <div class="stat-item"><span class="stat-icon">📊</span><span class="stat-text"><strong>Grade Compare</strong> PSA 7-10</span></div>
-  <div class="stat-item"><span class="stat-icon">💎</span><span class="stat-text"><strong>Print Run</strong> Rarity</span></div>
-  <div class="stat-item"><span class="stat-icon">📈</span><span class="stat-text"><strong>Momentum</strong> & Liquidity</span></div>
-  <div class="stat-item"><span class="stat-icon">🔍</span><span class="stat-text"><strong>Player Search</strong> Autocomplete</span></div>
-  <div class="stat-item"><span class="stat-icon">🏆</span><span class="stat-text"><strong>Player Intel</strong> & News</span></div>
+  <div class="stat-item"><span class="stat-icon">📈</span><span class="stat-text"><strong>Momentum</strong> & Efficiency</span></div>
+  <div class="stat-item"><span class="stat-icon">💼</span><span class="stat-text"><strong>Portfolio</strong> Tracker</span></div>
+  <div class="stat-item"><span class="stat-icon">💰</span><span class="stat-text"><strong>Deal Scores</strong> on Sales</span></div>
+  <div class="stat-item"><span class="stat-icon">🌡️</span><span class="stat-text"><strong>Hot/Cold</strong> Indicator</span></div>
+  <div class="stat-item"><span class="stat-icon">💱</span><span class="stat-text"><strong>Multi-Currency</strong></span></div>
+  <div class="stat-item"><span class="stat-icon">📐</span><span class="stat-text"><strong>ROI</strong> Calculator</span></div>
 </div>
 
 <div class="content">
@@ -455,7 +514,35 @@ footer span { color: var(--orange); }
   </div>
 </div>
 
-<footer><span>SLABIQ</span> v3 · AI Card Intelligence · PSA · BGS · SGC · eBay · Goldin · 130point</footer>
+<!-- PORTFOLIO BAR -->
+<div class="portfolio-bar" id="portfolioBar">
+  <div><div class="pf-lbl">PORTFOLIO</div><div class="pf-val" id="pfTotal">$0</div></div>
+  <div class="pf-count" id="pfCount">0 cards</div>
+  <button class="pf-btn" onclick="openPortfolio()">VIEW</button>
+  <div style="flex:1"></div>
+  <select class="curr-sel" id="currSel" onchange="setCurrency(this.value)">
+    <option value="USD">USD $</option>
+    <option value="GBP">GBP £</option>
+    <option value="EUR">EUR €</option>
+    <option value="CAD">CAD $</option>
+    <option value="AUD">AUD $</option>
+    <option value="JPY">JPY ¥</option>
+  </select>
+</div>
+
+<!-- PORTFOLIO MODAL -->
+<div class="pf-modal" id="pfModal" onclick="if(event.target===this)closePortfolio()">
+  <div class="pf-modal-content">
+    <div class="pf-modal-header">
+      <div class="pf-modal-title">My Collection</div>
+      <button class="pf-close" onclick="closePortfolio()">✕</button>
+    </div>
+    <div class="pf-summary" id="pfSummary"></div>
+    <div id="pfCards"></div>
+  </div>
+</div>
+
+<footer><span>SLABIQ</span> v4 · AI Card Intelligence · PSA · BGS · SGC · eBay · Goldin · 130point · Alt · Card Ladder</footer>
 
 <script>
 const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
@@ -863,6 +950,14 @@ async function renderFull(data) {
   const momentum = data.momentum || {};
   const liquidity = data.liquidity || {};
   const isCached = data._cached || false;
+  const mktEfficiency = data.market_efficiency || {};
+  const investment = data.investment || {};
+
+  // Store current card data for portfolio
+  window._currentCard = {
+    cert: data.cert_number, gc, name: card.subject, year: card.year,
+    brand: card.brand, grade: card.grade, avgPrice: sum?.avg_price || 0,
+  };
 
   const rarityScore = getRarityScore(card);
   const printRun = getEstimatedPrintRun(card);
@@ -988,7 +1083,7 @@ async function renderFull(data) {
 
     <!-- MARKET INTELLIGENCE -->
     ${sum ? `<div class="sc au2">
-      <div class="sc-title">📈 Market Intelligence ${isCached ? '<span class="cached-badge">CACHED</span>' : ''}</div>
+      <div class="sc-title">📈 Market Intelligence ${isCached ? '<span class="cached-badge">CACHED</span>' : ''} ${tempBadgeHTML(investment)}</div>
       <div class="intel-row">
         <div class="intel-card">
           <div class="intel-card-lbl">Price Momentum</div>
@@ -1001,10 +1096,37 @@ async function renderFull(data) {
           <div class="intel-card-sub">${liquidity.label || 'No data'}${liquidity.avg_days_between ? ' · ' + liquidity.avg_days_between + 'd avg' : ''}</div>
         </div>
         <div class="intel-card">
+          <div class="intel-card-lbl">Market Efficiency</div>
+          <div class="intel-card-val" style="color:${mktEfficiency.score >= 7 ? 'var(--green)' : mktEfficiency.score >= 4 ? 'var(--yellow)' : 'var(--red)'}">${mktEfficiency.score || '—'}<span style="font-size:13px">/10</span></div>
+          <div class="intel-card-sub">${mktEfficiency.label || 'No data'}${mktEfficiency.volatility ? ' · ' + mktEfficiency.volatility + '% vol' : ''}</div>
+        </div>
+      </div>
+      <div class="intel-row">
+        <div class="intel-card">
           <div class="intel-card-lbl">Sales Volume</div>
           <div class="intel-card-val" style="color:var(--blue)">${(sum.total_sales_found || 0).toLocaleString()}</div>
           <div class="intel-card-sub">${sum.sources?.join(' + ') || 'Multiple sources'}</div>
         </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">Value Rating</div>
+          <div class="intel-card-val" style="color:${investment.value_pct < -5 ? 'var(--green)' : investment.value_pct > 10 ? 'var(--red)' : 'var(--text)'};font-size:18px">${investment.value_rating || '—'}</div>
+          <div class="intel-card-sub">${investment.value_pct ? (investment.value_pct > 0 ? '+' : '') + investment.value_pct + '% vs all-time avg' : '—'}</div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">Est. Market Cap</div>
+          <div class="intel-card-val" style="color:var(--text)">${investment.market_cap ? fmtPrice(investment.market_cap) : '—'}</div>
+          <div class="intel-card-sub">${card.pop ? 'Pop ' + card.pop + ' × avg price' : '—'}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap">
+        <div style="font-size:10px;color:var(--text-dim)">ROI Calculator:</div>
+        <div class="roi-wrap">
+          <span style="font-size:10px;color:var(--text-dim)">Bought at</span>
+          <input class="roi-input" id="roiInput" type="number" placeholder="$0" oninput="calcROI(${sum.avg_price || 0})"/>
+          <span class="roi-result" id="roiResult">—</span>
+        </div>
+        <div style="flex:1"></div>
+        <button class="pf-btn add" onclick="addToPortfolio(window._currentCard)">+ Add to Portfolio</button>
       </div>
     </div>` : ''}
 
@@ -1083,7 +1205,7 @@ async function renderFull(data) {
         const sc = SRC[k] || { c: '#555', bg: '#f5f5f5' };
         return `<a class="sale-row" href="${s.url || '#'}" target="_blank">
           <div class="sale-src" style="color:${sc.c};border-color:${sc.c}44;background:${sc.bg}">${s.source}</div>
-          <div class="sale-title">${cleanTitle(s.title)}</div>
+          <div class="sale-title">${cleanTitle(s.title)}${s.deal_score ? ' ' + dealBadgeHTML(s.deal_score) : ''}</div>
           <div class="sale-date">${fmtDate(s.date)}</div>
           <div class="sale-price">${fmtPrice(s.price)}</div>
         </a>`;
@@ -1421,7 +1543,7 @@ window._showAllSales = function(btn) {
     const sc = SRC[k] || { c: '#555', bg: '#f5f5f5' };
     return `<a class="sale-row" href="${s.url || '#'}" target="_blank">
       <div class="sale-src" style="color:${sc.c};border-color:${sc.c}44;background:${sc.bg}">${s.source}</div>
-      <div class="sale-title">${cleanTitle(s.title)}</div>
+      <div class="sale-title">${cleanTitle(s.title)}${s.deal_score ? ' ' + dealBadgeHTML(s.deal_score) : ''}</div>
       <div class="sale-date">${fmtDate(s.date)}</div>
       <div class="sale-price">${fmtPrice(s.price)}</div>
     </a>`;
@@ -1431,6 +1553,161 @@ window._showAllSales = function(btn) {
 
 function show(id, v) { document.getElementById(id).style.display = v ? 'block' : 'none'; }
 function setErr(m) { const e = document.getElementById('errBox'); e.style.display = m ? 'block' : 'none'; e.textContent = m; }
+
+// ═══════════════════════════════════════════════════
+// PORTFOLIO TRACKER (localStorage-based, Card Ladder-style)
+// ═══════════════════════════════════════════════════
+const PF_KEY = 'slabiq_portfolio';
+let portfolio = JSON.parse(localStorage.getItem(PF_KEY) || '[]');
+let fxRates = { USD: 1, GBP: 0.79, EUR: 0.92, CAD: 1.36, AUD: 1.53, JPY: 149.5 };
+let currentCurrency = localStorage.getItem('slabiq_currency') || 'USD';
+const CURR_SYMBOLS = { USD: '$', GBP: '£', EUR: '€', CAD: 'C$', AUD: 'A$', JPY: '¥' };
+
+// Load FX rates
+(async () => {
+  try {
+    const r = await fetch(`${API}/fx/rates`, { signal: AbortSignal.timeout(5000) });
+    if (r.ok) fxRates = await r.json();
+  } catch {}
+  updatePortfolioBar();
+})();
+
+function convertPrice(usdPrice) {
+  if (!usdPrice) return 0;
+  return usdPrice * (fxRates[currentCurrency] || 1);
+}
+
+function fmtCurr(usdPrice) {
+  if (usdPrice == null) return '—';
+  const converted = convertPrice(usdPrice);
+  const sym = CURR_SYMBOLS[currentCurrency] || '$';
+  if (currentCurrency === 'JPY') return sym + Math.round(converted).toLocaleString();
+  return sym + converted.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function setCurrency(c) {
+  currentCurrency = c;
+  localStorage.setItem('slabiq_currency', c);
+  updatePortfolioBar();
+}
+
+function addToPortfolio(card) {
+  const existing = portfolio.find(p => p.cert === card.cert && p.gc === card.gc);
+  if (existing) return;
+  portfolio.push({
+    cert: card.cert,
+    gc: card.gc,
+    name: card.name,
+    year: card.year,
+    brand: card.brand,
+    grade: card.grade,
+    avgPrice: card.avgPrice,
+    addedAt: new Date().toISOString(),
+    purchasePrice: card.purchasePrice || null,
+  });
+  localStorage.setItem(PF_KEY, JSON.stringify(portfolio));
+  updatePortfolioBar();
+}
+
+function removeFromPortfolio(cert, gc) {
+  portfolio = portfolio.filter(p => !(p.cert === cert && p.gc === gc));
+  localStorage.setItem(PF_KEY, JSON.stringify(portfolio));
+  updatePortfolioBar();
+  renderPortfolioModal();
+}
+
+function updatePortfolioBar() {
+  const bar = document.getElementById('portfolioBar');
+  if (portfolio.length === 0) {
+    bar.classList.remove('show');
+    document.body.classList.remove('has-portfolio');
+    return;
+  }
+  bar.classList.add('show');
+  document.body.classList.add('has-portfolio');
+
+  const total = portfolio.reduce((s, p) => s + (p.avgPrice || 0), 0);
+  document.getElementById('pfTotal').textContent = fmtCurr(total);
+  document.getElementById('pfCount').textContent = `${portfolio.length} card${portfolio.length !== 1 ? 's' : ''}`;
+}
+
+function openPortfolio() {
+  document.getElementById('pfModal').classList.add('show');
+  renderPortfolioModal();
+}
+
+function closePortfolio() {
+  document.getElementById('pfModal').classList.remove('show');
+}
+
+function renderPortfolioModal() {
+  const total = portfolio.reduce((s, p) => s + (p.avgPrice || 0), 0);
+  const avgCard = portfolio.length ? total / portfolio.length : 0;
+
+  document.getElementById('pfSummary').innerHTML = `
+    <div class="pf-sum-item"><div class="pf-sum-val" style="color:var(--orange)">${fmtCurr(total)}</div><div class="pf-sum-lbl">TOTAL VALUE</div></div>
+    <div class="pf-sum-item"><div class="pf-sum-val">${portfolio.length}</div><div class="pf-sum-lbl">CARDS</div></div>
+    <div class="pf-sum-item"><div class="pf-sum-val">${fmtCurr(avgCard)}</div><div class="pf-sum-lbl">AVG CARD VALUE</div></div>
+  `;
+
+  document.getElementById('pfCards').innerHTML = portfolio.length === 0
+    ? '<div style="padding:40px;text-align:center;color:var(--text-dim)">No cards in portfolio yet. Click "Add to Portfolio" on any card result.</div>'
+    : portfolio.map(p => `
+    <div class="pf-card-row">
+      <div class="pf-card-info">
+        <div class="pf-card-name">${p.name || 'Unknown'}</div>
+        <div class="pf-card-meta">${p.year || ''} · ${p.gc} ${p.grade} · Cert #${p.cert}</div>
+      </div>
+      <div class="pf-card-val">
+        <div class="pf-card-price">${fmtCurr(p.avgPrice)}</div>
+      </div>
+      <button class="pf-rm" onclick="removeFromPortfolio('${p.cert}','${p.gc}')">Remove</button>
+    </div>
+  `).join('');
+}
+
+updatePortfolioBar();
+
+// ═══════════════════════════════════════════════════
+// DEAL SCORE HELPERS
+// ═══════════════════════════════════════════════════
+function dealBadgeHTML(dealScore) {
+  if (!dealScore || dealScore.rating === 'unknown') return '';
+  const map = {
+    steal:     { cls: 'deal-steal', text: 'STEAL' },
+    great_deal:{ cls: 'deal-great', text: 'GREAT DEAL' },
+    good_deal: { cls: 'deal-good',  text: 'GOOD DEAL' },
+    fair:      { cls: 'deal-fair',  text: 'FAIR' },
+    above_avg: { cls: 'deal-above', text: 'ABOVE AVG' },
+    overpriced:{ cls: 'deal-over',  text: 'OVERPRICED' },
+  };
+  const m = map[dealScore.rating] || map.fair;
+  return `<span class="deal-badge ${m.cls}">${m.text} ${dealScore.pct_vs_avg > 0 ? '+' : ''}${dealScore.pct_vs_avg}%</span>`;
+}
+
+function tempBadgeHTML(investment) {
+  if (!investment || !investment.hot_cold_label) return '';
+  const cls = {
+    HOT: 'temp-hot', WARM: 'temp-warm', NEUTRAL: 'temp-neutral',
+    COOL: 'temp-cool', COLD: 'temp-cold'
+  }[investment.hot_cold_label] || 'temp-neutral';
+  return `<span class="temp-badge ${cls}">${investment.hot_cold_label} ${investment.hot_cold_score}/10</span>`;
+}
+
+// ═══════════════════════════════════════════════════
+// ROI CALCULATOR
+// ═══════════════════════════════════════════════════
+function calcROI(avgPrice) {
+  const input = document.getElementById('roiInput');
+  const result = document.getElementById('roiResult');
+  if (!input || !result) return;
+  const cost = parseFloat(input.value);
+  if (!cost || cost <= 0 || !avgPrice) { result.textContent = '—'; return; }
+  const roi = ((avgPrice - cost) / cost * 100).toFixed(1);
+  const prefix = roi > 0 ? '+' : '';
+  const color = roi > 0 ? 'var(--green)' : roi < 0 ? 'var(--red)' : 'var(--text-dim)';
+  result.innerHTML = `<span style="color:${color};font-weight:700">${prefix}${roi}%</span> <span style="font-size:9px;color:var(--text-dim)">(${fmtPrice(avgPrice - cost)} ${roi > 0 ? 'gain' : 'loss'})</span>`;
+}
 </script>
 </body>
 </html>

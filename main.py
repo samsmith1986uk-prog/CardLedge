@@ -23,7 +23,7 @@ from scrapers.beckett import scrape_beckett_cert
 from scrapers.sgc import scrape_sgc_cert
 
 
-app = FastAPI(title="SLABIQ API", version="3.0.0")
+app = FastAPI(title="SLABIQ API", version="4.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -128,6 +128,19 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
 
     # Step 5: Compute liquidity
     result["liquidity"] = _compute_liquidity(all_sales)
+
+    # Step 6: Compute market efficiency (Card Ladder-style)
+    result["market_efficiency"] = _compute_market_efficiency(all_sales)
+
+    # Step 7: Compute deal scores for each sale
+    if result["market_summary"]:
+        avg = result["market_summary"].get("avg_price", 0)
+        median = result["market_summary"].get("median_price", 0)
+        for sale in all_sales:
+            sale["deal_score"] = _compute_deal_score(sale.get("price", 0), avg, median)
+
+    # Step 8: Compute investment metrics
+    result["investment"] = _compute_investment_metrics(all_sales, result["market_summary"], result["momentum"], result["liquidity"], result.get("card_details", {}))
 
     _cache_set(ck, result)
     return result
@@ -451,6 +464,176 @@ def _compute_liquidity(sales: list) -> dict:
     }
 
 
+def _compute_market_efficiency(sales: list) -> dict:
+    """Card Ladder-style Market Efficiency Score — measures price stability."""
+    prices = [s["price"] for s in sales if s.get("price") and s["price"] > 5]
+    if len(prices) < 3:
+        return {"score": 0, "label": "Insufficient data", "volatility": 0, "consistency": 0}
+
+    import statistics
+    avg = statistics.mean(prices)
+    if avg == 0:
+        return {"score": 0, "label": "No data", "volatility": 0, "consistency": 0}
+
+    stdev = statistics.stdev(prices)
+    cv = stdev / avg  # coefficient of variation
+
+    # Consistency: what % of sales fall within 25% of median
+    median = statistics.median(prices)
+    within_band = sum(1 for p in prices if abs(p - median) / median <= 0.25)
+    consistency = round((within_band / len(prices)) * 100, 1)
+
+    # Score: lower CV = more efficient market
+    if cv < 0.10:
+        score, label = 10, "Highly efficient"
+    elif cv < 0.15:
+        score, label = 9, "Very efficient"
+    elif cv < 0.20:
+        score, label = 8, "Efficient"
+    elif cv < 0.30:
+        score, label = 7, "Moderately efficient"
+    elif cv < 0.40:
+        score, label = 6, "Fair"
+    elif cv < 0.50:
+        score, label = 5, "Moderate volatility"
+    elif cv < 0.65:
+        score, label = 4, "Volatile"
+    elif cv < 0.80:
+        score, label = 3, "Very volatile"
+    else:
+        score, label = 2, "Highly volatile"
+
+    return {
+        "score": score,
+        "label": label,
+        "volatility": round(cv * 100, 1),
+        "consistency": consistency,
+        "stdev": round(stdev, 2),
+        "sample_size": len(prices),
+    }
+
+
+def _compute_deal_score(price: float, avg: float, median: float) -> dict:
+    """Fanatics-style deal classification for a sale price."""
+    if not price or not avg or avg == 0:
+        return {"rating": "unknown", "pct_vs_avg": 0}
+
+    pct = round(((price - avg) / avg) * 100, 1)
+    pct_med = round(((price - median) / median) * 100, 1) if median else pct
+
+    if pct <= -25:
+        rating = "steal"
+    elif pct <= -10:
+        rating = "great_deal"
+    elif pct <= -3:
+        rating = "good_deal"
+    elif pct <= 5:
+        rating = "fair"
+    elif pct <= 15:
+        rating = "above_avg"
+    else:
+        rating = "overpriced"
+
+    return {"rating": rating, "pct_vs_avg": pct, "pct_vs_median": pct_med}
+
+
+def _compute_investment_metrics(sales: list, summary: dict, momentum: dict, liquidity: dict, card: dict) -> dict:
+    """Comprehensive investment metrics inspired by Card Ladder + Alt."""
+    prices = [s["price"] for s in sales if s.get("price") and s["price"] > 5]
+    if not prices or not summary:
+        return {}
+
+    avg = summary.get("avg_price", 0) or 0
+    low = summary.get("low_price", 0) or 0
+    high = summary.get("high_price", 0) or 0
+
+    # Market cap estimate (avg price * estimated pop at this grade)
+    pop = card.get("pop", 0) or 0
+    market_cap = round(avg * pop) if pop and avg else None
+
+    # 30-day ROI: if you bought at median 30 days ago vs current avg
+    roi_30d = momentum.get("pct_change", 0) if momentum else 0
+
+    # Spread (bid-ask proxy): range as % of avg
+    spread = round(((high - low) / avg) * 100, 1) if avg and high > low else 0
+
+    # Value rating: is current avg above or below fair value?
+    # Simple model: avg of recent sales vs all-time avg
+    recent_prices = prices[:min(5, len(prices))]
+    recent_avg = sum(recent_prices) / len(recent_prices) if recent_prices else avg
+    all_avg = sum(prices) / len(prices) if prices else avg
+    value_pct = round(((recent_avg - all_avg) / all_avg) * 100, 1) if all_avg else 0
+
+    if value_pct < -15:
+        value_label = "Undervalued"
+    elif value_pct < -5:
+        value_label = "Below avg"
+    elif value_pct <= 5:
+        value_label = "Fair value"
+    elif value_pct <= 15:
+        value_label = "Above avg"
+    else:
+        value_label = "Overvalued"
+
+    # Hot/Cold score (Market Movers-style)
+    mom_score = min(10, max(0, 5 + (momentum.get("pct_change", 0) / 10))) if momentum else 5
+    liq_score = liquidity.get("score", 5) if liquidity else 5
+    hot_cold = round((mom_score * 0.6 + liq_score * 0.4), 1)
+
+    if hot_cold >= 8:
+        temp_label = "HOT"
+    elif hot_cold >= 6:
+        temp_label = "WARM"
+    elif hot_cold >= 4:
+        temp_label = "NEUTRAL"
+    elif hot_cold >= 2:
+        temp_label = "COOL"
+    else:
+        temp_label = "COLD"
+
+    return {
+        "market_cap": market_cap,
+        "roi_30d": roi_30d,
+        "spread_pct": spread,
+        "value_rating": value_label,
+        "value_pct": value_pct,
+        "hot_cold_score": hot_cold,
+        "hot_cold_label": temp_label,
+        "recent_avg": round(recent_avg, 2),
+        "all_time_avg": round(all_avg, 2),
+    }
+
+
+# ── CURRENCY CONVERSION ──
+_fx_cache = {"ts": 0, "rates": {}}
+
+@app.get("/fx/rates")
+async def get_fx_rates():
+    """Get USD exchange rates for multi-currency support."""
+    now = time.time()
+    if now - _fx_cache["ts"] < 3600 and _fx_cache["rates"]:
+        return _fx_cache["rates"]
+
+    # Hardcoded fallback rates (updated periodically)
+    rates = {"USD": 1, "GBP": 0.79, "EUR": 0.92, "CAD": 1.36, "AUD": 1.53, "JPY": 149.5}
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get("https://open.er-api.com/v6/latest/USD")
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("rates"):
+                    for curr in ["GBP", "EUR", "CAD", "AUD", "JPY"]:
+                        if curr in data["rates"]:
+                            rates[curr] = round(data["rates"][curr], 4)
+    except Exception:
+        pass
+
+    _fx_cache["ts"] = now
+    _fx_cache["rates"] = rates
+    return rates
+
+
 # ── PSA POPULATION ──
 @app.get("/psa/population/{set_id}")
 async def get_psa_population(set_id: str):
@@ -484,7 +667,7 @@ async def cache_clear():
 # ── HEALTH ──
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "3.0.0", "cache_entries": len(_cache)}
+    return {"status": "ok", "version": "4.0.0", "cache_entries": len(_cache)}
 
 
 # ── AI ANALYST PROXY ──
