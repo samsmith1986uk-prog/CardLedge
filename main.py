@@ -142,6 +142,15 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
     # Step 8: Compute investment metrics
     result["investment"] = _compute_investment_metrics(all_sales, result["market_summary"], result["momentum"], result["liquidity"], result.get("card_details", {}))
 
+    # Step 9: Fair value estimate (regression-based)
+    result["fair_value"] = _compute_fair_value(all_sales)
+
+    # Step 10: Price distribution buckets
+    result["price_distribution"] = _compute_price_distribution(all_sales)
+
+    # Step 11: Best time to buy/sell
+    result["timing"] = _compute_timing_signal(all_sales, result["momentum"], result["market_summary"])
+
     _cache_set(ck, result)
     return result
 
@@ -602,6 +611,112 @@ def _compute_investment_metrics(sales: list, summary: dict, momentum: dict, liqu
         "recent_avg": round(recent_avg, 2),
         "all_time_avg": round(all_avg, 2),
     }
+
+
+def _compute_fair_value(sales: list) -> dict:
+    """Estimate fair value using weighted recent sales + trend regression."""
+    prices = [s["price"] for s in sales if s.get("price") and s["price"] > 5]
+    if len(prices) < 3:
+        return {"estimate": None, "confidence": "low", "method": "insufficient_data"}
+
+    import statistics
+
+    # Weighted average: recent sales weighted more heavily
+    weights = [1.0 / (i + 1) for i in range(len(prices))]  # sales already sorted recent-first
+    weighted_sum = sum(p * w for p, w in zip(prices, weights))
+    weight_total = sum(weights)
+    weighted_avg = weighted_sum / weight_total
+
+    median = statistics.median(prices)
+    avg = statistics.mean(prices)
+
+    # Fair value = blend of weighted avg (60%), median (25%), simple avg (15%)
+    fair = round(weighted_avg * 0.60 + median * 0.25 + avg * 0.15, 2)
+
+    # Confidence based on sample size and consistency
+    stdev = statistics.stdev(prices) if len(prices) > 1 else 0
+    cv = stdev / avg if avg else 1
+    if len(prices) >= 10 and cv < 0.25:
+        confidence = "high"
+    elif len(prices) >= 5 and cv < 0.40:
+        confidence = "medium"
+    else:
+        confidence = "low"
+
+    # How does last sale compare to fair value?
+    last_price = prices[0]
+    vs_fair = round(((last_price - fair) / fair) * 100, 1) if fair else 0
+
+    return {
+        "estimate": fair,
+        "confidence": confidence,
+        "vs_last_sale": vs_fair,
+        "last_sale": last_price,
+        "method": "weighted_blend",
+        "sample_size": len(prices),
+    }
+
+
+def _compute_price_distribution(sales: list) -> dict:
+    """Bucket prices into ranges for distribution visualization."""
+    prices = [s["price"] for s in sales if s.get("price") and s["price"] > 5]
+    if len(prices) < 3:
+        return {"buckets": []}
+
+    lo, hi = min(prices), max(prices)
+    if hi == lo:
+        return {"buckets": [{"label": f"${int(lo)}", "count": len(prices), "pct": 100}]}
+
+    n_buckets = min(6, max(3, len(prices) // 3))
+    step = (hi - lo) / n_buckets
+    buckets = []
+    for i in range(n_buckets):
+        blo = lo + i * step
+        bhi = lo + (i + 1) * step if i < n_buckets - 1 else hi + 1
+        count = sum(1 for p in prices if blo <= p < bhi)
+        buckets.append({
+            "label": f"${int(blo)}-${int(bhi)}",
+            "low": round(blo),
+            "high": round(bhi),
+            "count": count,
+            "pct": round(count / len(prices) * 100, 1),
+        })
+    return {"buckets": buckets, "total": len(prices)}
+
+
+def _compute_timing_signal(sales: list, momentum: dict, summary: dict) -> dict:
+    """Generate buy/sell timing signal based on momentum + price position."""
+    if not sales or not summary or not momentum:
+        return {"signal": "hold", "reason": "Insufficient data", "confidence": "low"}
+
+    avg = summary.get("avg_price", 0) or 0
+    low = summary.get("low_price", 0) or 0
+    pct_change = momentum.get("pct_change", 0) or 0
+    direction = momentum.get("direction", "unknown")
+
+    prices = [s["price"] for s in sales if s.get("price") and s["price"] > 5]
+    if not prices or not avg:
+        return {"signal": "hold", "reason": "No price data", "confidence": "low"}
+
+    last = prices[0]
+    vs_avg = ((last - avg) / avg * 100) if avg else 0
+
+    # Buy signals: price trending down but near historical low
+    if vs_avg < -15 and direction == "down":
+        return {"signal": "strong_buy", "reason": f"Price {vs_avg:.0f}% below avg & declining — potential bottom", "confidence": "medium"}
+    if vs_avg < -10:
+        return {"signal": "buy", "reason": f"Price {vs_avg:.0f}% below avg — good entry point", "confidence": "medium"}
+    if direction == "down" and pct_change < -15:
+        return {"signal": "buy", "reason": f"Momentum {pct_change}% — dip buy opportunity", "confidence": "low"}
+
+    # Sell signals: price well above average and rising
+    if vs_avg > 20 and direction == "up":
+        return {"signal": "strong_sell", "reason": f"Price {vs_avg:.0f}% above avg & rising — consider taking profits", "confidence": "medium"}
+    if vs_avg > 15:
+        return {"signal": "sell", "reason": f"Price {vs_avg:.0f}% above avg — elevated", "confidence": "low"}
+
+    # Hold
+    return {"signal": "hold", "reason": f"Price near fair value ({vs_avg:+.0f}% vs avg)", "confidence": "medium"}
 
 
 # ── CURRENCY CONVERSION ──

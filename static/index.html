@@ -353,6 +353,34 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .roi-input { width: 100px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 12px; background: var(--bg); }
 .roi-result { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; }
 
+/* ── WATCHLIST / PRICE ALERTS ── */
+.watchlist-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 8px; margin-top: 8px; }
+.wl-input { width: 90px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 12px; background: #fff; }
+.wl-btn { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--blue); background: var(--blue); color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; }
+.wl-btn.remove { background: transparent; color: var(--red); border-color: var(--red); }
+.wl-active { font-size: 10px; color: var(--blue); font-weight: 600; }
+
+/* ── SPREAD BAR ── */
+.spread-bar { position: relative; height: 20px; background: linear-gradient(90deg, var(--green-bg) 0%, var(--yellow-bg) 50%, var(--red-bg) 100%); border-radius: 10px; margin: 8px 0 4px; border: 1px solid var(--border); }
+.spread-marker { position: absolute; top: -2px; width: 3px; height: 24px; background: var(--orange); border-radius: 2px; transform: translateX(-50%); }
+.spread-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--text-dim); font-family: 'DM Mono', monospace; }
+.spread-avg-marker { position: absolute; top: -2px; width: 2px; height: 24px; background: var(--text-dim); border-radius: 1px; transform: translateX(-50%); opacity: 0.5; }
+
+/* ── FAIR VALUE ── */
+.fv-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+.fv-under { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.fv-fair { background: var(--bg); color: var(--text-mid); border: 1px solid var(--border2); }
+.fv-over { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+
+/* ── ACTIVE LISTINGS LINK ── */
+.active-listings-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 8px; font-size: 11px; font-weight: 600; color: var(--green); text-decoration: none; transition: all .15s; margin-top: 8px; }
+.active-listings-link:hover { background: var(--green); color: #fff; }
+
+/* ── PRICE DISTRIBUTION ── */
+.price-dist { margin-top: 8px; }
+.price-dist-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--bg); border: 1px solid var(--border); }
+.price-dist-seg { height: 100%; transition: width .3s; }
+
 footer { background: var(--dark); color: #555; text-align: center; padding: 18px 24px; font-size: 10px; letter-spacing: 1px; border-top: 2px solid var(--orange); }
 footer span { color: var(--orange); }
 body.has-portfolio { padding-bottom: 52px; }
@@ -936,7 +964,12 @@ async function renderFull(data) {
   const rawSum = data.market_summary;
   const gc = data.grading_company || grader;
 
-  const { filtered: sales, stats: filteredStats } = filterOutlierSales(rawSales);
+  const { filtered: salesUnsorted, stats: filteredStats } = filterOutlierSales(rawSales);
+  // Sort by date descending so sales[0] is always the most recent
+  const sales = salesUnsorted.sort((a, b) => {
+    const da = a.date || '', db = b.date || '';
+    return da < db ? 1 : da > db ? -1 : 0;
+  });
   window._allSales = sales;
   const sum = rawSum ? {
     ...rawSum,
@@ -952,6 +985,9 @@ async function renderFull(data) {
   const isCached = data._cached || false;
   const mktEfficiency = data.market_efficiency || {};
   const investment = data.investment || {};
+  const fairValue = data.fair_value || {};
+  const priceDist = data.price_distribution || {};
+  const timing = data.timing || {};
 
   // Store current card data for portfolio
   window._currentCard = {
@@ -1083,7 +1119,11 @@ async function renderFull(data) {
 
     <!-- MARKET INTELLIGENCE -->
     ${sum ? `<div class="sc au2">
-      <div class="sc-title">📈 Market Intelligence ${isCached ? '<span class="cached-badge">CACHED</span>' : ''} ${tempBadgeHTML(investment)}</div>
+      <div class="sc-title">📈 Market Intelligence ${isCached ? '<span class="cached-badge">CACHED</span>' : ''} ${tempBadgeHTML(investment)}
+        ${timing.signal && timing.signal !== 'hold' ? `<span class="fv-badge ${timing.signal.includes('buy') ? 'fv-under' : 'fv-over'}" style="margin-left:8px">${timing.signal.replace('_',' ').toUpperCase()}</span>` : ''}
+      </div>
+
+      <!-- Row 1: Core Metrics -->
       <div class="intel-row">
         <div class="intel-card">
           <div class="intel-card-lbl">Price Momentum</div>
@@ -1101,11 +1141,13 @@ async function renderFull(data) {
           <div class="intel-card-sub">${mktEfficiency.label || 'No data'}${mktEfficiency.volatility ? ' · ' + mktEfficiency.volatility + '% vol' : ''}</div>
         </div>
       </div>
+
+      <!-- Row 2: Value & Investment -->
       <div class="intel-row">
         <div class="intel-card">
-          <div class="intel-card-lbl">Sales Volume</div>
-          <div class="intel-card-val" style="color:var(--blue)">${(sum.total_sales_found || 0).toLocaleString()}</div>
-          <div class="intel-card-sub">${sum.sources?.join(' + ') || 'Multiple sources'}</div>
+          <div class="intel-card-lbl">Fair Value Estimate</div>
+          <div class="intel-card-val" style="color:var(--orange)">${fairValue.estimate ? fmtPrice(fairValue.estimate) : '—'}</div>
+          <div class="intel-card-sub">${fairValue.confidence ? fairValue.confidence + ' confidence' : '—'}${fairValue.vs_last_sale ? ' · Last sale ' + (fairValue.vs_last_sale > 0 ? '+' : '') + fairValue.vs_last_sale + '%' : ''}</div>
         </div>
         <div class="intel-card">
           <div class="intel-card-lbl">Value Rating</div>
@@ -1118,6 +1160,48 @@ async function renderFull(data) {
           <div class="intel-card-sub">${card.pop ? 'Pop ' + card.pop + ' × avg price' : '—'}</div>
         </div>
       </div>
+
+      <!-- Row 3: Volume + Spread + Timing -->
+      <div class="intel-row">
+        <div class="intel-card">
+          <div class="intel-card-lbl">Sales Volume</div>
+          <div class="intel-card-val" style="color:var(--blue)">${(sum.total_sales_found || 0).toLocaleString()}</div>
+          <div class="intel-card-sub">${sum.sources?.join(' + ') || 'Multiple sources'}</div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">Price Spread</div>
+          <div class="intel-card-val" style="color:${investment.spread_pct > 50 ? 'var(--red)' : investment.spread_pct > 25 ? 'var(--yellow)' : 'var(--green)'}">${investment.spread_pct ? investment.spread_pct + '%' : '—'}</div>
+          <div class="intel-card-sub">${sum.low_price && sum.high_price ? fmtPrice(sum.low_price) + ' – ' + fmtPrice(sum.high_price) : '—'}</div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">Timing Signal</div>
+          <div class="intel-card-val" style="font-size:16px;color:${timing.signal?.includes('buy') ? 'var(--green)' : timing.signal?.includes('sell') ? 'var(--red)' : 'var(--text-dim)'}">${(timing.signal || 'hold').replace('_', ' ').toUpperCase()}</div>
+          <div class="intel-card-sub">${timing.reason || '—'}</div>
+        </div>
+      </div>
+
+      <!-- Price Spread Visualization -->
+      ${sum.low_price && sum.high_price && sum.avg_price ? `<div style="padding:0 4px">
+        <div class="spread-bar">
+          <div class="spread-avg-marker" style="left:${Math.min(95, Math.max(5, ((sum.avg_price - sum.low_price) / (sum.high_price - sum.low_price)) * 100))}%" title="Avg: ${fmtPrice(sum.avg_price)}"></div>
+          ${fairValue.estimate ? `<div class="spread-marker" style="left:${Math.min(95, Math.max(5, ((fairValue.estimate - sum.low_price) / (sum.high_price - sum.low_price)) * 100))}%" title="Fair Value: ${fmtPrice(fairValue.estimate)}"></div>` : ''}
+        </div>
+        <div class="spread-labels"><span>${fmtPrice(sum.low_price)}</span><span>Fair Value: ${fairValue.estimate ? fmtPrice(fairValue.estimate) : '—'}</span><span>${fmtPrice(sum.high_price)}</span></div>
+      </div>` : ''}
+
+      <!-- Price Distribution -->
+      ${priceDist.buckets?.length > 1 ? `<div class="price-dist">
+        <div style="font-size:9px;color:var(--text-dim);margin-bottom:3px;font-family:'DM Mono',monospace">PRICE DISTRIBUTION</div>
+        <div class="price-dist-bar">
+          ${priceDist.buckets.map((b, i) => {
+            const colors = ['#10b981', '#34d399', '#fbbf24', '#f59e0b', '#f97316', '#ef4444'];
+            return `<div class="price-dist-seg" style="width:${b.pct}%;background:${colors[i % colors.length]}" title="${b.label}: ${b.count} sales (${b.pct}%)"></div>`;
+          }).join('')}
+        </div>
+        <div class="spread-labels">${priceDist.buckets.map(b => `<span>${b.count}</span>`).join('')}</div>
+      </div>` : ''}
+
+      <!-- ROI + Watchlist + Portfolio -->
       <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap">
         <div style="font-size:10px;color:var(--text-dim)">ROI Calculator:</div>
         <div class="roi-wrap">
@@ -1126,8 +1210,20 @@ async function renderFull(data) {
           <span class="roi-result" id="roiResult">—</span>
         </div>
         <div style="flex:1"></div>
-        <button class="pf-btn add" onclick="addToPortfolio(window._currentCard)">+ Add to Portfolio</button>
+        <button class="pf-btn" onclick="toggleWatchlist('${data.cert_number}','${gc}',${sum.avg_price || 0})" id="wlBtn">${isWatched(data.cert_number, gc) ? '★ Watching' : '☆ Watch'}</button>
+        <button class="pf-btn add" onclick="addToPortfolio(window._currentCard)">+ Portfolio</button>
       </div>
+      ${isWatched(data.cert_number, gc) ? `<div class="watchlist-bar">
+        <span class="wl-active">Price alert active</span>
+        <span style="font-size:10px;color:var(--text-dim)">Alert below</span>
+        <input class="wl-input" type="number" value="${getWatchPrice(data.cert_number, gc)}" onchange="updateWatchPrice('${data.cert_number}','${gc}',this.value)" placeholder="$0"/>
+        <button class="wl-btn remove" onclick="toggleWatchlist('${data.cert_number}','${gc}')">Remove</button>
+      </div>` : ''}
+
+      <!-- Active Listings Link -->
+      <a class="active-listings-link" href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent((card.subject || '') + ' ' + (card.year || '') + ' ' + (card.brand || '') + ' ' + gc + ' ' + (card.grade || ''))}&_sop=10" target="_blank">
+        🛍 View Active Listings on eBay
+      </a>
     </div>` : ''}
 
     <!-- GRADE COMPARISON -->
@@ -1667,6 +1763,46 @@ function renderPortfolioModal() {
 }
 
 updatePortfolioBar();
+
+// ═══════════════════════════════════════════════════
+// WATCHLIST / PRICE ALERTS (Card Ladder-style)
+// ═══════════════════════════════════════════════════
+const WL_KEY = 'slabiq_watchlist';
+let watchlist = JSON.parse(localStorage.getItem(WL_KEY) || '[]');
+
+function isWatched(cert, gc) {
+  return watchlist.some(w => w.cert === cert && w.gc === gc);
+}
+
+function getWatchPrice(cert, gc) {
+  const w = watchlist.find(w => w.cert === cert && w.gc === gc);
+  return w?.alertBelow || 0;
+}
+
+function toggleWatchlist(cert, gc, currentPrice) {
+  if (isWatched(cert, gc)) {
+    watchlist = watchlist.filter(w => !(w.cert === cert && w.gc === gc));
+  } else {
+    const card = window._currentCard || {};
+    watchlist.push({
+      cert, gc,
+      name: card.name || '',
+      grade: card.grade || '',
+      alertBelow: Math.round((currentPrice || 0) * 0.85),
+      currentPrice: currentPrice || 0,
+      addedAt: new Date().toISOString(),
+    });
+  }
+  localStorage.setItem(WL_KEY, JSON.stringify(watchlist));
+  const btn = document.getElementById('wlBtn');
+  if (btn) btn.textContent = isWatched(cert, gc) ? '★ Watching' : '☆ Watch';
+}
+
+function updateWatchPrice(cert, gc, price) {
+  const w = watchlist.find(w => w.cert === cert && w.gc === gc);
+  if (w) w.alertBelow = parseFloat(price) || 0;
+  localStorage.setItem(WL_KEY, JSON.stringify(watchlist));
+}
 
 // ═══════════════════════════════════════════════════
 // DEAL SCORE HELPERS

@@ -42,6 +42,7 @@ def build_card_identity(psa_cert: dict) -> dict:
     variety = psa_cert.get("variety", "")
     card_number = psa_cert.get("card_number", "")
     grade = psa_cert.get("grade", "10")
+    gc = psa_cert.get("grading_company", "PSA")
     parallel = _detect_parallel(variety, brand)
 
     return {
@@ -51,11 +52,12 @@ def build_card_identity(psa_cert: dict) -> dict:
         "variety": variety,
         "card_number": card_number,
         "grade": grade,
+        "grading_company": gc,
         "parallel": parallel,
         "query_short": f"{subject} {year} {card_number}".strip(),
         "query_full": f"{subject} {year} {brand} #{card_number} {variety}".strip(),
-        "query_graded": f"{subject} {year} {brand} {card_number} PSA {grade}".strip(),
-        "query_clean": f"{subject} {year} {brand} {card_number} PSA {grade}".strip(),
+        "query_graded": f"{subject} {year} {brand} {card_number} {gc} {grade}".strip(),
+        "query_clean": f"{subject} {year} {brand} {card_number} {gc} {grade}".strip(),
     }
 
 def _detect_parallel(variety: str, brand: str) -> dict:
