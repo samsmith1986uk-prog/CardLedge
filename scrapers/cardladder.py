@@ -84,18 +84,21 @@ def _parse_card(doc: dict) -> dict:
     """Parse a Firestore card document."""
     f = doc.get("fields", {})
 
-    # Extract recent daily sales (date -> {n: count, p: price})
+    # Extract ALL daily sales (date -> {n: count, p: price})
     ds_raw = _val(f.get("dailySales")) or {}
-    recent_sales = []
+    all_daily_sales = []
     if isinstance(ds_raw, dict):
-        for date_str, sale_data in sorted(ds_raw.items(), reverse=True)[:20]:
+        for date_str, sale_data in sorted(ds_raw.items(), reverse=True):
             if isinstance(sale_data, dict):
-                recent_sales.append({
-                    "date": date_str,
-                    "price": sale_data.get("p", 0),
-                    "count": sale_data.get("n", 0),
-                })
+                price = sale_data.get("p", 0)
+                if price and price > 0:
+                    all_daily_sales.append({
+                        "date": date_str,
+                        "price": price,
+                        "count": sale_data.get("n", 0),
+                    })
 
+    recent_sales = all_daily_sales[:20]
     current_value = recent_sales[0]["price"] if recent_sales else None
 
     return {
@@ -115,6 +118,8 @@ def _parse_card(doc: dict) -> dict:
         "slug": _val(f.get("slug")) or "",
         "current_value": current_value,
         "recent_sales": recent_sales[:10],
+        "all_sales": all_daily_sales,  # Full sales history for charting
+        "total_tracked_sales": len(all_daily_sales),
         "psa_spec_id": _val(f.get("psaSpecId")),
         "source": "Card Ladder",
     }

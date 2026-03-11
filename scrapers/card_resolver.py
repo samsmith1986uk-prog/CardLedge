@@ -19,8 +19,9 @@ import httpx
 import re
 import json
 import asyncio
-from typing import Optional
+from typing import Optional, List
 from urllib.parse import quote_plus
+from difflib import SequenceMatcher
 
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -183,6 +184,101 @@ async def resolve_card_image(identity: dict) -> str:
 
 
 # ─────────────────────────────────────────────
+# TITLE RELEVANCE FILTERING
+# ─────────────────────────────────────────────
+
+def _compute_title_relevance(title: str, identity: dict) -> float:
+    """Score how relevant a sale title is to the card identity (0.0-1.0).
+    Requires player name match + bonus for year/number/brand/grade."""
+    if not title or not identity.get("subject"):
+        return 0.0
+
+    title_upper = title.upper()
+    subject = identity.get("subject", "").upper()
+
+    # Check player name: all name words must appear in title
+    name_words = [w for w in subject.split() if len(w) > 1]
+    if not name_words:
+        return 0.0
+
+    # At least the last name (last word OR longest word) must appear in title
+    last_word = name_words[-1] if name_words else ""
+    longest_word = max(name_words, key=len) if name_words else ""
+    if last_word not in title_upper and longest_word not in title_upper:
+        return 0.0
+
+    # Score: how many name words match
+    name_hits = sum(1 for w in name_words if w in title_upper)
+    name_score = name_hits / len(name_words)  # 0.0-1.0
+
+    # If less than half the name matches, reject
+    if name_score < 0.5:
+        return 0.0
+
+    # Bonus points for other card details matching
+    bonus = 0.0
+    year = identity.get("year", "")
+    if year and year[:4] in title:
+        bonus += 0.15
+
+    card_number = identity.get("card_number", "")
+    if card_number:
+        # Match #123 or just 123 in title
+        cn_clean = card_number.strip("#").strip()
+        if cn_clean and (f"#{cn_clean}" in title or f"#{cn_clean} " in title or f" {cn_clean} " in title):
+            bonus += 0.15
+
+    brand = identity.get("brand", "").upper()
+    if brand:
+        brand_words = [w for w in brand.split() if len(w) > 2]
+        brand_hits = sum(1 for w in brand_words if w in title_upper)
+        if brand_words:
+            bonus += 0.1 * min(1.0, brand_hits / max(1, len(brand_words)))
+
+    gc = identity.get("grading_company", "").upper()
+    if gc and gc in title_upper:
+        bonus += 0.1
+
+    grade = identity.get("grade", "")
+    if grade and gc:
+        # Match "PSA 10" or "BGS 8.5" pattern
+        grade_pattern = f"{gc}\\s*{re.escape(grade)}"
+        if re.search(grade_pattern, title_upper):
+            bonus += 0.1
+
+    return min(1.0, name_score * 0.5 + bonus + 0.3)  # base 0.3 for having name match
+
+
+def filter_relevant_sales(sales: List[dict], identity: dict, threshold: float = 0.55) -> List[dict]:
+    """Filter sales to only include those relevant to the card identity."""
+    if not identity.get("subject"):
+        return sales
+
+    filtered = []
+    for sale in sales:
+        title = sale.get("title", "")
+        score = _compute_title_relevance(title, identity)
+        if score >= threshold:
+            sale["relevance_score"] = round(score, 2)
+            filtered.append(sale)
+        else:
+            print(f"[filter] Rejected (score={score:.2f}): {title[:80]}")
+
+    if not filtered and sales:
+        # If we filtered everything out, keep the best matches
+        scored = [(s, _compute_title_relevance(s.get("title", ""), identity)) for s in sales]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        # Keep top 5 even if below threshold
+        for s, score in scored[:5]:
+            s["relevance_score"] = round(score, 2)
+            filtered.append(s)
+        print(f"[filter] All below threshold, kept top {len(filtered)}")
+
+    print(f"[filter] Kept {len(filtered)}/{len(sales)} sales (threshold={threshold})")
+    return filtered
+
+
+# ─────────────────────────────────────────────
 # SALES DATA
 # ─────────────────────────────────────────────
 
@@ -207,6 +303,9 @@ async def resolve_sales_data(identity: dict) -> dict:
             print(f"[sales/{name}] {len(result)} sales found")
         else:
             print(f"[sales/{name}] 0 results")
+
+    # Filter irrelevant sales (wrong player, wrong card)
+    all_sales = filter_relevant_sales(all_sales, identity)
 
     all_sales.sort(key=lambda x: x.get("date", ""), reverse=True)
 
@@ -388,4 +487,5 @@ async def resolve_card(psa_cert: dict) -> dict:
         "sales": sales_data["sales"],
         "stats": sales_data["stats"],
         "sources_hit": sales_data["sources_hit"],
+        "card_identity": identity,  # Expose identity for frontend link building
     }

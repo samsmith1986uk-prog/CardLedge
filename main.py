@@ -108,6 +108,10 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
     if resolved.get("image_url") and result["card_details"]:
         result["card_details"]["image_url"] = resolved["image_url"]
 
+    # Pass card identity to frontend for building correct external links
+    if resolved.get("card_identity"):
+        result["card_identity"] = resolved["card_identity"]
+
     all_sales = resolved.get("sales", [])
     result["sales_data"] = all_sales
 
@@ -194,6 +198,11 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
                 result["player_index"] = cl_player
             if isinstance(cl_card, dict):
                 result["cardladder_match"] = cl_card
+                # Include Card Ladder's full sales history for charting
+                cl_sales = cl_card.get("all_sales", [])
+                if cl_sales:
+                    result["cardladder_sales"] = cl_sales[:100]  # Up to 100 data points
+                    print(f"[cardladder] {len(cl_sales)} sales history points for chart")
     except Exception as e:
         print(f"[analytics] cardladder error: {e}")
 

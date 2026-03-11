@@ -271,8 +271,25 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .cached-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); padding: 2px 7px; border-radius: 4px; font-size: 8px; font-weight: 700; letter-spacing: 1px; font-family: 'DM Mono', monospace; margin-left: 6px; }
 
 /* Chart */
-.chart-area { width: 100%; height: 100px; }
+.chart-area { width: 100%; height: 220px; position: relative; }
 .chart-area svg { width: 100%; height: 100%; overflow: visible; }
+.chart-tooltip {
+  position: absolute; pointer-events: none; z-index: 50;
+  background: var(--dark); color: #fff; padding: 8px 12px; border-radius: 8px;
+  font-size: 11px; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  transform: translate(-50%, -110%); opacity: 0; transition: opacity .15s;
+  border: 1px solid var(--dark3);
+}
+.chart-tooltip.show { opacity: 1; }
+.chart-tooltip .ct-price { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; color: var(--orange); }
+.chart-tooltip .ct-date { font-size: 9px; color: #999; margin-top: 2px; }
+.chart-tooltip .ct-src { font-size: 8px; color: #666; margin-top: 1px; }
+.chart-legend { display: flex; gap: 14px; align-items: center; margin-top: 8px; }
+.chart-legend-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--text-dim); }
+.chart-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.chart-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.chart-tab { padding: 3px 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); font-size: 10px; font-weight: 600; color: var(--text-dim); cursor: pointer; transition: all .15s; }
+.chart-tab.active { background: var(--orange); color: #fff; border-color: var(--orange); }
 
 /* External links */
 .ext-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -1058,6 +1075,7 @@ async function renderFull(data) {
   const timing = data.timing || {};
   const playerIndex = data.player_index || null;
   const clMatch = data.cardladder_match || null;
+  const clSales = data.cardladder_sales || [];
 
   // Store current card data for portfolio
   window._currentCard = {
@@ -1073,15 +1091,37 @@ async function renderFull(data) {
   // Grade comparison from sales data
   const gradeComps = extractGradeComps(rawSales);
 
-  const q = encodeURIComponent(`${card.subject || ''} ${card.year || ''} ${gc} ${card.grade || ''}`);
+  // Build precise search queries from card identity
+  const ci = data.card_identity || {};
+  const subject = card.subject || '';
+  const cardYear = card.year || '';
+  const cardBrand = card.brand || '';
+  const cardNum = card.card_number || '';
+  const cardGrade = card.grade || '';
+
+  // eBay: player + year + brand + card# + grading company + grade
+  const ebayTerms = [subject, cardYear, cardBrand, cardNum ? '#' + cardNum : '', gc, cardGrade].filter(Boolean).join(' ');
+  const ebayQ = encodeURIComponent(ebayTerms);
+
+  // PSA auction prices: player + year + brand
+  const psaTerms = [subject, cardYear, cardBrand].filter(Boolean).join(' ');
+  const psaQ = encodeURIComponent(psaTerms);
+
+  // Goldin: player + year + brand + card#
+  const goldinTerms = [subject, cardYear, cardBrand, cardNum ? '#' + cardNum : ''].filter(Boolean).join(' ');
+  const goldinQ = encodeURIComponent(goldinTerms);
+
+  // 130point: player + year + brand + card# + gc + grade
+  const pt130Terms = [subject, cardYear, cardBrand, cardNum, gc, cardGrade].filter(Boolean).join(' ');
+  const pt130Q = encodeURIComponent(pt130Terms);
 
   const ext = [
-    { href: `https://www.psacard.com/auctionprices/`, icon: '🔵', name: 'PSA Auctions', desc: 'Historic auction prices', c: '#003087' },
-    { href: `https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, icon: '🛒', name: 'eBay Sold', desc: 'Live sold comps', c: '#e53238' },
-    { href: `https://goldin.co/browse/all?q=${q}`, icon: '🏆', name: 'Goldin', desc: 'Auction results', c: '#b8922a' },
-    { href: `https://130point.com/sales/?s=${q}`, icon: '📊', name: '130point', desc: 'Multi-source comps', c: '#3355aa' },
-    { href: `https://www.tcdb.com/Search.cfm/search/${encodeURIComponent(card.subject || '')}`, icon: '📋', name: 'TCDB', desc: 'Set checklists', c: '#16a34a' },
-    { href: `https://www.pricecharting.com/search-products?q=${q}`, icon: '💹', name: 'PriceCharting', desc: 'Grade pricing', c: '#7c3aed' },
+    { href: `https://www.psacard.com/auctionprices/search?q=${psaQ}`, icon: '🔵', name: 'PSA Auctions', desc: 'Historic auction prices', c: '#003087' },
+    { href: `https://www.ebay.com/sch/i.html?_nkw=${ebayQ}&LH_Sold=1&LH_Complete=1`, icon: '🛒', name: 'eBay Sold', desc: 'Live sold comps', c: '#e53238' },
+    { href: `https://goldin.co/search?term=${goldinQ}`, icon: '🏆', name: 'Goldin', desc: 'Auction results', c: '#b8922a' },
+    { href: `https://130point.com/sales/?search=${pt130Q}`, icon: '📊', name: '130point', desc: 'Multi-source comps', c: '#3355aa' },
+    { href: `https://www.tcdb.com/Search.cfm/search/${encodeURIComponent(subject)}`, icon: '📋', name: 'TCDB', desc: 'Set checklists', c: '#16a34a' },
+    { href: `https://www.ebay.com/sch/i.html?_nkw=${ebayQ}&_sop=10`, icon: '🛍', name: 'eBay Active', desc: 'Buy now listings', c: '#0654ba' },
   ];
 
   // Build grade comparison table
@@ -1334,7 +1374,7 @@ async function renderFull(data) {
       </div>` : ''}
 
       <!-- Active Listings Link -->
-      <a class="active-listings-link" href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent((card.subject || '') + ' ' + (card.year || '') + ' ' + (card.brand || '') + ' ' + gc + ' ' + (card.grade || ''))}&_sop=10" target="_blank">
+      <a class="active-listings-link" href="https://www.ebay.com/sch/i.html?_nkw=${ebayQ}&_sop=10" target="_blank">
         🛍 View Active Listings on eBay
       </a>
     </div>` : ''}
@@ -1398,12 +1438,41 @@ async function renderFull(data) {
     ${sum ? `
     <div class="sc au3">
       <div class="sc-title">📈 Price History & Trend</div>
-      <div class="chart-area">${buildChart(sales)}</div>
-      <div style="display:flex;justify-content:space-between;margin-top:4px">
-        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-faint)">${fmtDate(sales[sales.length - 1]?.date) || ''}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-faint)">${fmtDate(sales[0]?.date) || ''}</span>
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="switchChartSource('comps', this)">Sold Comps</button>
+        ${data.cardladder_sales?.length ? `<button class="chart-tab" onclick="switchChartSource('cardladder', this)">Card Ladder (${data.cardladder_sales.length})</button>` : ''}
+        ${data.cardladder_sales?.length ? `<button class="chart-tab" onclick="switchChartSource('combined', this)">Combined</button>` : ''}
+      </div>
+      <div class="chart-area" id="chartArea"></div>
+      <div class="chart-legend">
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#ff6200"></div>Sale Price</div>
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--text-dim);opacity:.5"></div>Trend Line</div>
+        ${data.cardladder_sales?.length ? `<div class="chart-legend-item"><div class="chart-legend-dot" style="background:#3b82f6"></div>Card Ladder</div>` : ''}
       </div>
     </div>
+
+    <!-- CARD LADDER PRICING (if available) -->
+    ${data.cardladder_sales?.length > 5 ? `
+    <div class="sc au3">
+      <div class="sc-title">📊 Card Ladder Pricing History <span style="font-size:9px;color:var(--text-faint);font-weight:400">${data.cardladder_sales.length} data points</span></div>
+      <div class="intel-row">
+        <div class="intel-card">
+          <div class="intel-card-lbl">CL Current Value</div>
+          <div class="intel-card-val" style="color:var(--orange)">${clMatch?.current_value ? fmtPrice(clMatch.current_value) : '—'}</div>
+          <div class="intel-card-sub">${clMatch?.label || '—'}</div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">CL Sales Tracked</div>
+          <div class="intel-card-val" style="color:var(--blue)">${clMatch?.total_tracked_sales || data.cardladder_sales.length}</div>
+          <div class="intel-card-sub">via Card Ladder Firestore</div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">CL Population</div>
+          <div class="intel-card-val" style="color:var(--text)">${clMatch?.pop || '—'}</div>
+          <div class="intel-card-sub">${clMatch?.condition || ''} ${clMatch?.grading_company || ''}</div>
+        </div>
+      </div>
+    </div>` : ''}
 
     <!-- RECENT SALES -->
     <div class="sc au3">
@@ -1437,6 +1506,23 @@ async function renderFull(data) {
       </div>
     </div>
   `;
+
+  // Store chart data globally for tab switching
+  window._chartData = {
+    comps: sales,
+    cardladder: (data.cardladder_sales || []).map(s => ({
+      price: s.price, date: s.date, source: 'Card Ladder', count: s.count
+    })),
+    combined: [
+      ...sales.map(s => ({ price: s.price, date: s.date, source: s.source || 'Comps' })),
+      ...(data.cardladder_sales || []).map(s => ({ price: s.price, date: s.date, source: 'Card Ladder' })),
+    ].sort((a, b) => (a.date || '').localeCompare(b.date || '')),
+  };
+
+  // Initial chart render
+  if (document.getElementById('chartArea') && sales.length >= 2) {
+    renderInteractiveChart('comps');
+  }
 
   // Also try to fetch grade comparison from backend
   if (card.subject) {
@@ -1694,52 +1780,195 @@ function renderAnalystFallback(card, rarityScore, printRun, parallelTier, avgPri
   `;
 }
 
-// ── CHART WITH TREND LINE ──
-function buildChart(sales) {
-  const v = sales.filter(s => s.price).slice().reverse();
-  if (v.length < 2) return '<div style="text-align:center;color:var(--text-faint);font-size:11px;padding:24px 0">Not enough data for chart</div>';
+// ── INTERACTIVE CHART ──
+function switchChartSource(source, btn) {
+  document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderInteractiveChart(source);
+}
+
+function renderInteractiveChart(source) {
+  const container = document.getElementById('chartArea');
+  if (!container) return;
+
+  const rawData = window._chartData?.[source] || [];
+  const v = rawData.filter(s => s.price && s.price > 0 && s.date).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  if (v.length < 2) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-faint);font-size:11px;padding:60px 0">Not enough data for chart</div>';
+    return;
+  }
+
   const px = v.map(s => s.price);
   const mx = Math.max(...px), mn = Math.min(...px);
-  const W = 100, H = 100;
-  const pts = v.map((s, i) => [(i / (v.length - 1)) * W, H - ((s.price - mn) / (mx - mn || 1)) * (H - 12) - 6]);
-  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ');
-  const area = `${path} L${W} ${H} L0 ${H}Z`;
+  const range = mx - mn || 1;
 
-  // Linear regression for trend line
+  // Chart dimensions
+  const W = 600, H = 200;
+  const padL = 60, padR = 20, padT = 20, padB = 35;
+  const cW = W - padL - padR, cH = H - padT - padB;
+
+  // Map data to chart coordinates
+  const pts = v.map((s, i) => ({
+    x: padL + (i / (v.length - 1)) * cW,
+    y: padT + cH - ((s.price - mn) / range) * cH,
+    price: s.price,
+    date: s.date,
+    source: s.source || '',
+    count: s.count || 1,
+  }));
+
+  // Smooth bezier curve
+  function bezierPath(points) {
+    if (points.length < 2) return '';
+    let d = `M${points[0].x},${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const p0 = points[Math.max(0, i - 1)];
+      const p1 = points[i];
+      const tension = 0.3;
+      const cpx1 = p0.x + (p1.x - points[Math.max(0, i - 2)].x) * tension;
+      const cpy1 = p0.y + (p1.y - points[Math.max(0, i - 2)].y) * tension;
+      const cpx2 = p1.x - (points[Math.min(points.length - 1, i + 1)].x - p0.x) * tension;
+      const cpy2 = p1.y - (points[Math.min(points.length - 1, i + 1)].y - p0.y) * tension;
+      d += ` C${cpx1},${cpy1} ${cpx2},${cpy2} ${p1.x},${p1.y}`;
+    }
+    return d;
+  }
+
+  const curvePath = bezierPath(pts);
+  const areaPath = curvePath + ` L${pts[pts.length - 1].x},${padT + cH} L${pts[0].x},${padT + cH} Z`;
+
+  // Y-axis labels (5 ticks)
+  const yTicks = 5;
+  let yLabels = '';
+  let gridLines = '';
+  for (let i = 0; i <= yTicks; i++) {
+    const val = mn + (range * i / yTicks);
+    const y = padT + cH - (i / yTicks) * cH;
+    yLabels += `<text x="${padL - 8}" y="${y + 3}" text-anchor="end" font-size="9" font-family="DM Mono,monospace" fill="#999">${fmtPrice(val)}</text>`;
+    gridLines += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#ede9e3" stroke-width="0.5"/>`;
+  }
+
+  // X-axis labels (show ~5-7 dates evenly)
+  const xCount = Math.min(7, v.length);
+  let xLabels = '';
+  for (let i = 0; i < xCount; i++) {
+    const idx = Math.round(i * (v.length - 1) / (xCount - 1));
+    const pt = pts[idx];
+    if (pt) {
+      const d = new Date(v[idx].date);
+      const label = !isNaN(d.getTime()) ?
+        d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
+        v[idx].date.slice(0, 10);
+      xLabels += `<text x="${pt.x}" y="${padT + cH + 18}" text-anchor="middle" font-size="9" font-family="DM Mono,monospace" fill="#999">${label}</text>`;
+    }
+  }
+
+  // Linear regression for trend
   const n = pts.length;
   let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
   for (let i = 0; i < n; i++) {
-    sumX += pts[i][0];
-    sumY += pts[i][1];
-    sumXY += pts[i][0] * pts[i][1];
-    sumX2 += pts[i][0] * pts[i][0];
+    sumX += pts[i].x; sumY += pts[i].y;
+    sumXY += pts[i].x * pts[i].y; sumX2 += pts[i].x * pts[i].x;
   }
   const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
   const intercept = (sumY - slope * sumX) / n;
-  const trendY1 = intercept;
-  const trendY2 = slope * W + intercept;
-  const trendColor = slope < 0 ? '#1a8c45' : slope > 0 ? '#cc2200' : '#888'; // negative slope = prices going up (y-axis inverted)
+  const trendY1 = slope * padL + intercept;
+  const trendY2 = slope * (W - padR) + intercept;
+  const trendColor = slope > 0 ? '#cc2200' : slope < 0 ? '#1a8c45' : '#888';
 
+  // Determine dot colors by source
+  function dotColor(src) {
+    if (!src) return '#ff6200';
+    const s = src.toLowerCase();
+    if (s.includes('card ladder')) return '#3b82f6';
+    if (s.includes('ebay')) return '#e53238';
+    if (s.includes('goldin')) return '#b8922a';
+    if (s.includes('130point') || s.includes('130')) return '#3355aa';
+    return '#ff6200';
+  }
+
+  // High/low markers
   const mxIdx = px.indexOf(mx), mnIdx = px.indexOf(mn);
   const mxPt = pts[mxIdx], mnPt = pts[mnIdx];
 
-  return `<svg viewBox="-8 -8 ${W+16} ${H+12}" preserveAspectRatio="none">
+  // Build SVG
+  const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">
     <defs>
-      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#ff6200" stop-opacity="0.18"/>
-        <stop offset="100%" stop-color="#ff6200" stop-opacity="0"/>
+      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ff6200" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="#ff6200" stop-opacity="0.01"/>
       </linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feComposite in="SourceGraphic" in2="blur"/></filter>
     </defs>
-    <path d="${area}" fill="url(#cg)"/>
-    <path d="${path}" fill="none" stroke="#ff6200" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+
+    <!-- Grid -->
+    ${gridLines}
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + cH}" stroke="#ede9e3" stroke-width="0.5"/>
+
+    <!-- Area fill -->
+    <path d="${areaPath}" fill="url(#chartGrad)"/>
+
+    <!-- Main curve -->
+    <path d="${curvePath}" fill="none" stroke="#ff6200" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+
     <!-- Trend line -->
-    <line x1="0" y1="${trendY1}" x2="${W}" y2="${trendY2}" stroke="${trendColor}" stroke-width="1" stroke-dasharray="3,2" opacity="0.7"/>
-    ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2.2" fill="#ff6200" stroke="white" stroke-width="0.8"/>`).join('')}
-    <text x="${mxPt[0]}" y="${mxPt[1] - 5}" text-anchor="middle" font-size="5" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#1a8c45">${fmtPrice(mx)}</text>
-    <text x="${mnPt[0]}" y="${mnPt[1] + 8}" text-anchor="middle" font-size="5" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#cc2200">${fmtPrice(mn)}</text>
-    <!-- Trend label -->
-    <text x="${W - 2}" y="${trendY2 - 3}" text-anchor="end" font-size="4" font-family="DM Mono,monospace" fill="${trendColor}" opacity="0.8">TREND</text>
-  </svg>`;
+    <line x1="${padL}" y1="${trendY1}" x2="${W - padR}" y2="${trendY2}" stroke="${trendColor}" stroke-width="1.2" stroke-dasharray="6,4" opacity="0.5"/>
+    <text x="${W - padR - 2}" y="${Math.max(padT + 10, Math.min(padT + cH - 5, trendY2 - 6))}" text-anchor="end" font-size="8" font-family="DM Mono,monospace" fill="${trendColor}" opacity="0.7">TREND</text>
+
+    <!-- Axes labels -->
+    ${yLabels}
+    ${xLabels}
+
+    <!-- Data points -->
+    ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${dotColor(p.source)}" stroke="white" stroke-width="1.2" style="cursor:pointer" data-idx="${i}"/>`).join('')}
+
+    <!-- High/Low markers -->
+    <text x="${mxPt.x}" y="${Math.max(padT + 8, mxPt.y - 8)}" text-anchor="middle" font-size="10" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#1a8c45">${fmtPrice(mx)}</text>
+    <text x="${mnPt.x}" y="${Math.min(padT + cH - 2, mnPt.y + 14)}" text-anchor="middle" font-size="10" font-family="Barlow Condensed,sans-serif" font-weight="700" fill="#cc2200">${fmtPrice(mn)}</text>
+
+    <!-- Invisible hit areas for hover -->
+    ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="12" fill="transparent" style="cursor:pointer"
+      onmouseenter="showChartTooltip(${i}, evt)"
+      onmouseleave="hideChartTooltip()"/>`).join('')}
+  </svg>
+  <div class="chart-tooltip" id="chartTooltip">
+    <div class="ct-price" id="ctPrice"></div>
+    <div class="ct-date" id="ctDate"></div>
+    <div class="ct-src" id="ctSrc"></div>
+  </div>`;
+
+  container.innerHTML = svg;
+  window._chartPts = pts;
+}
+
+function showChartTooltip(idx, evt) {
+  const pt = window._chartPts?.[idx];
+  if (!pt) return;
+  const tip = document.getElementById('chartTooltip');
+  const area = document.getElementById('chartArea');
+  if (!tip || !area) return;
+
+  document.getElementById('ctPrice').textContent = fmtPrice(pt.price);
+  document.getElementById('ctDate').textContent = fmtDate(pt.date);
+  document.getElementById('ctSrc').textContent = pt.source || '';
+
+  // Position tooltip
+  const rect = area.getBoundingClientRect();
+  const svgRect = area.querySelector('svg').getBoundingClientRect();
+  const scaleX = svgRect.width / 600;
+  const scaleY = svgRect.height / 200;
+  const tipX = svgRect.left - rect.left + pt.x * scaleX;
+  const tipY = svgRect.top - rect.top + pt.y * scaleY;
+
+  tip.style.left = tipX + 'px';
+  tip.style.top = tipY + 'px';
+  tip.classList.add('show');
+}
+
+function hideChartTooltip() {
+  const tip = document.getElementById('chartTooltip');
+  if (tip) tip.classList.remove('show');
 }
 
 // ── Show More Sales ──
