@@ -159,108 +159,8 @@ async def _playwright_extract_ebay(url: str) -> list:
 
 
 # ─────────────────────────────────────────────
-# IMAGE RESOLUTION (Collectors tRPC API)
+# IMAGE RESOLUTION
 # ─────────────────────────────────────────────
-
-# Cached Playwright page for Collectors session
-_collectors_page = None
-_collectors_lock = asyncio.Lock()
-
-
-async def _get_collectors_page():
-    """Login to Collectors app once and return a cached page for API calls."""
-    global _collectors_page
-    if _collectors_page is not None:
-        try:
-            await _collectors_page.evaluate("1+1")
-            return _collectors_page
-        except Exception:
-            _collectors_page = None
-
-    import os
-    email = os.getenv("PSA_EMAIL", "")
-    password = os.getenv("PSA_PASSWORD", "")
-    if not email or not password:
-        print("[collectors] No PSA_EMAIL/PSA_PASSWORD in env")
-        return None
-
-    try:
-        from playwright.async_api import async_playwright
-        pw = await async_playwright().start()
-        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
-        ctx = await browser.new_context(
-            user_agent=BROWSER_HEADERS["User-Agent"],
-            viewport={"width": 1440, "height": 900}
-        )
-        page = await ctx.new_page()
-
-        await page.goto("https://app.collectors.com/signin", wait_until="networkidle", timeout=30000)
-        await page.wait_for_timeout(2000)
-        try:
-            await page.locator(".osano-cm-dialog__close").click(timeout=3000)
-            await page.wait_for_timeout(500)
-        except Exception:
-            pass
-
-        await page.locator('input[type="email"], input[name="email"]').first.fill(email)
-        await page.wait_for_timeout(500)
-        await page.locator('button:has-text("Continue")').first.click(timeout=10000)
-        await page.wait_for_timeout(3000)
-        await page.locator('input[type="password"]').first.fill(password)
-        await page.wait_for_timeout(500)
-        await page.evaluate(
-            "document.querySelectorAll('button').forEach(b => { if(b.textContent.trim()==='Verify') b.click() })"
-        )
-        await page.wait_for_timeout(8000)
-
-        if "collection" in page.url:
-            print(f"[collectors] Logged in: {page.url}")
-            _collectors_page = page
-            return page
-        else:
-            print(f"[collectors] Login may have failed, URL: {page.url}")
-            await browser.close()
-            return None
-    except Exception as e:
-        print(f"[collectors] Login error: {e}")
-        return None
-
-
-async def _fetch_collectors_image(cert: str) -> dict:
-    """Get card front/back images via Collectors tRPC API."""
-    async with _collectors_lock:
-        page = await _get_collectors_page()
-    if not page:
-        return {}
-
-    try:
-        hex_input = json.dumps({"certNumber": cert}).encode().hex()
-        result = await page.evaluate(f"""async () => {{
-            try {{
-                const resp = await fetch(
-                    '/collection/api/trpc/search.getCertDetails?batch=1&input={{"0":"{hex_input}"}}',
-                    {{credentials: 'include'}}
-                );
-                if (!resp.ok) return null;
-                return await resp.json();
-            }} catch(e) {{ return null; }}
-        }}""")
-
-        if result and isinstance(result, list) and len(result) > 0:
-            data = result[0].get("result", {}).get("data", {}).get("json", {})
-            front = data.get("frontImageUrl", "")
-            back = data.get("backImageUrl", "")
-            if front:
-                front = front.replace("/small/", "/medium/").replace("/thumbnail/", "/medium/")
-            if back:
-                back = back.replace("/small/", "/medium/").replace("/thumbnail/", "/medium/")
-            return {"front": front, "back": back}
-    except Exception as e:
-        print(f"[collectors] API error for cert {cert}: {e}")
-        global _collectors_page
-        _collectors_page = None
-    return {}
-
 
 async def resolve_card_image(identity: dict) -> dict:
     """Get card image: Collectors API (PSA) > eBay sold listing.
@@ -268,10 +168,12 @@ async def resolve_card_image(identity: dict) -> dict:
     cert = identity.get("cert_number", "")
     gc = identity.get("grading_company", "").upper()
 
-    # 1. Collectors tRPC API — returns real PSA CloudFront images (front + back)
+    # 1. Collectors tRPC API — real PSA CloudFront images (front + back)
+    #    Uses httpx with stored cookies (production) or Playwright fallback (local)
     if gc == "PSA" and cert:
         try:
-            imgs = await _fetch_collectors_image(cert)
+            from scrapers.collectors_image import fetch_cert_images
+            imgs = await fetch_cert_images(cert)
             if imgs.get("front"):
                 print(f"[image/collectors] Found: {imgs['front'][:80]}")
                 return imgs
