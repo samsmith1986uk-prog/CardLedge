@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: slabiq
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    envVars:
+      - key: PSA_API_TOKEN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PORT
+        value: 8000
