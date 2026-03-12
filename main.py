@@ -33,15 +33,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── STATIC FILES & ROOT ──
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+# ── FRONTEND ──
+from fastapi.responses import HTMLResponse
+import pathlib
 
-@app.get("/")
+_INDEX_HTML = (pathlib.Path(__file__).parent / "static" / "index.html").read_text()
+
+@app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
-    return FileResponse("static/index.html")
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
+    return _INDEX_HTML
 
 # ── IN-MEMORY CACHE (1 hour TTL) ──
 _cache = {}
