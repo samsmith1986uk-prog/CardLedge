@@ -35,9 +35,14 @@ app.add_middleware(
 
 # ── FRONTEND ──
 from fastapi.responses import HTMLResponse
-import pathlib
+import pathlib, os
 
-_INDEX_HTML = (pathlib.Path(__file__).parent / "static" / "index.html").read_text()
+_STATIC_DIR = pathlib.Path(__file__).parent / "static"
+_INDEX_PATH = _STATIC_DIR / "index.html"
+if not _INDEX_PATH.exists():
+    # Fallback: try relative to cwd
+    _INDEX_PATH = pathlib.Path("static/index.html")
+_INDEX_HTML = _INDEX_PATH.read_text() if _INDEX_PATH.exists() else "<html><body><h1>SlabIQ</h1><p>Frontend not found. Check deployment.</p></body></html>"
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
@@ -891,7 +896,7 @@ async def cache_clear():
 # ── HEALTH ──
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "8.0.0", "cache_entries": len(_cache)}
+    return {"status": "ok", "version": "9.0.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
 
 
 # ── AI ANALYST PROXY ──

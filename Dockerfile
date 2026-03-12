@@ -25,4 +25,4 @@ COPY . .
 RUN python -c "from main import app; print('SlabIQ app OK')"
 
 # Render sets PORT env var
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-10000}"]
+CMD ["sh", "-c", "echo 'Starting SlabIQ on port ${PORT:-10000}...' && python -c 'from main import app; print(\"Import OK\")' && uvicorn main:app --host 0.0.0.0 --port ${PORT:-10000} --log-level info"]
