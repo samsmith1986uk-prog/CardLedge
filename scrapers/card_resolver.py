@@ -226,14 +226,14 @@ async def _fetch_psa_cert_image(cert: str) -> str:
             )
             if resp.status_code != 200:
                 return ""
-            # PSA hosts card images on CloudFront - get the first front image
+            # PSA hosts card images on CloudFront - get the first front image (medium quality)
             imgs = re.findall(
                 r'https://d1htnxwo4o0jhw\.cloudfront\.net/cert/\d+/small/[^"<>\s\\]+\.jpg',
                 resp.text
             )
             if imgs:
-                # First image is typically the front of the card
-                return imgs[0]
+                # Use medium size for better quality display
+                return imgs[0].replace("/small/", "/medium/")
             # Fallback: any cloudfront cert image
             imgs = re.findall(
                 r'https://d1htnxwo4o0jhw\.cloudfront\.net/cert/[^"<>\s\\]+\.jpg',
@@ -345,6 +345,33 @@ def filter_relevant_sales(sales: List[dict], identity: dict, threshold: float = 
 # SALES DATA
 # ─────────────────────────────────────────────
 
+def _parse_date_for_sort(date_str: str) -> str:
+    """Parse various date formats into ISO format for correct sorting."""
+    if not date_str:
+        return ""
+    from datetime import datetime
+    for fmt in [
+        "%a %d %b %Y %H:%M:%S %Z",  # "Tue 28 Jan 2025 02:22:00 GMT"
+        "%a %d %b %Y",                # "Tue 28 Jan 2025"
+        "%b %d, %Y",                  # "Jan 28, 2025"
+        "%m/%d/%Y",                    # "01/28/2025"
+        "%Y-%m-%d",                    # "2025-01-28"
+        "%d %b %Y",                    # "28 Jan 2025"
+    ]:
+        try:
+            return datetime.strptime(date_str.strip(), fmt).strftime("%Y-%m-%d")
+        except (ValueError, TypeError):
+            continue
+    # Try to extract any 4-digit year + month pattern
+    m = re.search(r'(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+(\d{4})', date_str, re.IGNORECASE)
+    if m:
+        try:
+            return datetime.strptime(f"{m.group(1)} {m.group(2)} {m.group(3)}", "%d %b %Y").strftime("%Y-%m-%d")
+        except (ValueError, TypeError):
+            pass
+    return date_str  # fallback to original string
+
+
 async def resolve_sales_data(identity: dict) -> dict:
     tasks = [
         _sales_from_130point(identity),
@@ -370,7 +397,7 @@ async def resolve_sales_data(identity: dict) -> dict:
     # Filter irrelevant sales (wrong player, wrong card)
     all_sales = filter_relevant_sales(all_sales, identity)
 
-    all_sales.sort(key=lambda x: x.get("date", ""), reverse=True)
+    all_sales.sort(key=lambda x: _parse_date_for_sort(x.get("date", "")), reverse=True)
 
     prices = [s["price"] for s in all_sales if s.get("price") and s["price"] > 5]
     stats = {}

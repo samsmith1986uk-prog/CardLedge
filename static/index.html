@@ -299,6 +299,13 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .ext-name { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
 .ext-desc { font-size: 9px; color: var(--text-dim); margin-top: 1px; }
 
+/* ── COLLAPSIBLE SECTIONS ── */
+.sc-collapse { cursor: pointer; user-select: none; }
+.sc-collapse::after { content: ''; display: inline-block; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--text-dim); margin-left: 8px; transition: transform .2s; vertical-align: middle; }
+.sc-collapse.collapsed::after { transform: rotate(-90deg); }
+.sc-body { transition: max-height .3s ease, opacity .2s ease; overflow: hidden; }
+.sc-body.hidden { max-height: 0 !important; opacity: 0; padding: 0 !important; margin: 0 !important; }
+
 /* ── EMPTY ── */
 .empty { text-align: center; padding: 56px 24px; }
 .empty-icon { width: 68px; height: 68px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
@@ -970,6 +977,11 @@ function renderTerm(lines, activeIdx) {
 }
 
 // ── HELPERS ──
+function toggleSection(titleEl) {
+  titleEl.classList.toggle('collapsed');
+  const body = titleEl.nextElementSibling;
+  if (body) body.classList.toggle('hidden');
+}
 function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function cleanTitle(t) {
   if (!t) return '';
@@ -1157,9 +1169,13 @@ async function renderFull(data) {
     </div>`;
   }
 
+  // ── Compute last sale ──
+  const lastSalePrice = sales.length ? sales[0].price : (sum?.last_sale_price || sum?.avg_price || 0);
+  const lastSaleDate = sales.length ? sales[0].date : (sum?.last_sale_date || '');
+
   // ── RENDER ──
   document.getElementById('resultsWrap').innerHTML = `
-    <!-- CARD HERO -->
+    <!-- CARD HERO — clean, data-first layout -->
     <div class="result-hero au">
       <div class="result-stripe"></div>
       <div class="result-body">
@@ -1169,19 +1185,16 @@ async function renderFull(data) {
             : '<div class="card-img-ph">🃏</div>'}
         </div>
         <div>
-          <div class="card-sport">${card.category || gc + ' GRADED'}</div>
           <div class="card-name">${card.subject || 'Unknown Card'}</div>
           <div class="card-set">${[card.year, card.brand, card.variety].filter(Boolean).join(' · ')}</div>
-          <div class="card-cert">CERT #${data.cert_number}${card.card_number ? ' · #' + card.card_number : ''}</div>
+          <div class="card-cert">CERT #${data.cert_number}${card.card_number ? ' · Card #' + card.card_number : ''}</div>
           <div class="badges">
             <div class="grade-pill ${gc.toLowerCase()}">${gc} ${card.grade || '?'}</div>
+            ${card.pop != null ? `<span class="tag tag-grey">POP ${(card.pop || 0).toLocaleString()}${card.pop_higher === 0 ? ' · NONE HIGHER' : ''}</span>` : ''}
             <span class="tag" style="color:${parallelTier.color};border-color:${parallelTier.color}44;background:${parallelTier.color}12">${parallelTier.tier}</span>
-            ${card.pop != null ? `<span class="tag tag-grey">POP ${card.grade}: ${(card.pop || 0).toLocaleString()}</span>` : ''}
-            ${card.pop_higher === 0 && card.grade === '10' ? '<span class="tag tag-green">HIGHEST GRADE</span>' : ''}
-            ${card.subgrades ? `<span class="tag tag-grey" title="Centering: ${card.subgrades.centering || '?'} | Corners: ${card.subgrades.corners || '?'} | Edges: ${card.subgrades.edges || '?'} | Surface: ${card.subgrades.surface || '?'}">SUBGRADES</span>` : ''}
           </div>
           ${sum ? `<div class="prices">
-            <div class="price-block"><div class="lbl">Last Sale</div><div class="val main">${fmtPrice(sum.last_sale_price || (sales.length ? sales[0].price : sum.avg_price))}</div>${sum.last_sale_date ? `<div style="font-size:9px;color:var(--text-faint);margin-top:2px">${sum.last_sale_date}</div>` : ''}</div>
+            <div class="price-block"><div class="lbl">Last Sale</div><div class="val main">${fmtPrice(lastSalePrice)}</div><div style="font-size:9px;color:var(--text-faint);margin-top:2px">${fmtDate(lastSaleDate)}</div></div>
             <div class="price-block"><div class="lbl">Low</div><div class="val lo">${fmtPrice(sum.low_price)}</div></div>
             <div class="price-block"><div class="lbl">High</div><div class="val hi">${fmtPrice(sum.high_price)}</div></div>
             <div class="price-block"><div class="lbl">Median</div><div class="val med">${fmtPrice(sum.median_price)}</div></div>
@@ -1198,11 +1211,6 @@ async function renderFull(data) {
             <div class="iq-sub"><div class="iq-sub-val" style="color:#ddd">—</div><div class="iq-sub-lbl">MARKET</div></div>
           </div>
           <div class="iq-hold" id="iqHold">AI analyst loading…</div>
-          ${sales.length > 0 ? `<div class="iq-last-sale">
-            <div class="iq-last-sale-lbl">Last Sale</div>
-            <div class="iq-last-sale-val" style="color:var(--green)">${fmtPrice(sales[0].price)}</div>
-            <div class="iq-last-sale-date">${fmtDate(sales[0].date)}</div>
-          </div>` : ''}
         </div>
       </div>
     </div>
@@ -1230,7 +1238,8 @@ async function renderFull(data) {
 
     <!-- PLAYER INDEX (Card Ladder) -->
     ${playerIndex ? `<div class="sc au2">
-      <div class="sc-title">📊 Player Market Index <span style="font-size:9px;color:var(--text-faint);font-weight:400;margin-left:6px">via Card Ladder</span></div>
+      <div class="sc-title sc-collapse" onclick="toggleSection(this)">📊 Player Index <span style="font-size:9px;color:var(--text-faint);font-weight:400;margin-left:6px">Card Ladder</span></div>
+      <div class="sc-body">
       <div class="intel-row">
         <div class="intel-card">
           <div class="intel-card-lbl">Index Value</div>
@@ -1269,162 +1278,86 @@ async function renderFull(data) {
         <div style="flex:1;font-size:11px;font-weight:500">${clMatch.label}</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;color:var(--orange)">${clMatch.current_value ? fmtPrice(clMatch.current_value) : '—'}</div>
       </div>` : ''}
+      </div>
     </div>` : ''}
 
-    <!-- MARKET INTELLIGENCE -->
+    <!-- MARKET INTELLIGENCE — compact grid -->
     ${sum ? `<div class="sc au2">
-      <div class="sc-title">📈 Market Intelligence ${isCached ? '<span class="cached-badge">CACHED</span>' : ''} ${tempBadgeHTML(investment)}
+      <div class="sc-title sc-collapse" onclick="toggleSection(this)">📈 Market Intelligence ${isCached ? '<span class="cached-badge">CACHED</span>' : ''}
         ${timing.signal && timing.signal !== 'hold' ? `<span class="fv-badge ${timing.signal.includes('buy') ? 'fv-under' : 'fv-over'}" style="margin-left:8px">${timing.signal.replace('_',' ').toUpperCase()}</span>` : ''}
       </div>
-
-      <!-- Row 1: Core Metrics -->
+      <div class="sc-body">
       <div class="intel-row">
         <div class="intel-card">
-          <div class="intel-card-lbl">Price Momentum</div>
+          <div class="intel-card-lbl">Momentum</div>
           <div class="intel-card-val ${momentum.direction === 'up' ? 'momentum-up' : momentum.direction === 'down' ? 'momentum-down' : 'momentum-stable'}">${momentum.pct_change != null ? (momentum.pct_change > 0 ? '+' : '') + momentum.pct_change + '%' : '—'}</div>
-          <div class="intel-card-sub">${momentum.label || 'No data'}</div>
         </div>
         <div class="intel-card">
-          <div class="intel-card-lbl">Liquidity Score</div>
+          <div class="intel-card-lbl">Liquidity</div>
           <div class="intel-card-val" style="color:${liquidity.score >= 7 ? 'var(--green)' : liquidity.score >= 4 ? 'var(--yellow)' : 'var(--red)'}">${liquidity.score || '—'}<span style="font-size:13px">/10</span></div>
-          <div class="intel-card-sub">${liquidity.label || 'No data'}${liquidity.avg_days_between ? ' · ' + liquidity.avg_days_between + 'd avg' : ''}</div>
         </div>
         <div class="intel-card">
-          <div class="intel-card-lbl">Market Efficiency</div>
-          <div class="intel-card-val" style="color:${mktEfficiency.score >= 7 ? 'var(--green)' : mktEfficiency.score >= 4 ? 'var(--yellow)' : 'var(--red)'}">${mktEfficiency.score || '—'}<span style="font-size:13px">/10</span></div>
-          <div class="intel-card-sub">${mktEfficiency.label || 'No data'}${mktEfficiency.volatility ? ' · ' + mktEfficiency.volatility + '% vol' : ''}</div>
-        </div>
-      </div>
-
-      <!-- Row 2: Value & Investment -->
-      <div class="intel-row">
-        <div class="intel-card">
-          <div class="intel-card-lbl">Fair Value Estimate</div>
+          <div class="intel-card-lbl">Fair Value</div>
           <div class="intel-card-val" style="color:var(--orange)">${fairValue.estimate ? fmtPrice(fairValue.estimate) : '—'}</div>
-          <div class="intel-card-sub">${fairValue.confidence ? fairValue.confidence + ' confidence' : '—'}${fairValue.vs_last_sale ? ' · Last sale ' + (fairValue.vs_last_sale > 0 ? '+' : '') + fairValue.vs_last_sale + '%' : ''}</div>
-        </div>
-        <div class="intel-card">
-          <div class="intel-card-lbl">Value Rating</div>
-          <div class="intel-card-val" style="color:${investment.value_pct < -5 ? 'var(--green)' : investment.value_pct > 10 ? 'var(--red)' : 'var(--text)'};font-size:18px">${investment.value_rating || '—'}</div>
-          <div class="intel-card-sub">${investment.value_pct ? (investment.value_pct > 0 ? '+' : '') + investment.value_pct + '% vs all-time avg' : '—'}</div>
-        </div>
-        <div class="intel-card">
-          <div class="intel-card-lbl">Est. Market Cap</div>
-          <div class="intel-card-val" style="color:var(--text)">${investment.market_cap ? fmtPrice(investment.market_cap) : '—'}</div>
-          <div class="intel-card-sub">${card.pop ? 'Pop ' + card.pop + ' × avg price' : '—'}</div>
         </div>
       </div>
-
-      <!-- Row 3: Volume + Spread + Timing -->
       <div class="intel-row">
         <div class="intel-card">
-          <div class="intel-card-lbl">Sales Volume</div>
-          <div class="intel-card-val" style="color:var(--blue)">${(sum.total_sales_found || 0).toLocaleString()}</div>
-          <div class="intel-card-sub">${sum.sources?.join(' + ') || 'Multiple sources'}</div>
+          <div class="intel-card-lbl">Efficiency</div>
+          <div class="intel-card-val" style="color:${mktEfficiency.score >= 7 ? 'var(--green)' : mktEfficiency.score >= 4 ? 'var(--yellow)' : 'var(--red)'}">${mktEfficiency.score || '—'}<span style="font-size:13px">/10</span></div>
         </div>
         <div class="intel-card">
-          <div class="intel-card-lbl">Price Spread</div>
+          <div class="intel-card-lbl">Spread</div>
           <div class="intel-card-val" style="color:${investment.spread_pct > 50 ? 'var(--red)' : investment.spread_pct > 25 ? 'var(--yellow)' : 'var(--green)'}">${investment.spread_pct ? investment.spread_pct + '%' : '—'}</div>
-          <div class="intel-card-sub">${sum.low_price && sum.high_price ? fmtPrice(sum.low_price) + ' – ' + fmtPrice(sum.high_price) : '—'}</div>
         </div>
         <div class="intel-card">
-          <div class="intel-card-lbl">Timing Signal</div>
-          <div class="intel-card-val" style="font-size:16px;color:${timing.signal?.includes('buy') ? 'var(--green)' : timing.signal?.includes('sell') ? 'var(--red)' : 'var(--text-dim)'}">${(timing.signal || 'hold').replace('_', ' ').toUpperCase()}</div>
-          <div class="intel-card-sub">${timing.reason || '—'}</div>
+          <div class="intel-card-lbl">Sales Found</div>
+          <div class="intel-card-val" style="color:var(--blue)">${(sum.total_sales_found || 0).toLocaleString()}</div>
         </div>
       </div>
 
-      <!-- Price Spread Visualization -->
-      ${sum.low_price && sum.high_price && sum.avg_price ? `<div style="padding:0 4px">
-        <div class="spread-bar">
-          <div class="spread-avg-marker" style="left:${Math.min(95, Math.max(5, ((sum.avg_price - sum.low_price) / (sum.high_price - sum.low_price)) * 100))}%" title="Avg: ${fmtPrice(sum.avg_price)}"></div>
-          ${fairValue.estimate ? `<div class="spread-marker" style="left:${Math.min(95, Math.max(5, ((fairValue.estimate - sum.low_price) / (sum.high_price - sum.low_price)) * 100))}%" title="Fair Value: ${fmtPrice(fairValue.estimate)}"></div>` : ''}
-        </div>
-        <div class="spread-labels"><span>${fmtPrice(sum.low_price)}</span><span>Fair Value: ${fairValue.estimate ? fmtPrice(fairValue.estimate) : '—'}</span><span>${fmtPrice(sum.high_price)}</span></div>
-      </div>` : ''}
-
-      <!-- Price Distribution -->
-      ${priceDist.buckets?.length > 1 ? `<div class="price-dist">
-        <div style="font-size:9px;color:var(--text-dim);margin-bottom:3px;font-family:'DM Mono',monospace">PRICE DISTRIBUTION</div>
-        <div class="price-dist-bar">
-          ${priceDist.buckets.map((b, i) => {
-            const colors = ['#10b981', '#34d399', '#fbbf24', '#f59e0b', '#f97316', '#ef4444'];
-            return `<div class="price-dist-seg" style="width:${b.pct}%;background:${colors[i % colors.length]}" title="${b.label}: ${b.count} sales (${b.pct}%)"></div>`;
-          }).join('')}
-        </div>
-        <div class="spread-labels">${priceDist.buckets.map(b => `<span>${b.count}</span>`).join('')}</div>
-      </div>` : ''}
-
-      <!-- ROI + Watchlist + Portfolio -->
-      <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap">
-        <div style="font-size:10px;color:var(--text-dim)">ROI Calculator:</div>
+      <!-- Actions row -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap">
         <div class="roi-wrap">
-          <span style="font-size:10px;color:var(--text-dim)">Bought at</span>
-          <input class="roi-input" id="roiInput" type="number" placeholder="$0" oninput="calcROI(${sum.avg_price || 0})"/>
+          <span style="font-size:10px;color:var(--text-dim)">ROI:</span>
+          <input class="roi-input" id="roiInput" type="number" placeholder="Buy $" oninput="calcROI(${lastSalePrice || 0})"/>
           <span class="roi-result" id="roiResult">—</span>
         </div>
         <div style="flex:1"></div>
-        <button class="pf-btn" onclick="toggleWatchlist('${data.cert_number}','${gc}',${sum.avg_price || 0})" id="wlBtn">${isWatched(data.cert_number, gc) ? '★ Watching' : '☆ Watch'}</button>
+        <button class="pf-btn" onclick="toggleWatchlist('${data.cert_number}','${gc}',${lastSalePrice || 0})" id="wlBtn">${isWatched(data.cert_number, gc) ? '★ Watching' : '☆ Watch'}</button>
         <button class="pf-btn add" onclick="addToPortfolio(window._currentCard)">+ Portfolio</button>
       </div>
-      ${isWatched(data.cert_number, gc) ? `<div class="watchlist-bar">
-        <span class="wl-active">Price alert active</span>
-        <span style="font-size:10px;color:var(--text-dim)">Alert below</span>
-        <input class="wl-input" type="number" value="${getWatchPrice(data.cert_number, gc)}" onchange="updateWatchPrice('${data.cert_number}','${gc}',this.value)" placeholder="$0"/>
-        <button class="wl-btn remove" onclick="toggleWatchlist('${data.cert_number}','${gc}')">Remove</button>
-      </div>` : ''}
-
-      <!-- Active Listings Link -->
-      <a class="active-listings-link" href="https://www.ebay.com/sch/i.html?_nkw=${ebayQ}&_sop=10" target="_blank">
-        🛍 View Active Listings on eBay
-      </a>
+      </div>
     </div>` : ''}
 
     <!-- GRADE COMPARISON -->
     ${gradeTableHTML}
 
-    <!-- RARITY ENGINE -->
+    <!-- RARITY ENGINE — compact -->
     <div class="sc au2">
-      <div class="sc-title">💎 Rarity Engine</div>
-      <div class="rarity-grid">
-        <div class="rarity-item highlight">
-          <div class="ri-lbl">Rarity Score</div>
-          <div class="ri-val">${rarityScore}<span style="font-size:13px">/10</span></div>
-          <div class="ri-sub">${parallelTier.tier} tier</div>
+      <div class="sc-title sc-collapse" onclick="toggleSection(this)">💎 Rarity Engine — ${rarityScore}/10</div>
+      <div class="sc-body">
+      <div class="intel-row">
+        <div class="intel-card">
+          <div class="intel-card-lbl">Print Run</div>
+          <div class="intel-card-val">${printRun >= 1000 ? (printRun >= 100000 ? Math.round(printRun/1000)+'k+' : printRun.toLocaleString()) : printRun}</div>
         </div>
-        <div class="rarity-item">
-          <div class="ri-lbl">Est. Print Run</div>
-          <div class="ri-val">${printRun >= 1000 ? (printRun >= 100000 ? Math.round(printRun/1000)+'k+' : printRun.toLocaleString()) : printRun}</div>
-          <div class="ri-sub">${printRun < 100 ? 'Serial numbered' : printRun < 5000 ? 'Short print' : printRun < 50000 ? 'Limited' : 'Mass market'}</div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">${gc} ${card.grade} Pop</div>
+          <div class="intel-card-val">${(card.pop || 0).toLocaleString()}</div>
         </div>
-        <div class="rarity-item">
-          <div class="ri-lbl">${gc} ${card.grade} Pop</div>
-          <div class="ri-val">${(card.pop || 0).toLocaleString()}</div>
-          <div class="ri-sub">${popRatio ? `~${popRatio}% graded` : 'Unknown ratio'}</div>
-        </div>
-        <div class="rarity-item">
-          <div class="ri-lbl">Pop Higher</div>
-          <div class="ri-val">${card.pop_higher ?? '—'}</div>
-          <div class="ri-sub">${card.pop_higher === 0 ? 'Highest grade' : card.pop_higher != null ? `${card.pop_higher} copies above` : '—'}</div>
-        </div>
-        <div class="rarity-item">
-          <div class="ri-lbl">Parallel Tier</div>
-          <div class="ri-val" style="font-size:15px;color:${parallelTier.color}">${parallelTier.tier}</div>
-          <div class="ri-sub">Score: ${parallelTier.score}/10</div>
-        </div>
-        <div class="rarity-item">
-          <div class="ri-lbl">Supply Pressure</div>
-          <div class="ri-val" style="font-size:15px">${popRatio ? (parseFloat(popRatio) < 1 ? 'SCARCE' : parseFloat(popRatio) < 5 ? 'LOW' : parseFloat(popRatio) < 20 ? 'MODERATE' : 'HIGH') : '—'}</div>
-          <div class="ri-sub">${popRatio ? parseFloat(popRatio) < 5 ? 'Demand exceeds supply' : 'Monitor pop growth' : '—'}</div>
+        <div class="intel-card">
+          <div class="intel-card-lbl">Pop Higher</div>
+          <div class="intel-card-val">${card.pop_higher ?? '—'}</div>
         </div>
       </div>
       <div class="rarity-bar-row">
         ${[
-          { label: 'Serial / Print Run', score: printRun <= 1 ? 10 : printRun <= 10 ? 9.5 : printRun <= 50 ? 8.5 : printRun <= 99 ? 7.8 : printRun <= 500 ? 7 : printRun <= 5000 ? 5 : printRun <= 50000 ? 3.5 : 2, color: '#ff6200' },
+          { label: 'Print Run', score: printRun <= 1 ? 10 : printRun <= 10 ? 9.5 : printRun <= 50 ? 8.5 : printRun <= 99 ? 7.8 : printRun <= 500 ? 7 : printRun <= 5000 ? 5 : printRun <= 50000 ? 3.5 : 2, color: '#ff6200' },
           { label: 'Pop Pressure', score: (card.pop || 0) <= 5 ? 9.5 : (card.pop || 0) <= 20 ? 8 : (card.pop || 0) <= 100 ? 6.5 : (card.pop || 0) <= 500 ? 5 : 3, color: '#1a8c45' },
-          { label: 'Parallel Prestige', score: parallelTier.score, color: parallelTier.color },
+          { label: 'Parallel', score: parallelTier.score, color: parallelTier.color },
           { label: 'Grade Scarcity', score: card.grade === '10' ? (card.pop_higher === 0 ? 9 : 7) : 5, color: '#003087' },
-          { label: 'Overall Rarity', score: rarityScore, color: '#8b5cf6' },
+          { label: 'Overall', score: rarityScore, color: '#8b5cf6' },
         ].map(b => `
           <div class="rb-item">
             <span class="rb-label">${b.label}</span>
@@ -1432,6 +1365,7 @@ async function renderFull(data) {
             <span class="rb-score" style="color:${b.color}">${b.score.toFixed(1)}</span>
           </div>
         `).join('')}
+      </div>
       </div>
     </div>
 
@@ -1605,8 +1539,8 @@ Respond ONLY with JSON:
   "entry_price": "<e.g. Under $6,500>",
   "price_target": "<e.g. $15,000-20,000>",
   "risk_flags": [{"label": "<name>", "level": "<green|yellow|red>", "detail": "<1 sentence>"}],
-  "key_bullets": ["<5-7 punchy bullet points covering: why buy/sell, key risks, catalysts, player trajectory, market dynamics>"],
-  "verdict_paragraph": "<ONE tight paragraph: the investment case in 3-4 sentences max. Be specific with numbers and facts.>",
+  "key_bullets": ["<MAX 5 punchy bullet points. Each under 15 words. Cover: value, risk, catalyst, trajectory, market.>"],
+  "verdict_paragraph": "<ONE sentence verdict. Be specific with numbers.>",
   "news_items": [{"headline": "<headline>", "sentiment": "<positive|negative|neutral>", "impact": "<HIGH|MED|LOW>", "date": "<date>"}],
   "player_stats": {"age": null, "career_stage": "<Rising Star|Peak|Veteran|Declining>", "award_trajectory": "<trajectory>"},
   "upcoming_events": [{"name": "<event>", "date": "<date>", "impact": "<HIGH|MED|LOW>", "reason": "<why>"}],
