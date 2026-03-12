@@ -163,11 +163,11 @@ async def _playwright_extract_ebay(url: str) -> list:
 # ─────────────────────────────────────────────
 
 async def resolve_card_image(identity: dict) -> str:
-    """Try to get a card image: PSA cert image > TCDB > eBay sold listing."""
+    """Try to get a card image: PSA cert > eBay sold listing > TCDB."""
     cert = identity.get("cert_number", "")
     gc = identity.get("grading_company", "").upper()
 
-    # 1. PSA cert image (direct from PSA)
+    # 1. PSA cert image (direct from PSA, may be blocked by Cloudflare)
     if gc == "PSA" and cert:
         try:
             psa_img = await _fetch_psa_cert_image(cert)
@@ -177,7 +177,27 @@ async def resolve_card_image(identity: dict) -> str:
         except Exception as e:
             print(f"[image/psa] Error: {e}")
 
-    # 2. Try TCDB (official card images, no watermarks)
+    # 2. eBay sold listing images (most reliable, uses full card details)
+    query = identity.get("query_graded", identity.get("query_clean", ""))
+    url = f"https://www.ebay.com/sch/i.html?_nkw={quote_plus(query)}&LH_Sold=1&LH_Complete=1&_ipg=5"
+    try:
+        html = await _playwright_get(url, timeout=20000)
+        if html:
+            for pat in [
+                r'"imageUrl"\s*:\s*"(https://i\.ebayimg\.com/[^"]+)"',
+                r'src="(https://i\.ebayimg\.com/images/g/[^"]+)"',
+                r'src="(https://i\.ebayimg\.com/thumbs/[^"]+)"',
+            ]:
+                matches = re.findall(pat, html)
+                good = [m for m in matches if "s-l" in m and "225" not in m]
+                if not good:
+                    good = [m for m in matches if "ebayimg" in m]
+                if good:
+                    return good[0]
+    except Exception as e:
+        print(f"[image/ebay] {e}")
+
+    # 3. TCDB fallback (often blocked by Cloudflare, skip if others found)
     try:
         from scrapers.tcdb import get_tcdb_card_image
         tcdb_img = await get_tcdb_card_image(
@@ -185,7 +205,7 @@ async def resolve_card_image(identity: dict) -> str:
             year=identity.get("year", ""),
             brand=identity.get("brand", ""),
             card_number=identity.get("card_number", ""),
-            sport="",  # will be guessed
+            sport="",
         )
         if tcdb_img:
             print(f"[image/tcdb] Found: {tcdb_img[:60]}")
@@ -193,26 +213,6 @@ async def resolve_card_image(identity: dict) -> str:
     except Exception as e:
         print(f"[image/tcdb] Error: {e}")
 
-    # 3. Fallback: eBay sold listing images (use full card details for accuracy)
-    query = identity.get("query_graded", identity.get("query_clean", ""))
-    url = f"https://www.ebay.com/sch/i.html?_nkw={quote_plus(query)}&LH_Sold=1&LH_Complete=1&_ipg=5"
-    try:
-        html = await _playwright_get(url, timeout=20000)
-        if not html:
-            return ""
-        for pat in [
-            r'"imageUrl"\s*:\s*"(https://i\.ebayimg\.com/[^"]+)"',
-            r'src="(https://i\.ebayimg\.com/images/g/[^"]+)"',
-            r'src="(https://i\.ebayimg\.com/thumbs/[^"]+)"',
-        ]:
-            matches = re.findall(pat, html)
-            good = [m for m in matches if "s-l" in m and "225" not in m]
-            if not good:
-                good = [m for m in matches if "ebayimg" in m]
-            if good:
-                return good[0]
-    except Exception as e:
-        print(f"[image/ebay] {e}")
     return ""
 
 
