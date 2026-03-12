@@ -128,11 +128,19 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
     # Step 3: Compute market summary
     stats = resolved.get("stats", {})
     if stats:
+        # Last sale = most recent sale (sales are sorted date desc)
+        last_sale_price = None
+        last_sale_date = ""
+        if all_sales:
+            last_sale_price = all_sales[0].get("price")
+            last_sale_date = all_sales[0].get("date", "")
         result["market_summary"] = {
             "avg_price": stats.get("avg_price"),
             "median_price": stats.get("median_price"),
             "low_price": stats.get("low_price"),
             "high_price": stats.get("high_price"),
+            "last_sale_price": last_sale_price,
+            "last_sale_date": last_sale_date,
             "total_sales_found": stats.get("total_sales", 0),
             "sources_checked": len(stats.get("sources", [])),
             "sources": stats.get("sources", []),

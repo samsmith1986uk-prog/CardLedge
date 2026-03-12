@@ -44,6 +44,7 @@ def build_card_identity(psa_cert: dict) -> dict:
     card_number = psa_cert.get("card_number", "")
     grade = psa_cert.get("grade", "10")
     gc = psa_cert.get("grading_company", "PSA")
+    cert_number = psa_cert.get("cert_number", "")
     parallel = _detect_parallel(variety, brand)
 
     return {
@@ -54,6 +55,7 @@ def build_card_identity(psa_cert: dict) -> dict:
         "card_number": card_number,
         "grade": grade,
         "grading_company": gc,
+        "cert_number": cert_number,
         "parallel": parallel,
         "query_short": f"{subject} {year} {card_number}".strip(),
         "query_full": f"{subject} {year} {brand} #{card_number} {variety}".strip(),
@@ -161,8 +163,21 @@ async def _playwright_extract_ebay(url: str) -> list:
 # ─────────────────────────────────────────────
 
 async def resolve_card_image(identity: dict) -> str:
-    """Try to get a card image from multiple sources: TCDB first, then eBay."""
-    # Try TCDB first (official card images, no watermarks)
+    """Try to get a card image: PSA cert image > TCDB > eBay sold listing."""
+    cert = identity.get("cert_number", "")
+    gc = identity.get("grading_company", "").upper()
+
+    # 1. PSA cert image (direct from PSA)
+    if gc == "PSA" and cert:
+        try:
+            psa_img = await _fetch_psa_cert_image(cert)
+            if psa_img:
+                print(f"[image/psa] Found: {psa_img[:60]}")
+                return psa_img
+        except Exception as e:
+            print(f"[image/psa] Error: {e}")
+
+    # 2. Try TCDB (official card images, no watermarks)
     try:
         from scrapers.tcdb import get_tcdb_card_image
         tcdb_img = await get_tcdb_card_image(
@@ -178,8 +193,9 @@ async def resolve_card_image(identity: dict) -> str:
     except Exception as e:
         print(f"[image/tcdb] Error: {e}")
 
-    # Fallback: eBay sold listing images
-    url = f"https://www.ebay.com/sch/i.html?_nkw={quote_plus(identity['query_clean'])}&LH_Sold=1&LH_Complete=1&_ipg=5"
+    # 3. Fallback: eBay sold listing images (use full card details for accuracy)
+    query = identity.get("query_graded", identity.get("query_clean", ""))
+    url = f"https://www.ebay.com/sch/i.html?_nkw={quote_plus(query)}&LH_Sold=1&LH_Complete=1&_ipg=5"
     try:
         html = await _playwright_get(url, timeout=20000)
         if not html:
@@ -197,6 +213,36 @@ async def resolve_card_image(identity: dict) -> str:
                 return good[0]
     except Exception as e:
         print(f"[image/ebay] {e}")
+    return ""
+
+
+async def _fetch_psa_cert_image(cert: str) -> str:
+    """Fetch the card image URL from PSA's cert page (CloudFront-hosted)."""
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            resp = await client.get(
+                f"https://www.psacard.com/cert/{cert}",
+                headers=BROWSER_HEADERS
+            )
+            if resp.status_code != 200:
+                return ""
+            # PSA hosts card images on CloudFront - get the first front image
+            imgs = re.findall(
+                r'https://d1htnxwo4o0jhw\.cloudfront\.net/cert/\d+/small/[^"<>\s\\]+\.jpg',
+                resp.text
+            )
+            if imgs:
+                # First image is typically the front of the card
+                return imgs[0]
+            # Fallback: any cloudfront cert image
+            imgs = re.findall(
+                r'https://d1htnxwo4o0jhw\.cloudfront\.net/cert/[^"<>\s\\]+\.jpg',
+                resp.text
+            )
+            if imgs:
+                return imgs[0]
+    except Exception as e:
+        print(f"[psa-image] Error: {e}")
     return ""
 
 

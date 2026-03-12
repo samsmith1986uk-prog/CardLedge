@@ -1181,7 +1181,7 @@ async function renderFull(data) {
             ${card.subgrades ? `<span class="tag tag-grey" title="Centering: ${card.subgrades.centering || '?'} | Corners: ${card.subgrades.corners || '?'} | Edges: ${card.subgrades.edges || '?'} | Surface: ${card.subgrades.surface || '?'}">SUBGRADES</span>` : ''}
           </div>
           ${sum ? `<div class="prices">
-            <div class="price-block"><div class="lbl">Avg Sale</div><div class="val main">${fmtPrice(sum.avg_price)}</div></div>
+            <div class="price-block"><div class="lbl">Last Sale</div><div class="val main">${fmtPrice(sum.last_sale_price || (sales.length ? sales[0].price : sum.avg_price))}</div>${sum.last_sale_date ? `<div style="font-size:9px;color:var(--text-faint);margin-top:2px">${sum.last_sale_date}</div>` : ''}</div>
             <div class="price-block"><div class="lbl">Low</div><div class="val lo">${fmtPrice(sum.low_price)}</div></div>
             <div class="price-block"><div class="lbl">High</div><div class="val hi">${fmtPrice(sum.high_price)}</div></div>
             <div class="price-block"><div class="lbl">Median</div><div class="val med">${fmtPrice(sum.median_price)}</div></div>
