@@ -122,6 +122,8 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
 
     if resolved.get("image_url") and result["card_details"]:
         result["card_details"]["image_url"] = resolved["image_url"]
+    if resolved.get("back_image_url") and result["card_details"]:
+        result["card_details"]["back_image_url"] = resolved["back_image_url"]
 
     # Pass card identity to frontend for building correct external links
     if resolved.get("card_identity"):

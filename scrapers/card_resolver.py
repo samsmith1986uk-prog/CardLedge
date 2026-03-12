@@ -159,25 +159,126 @@ async def _playwright_extract_ebay(url: str) -> list:
 
 
 # ─────────────────────────────────────────────
-# IMAGE RESOLUTION
+# IMAGE RESOLUTION (Collectors tRPC API)
 # ─────────────────────────────────────────────
 
-async def resolve_card_image(identity: dict) -> str:
-    """Try to get a card image: PSA cert > eBay sold listing > TCDB."""
+# Cached Playwright page for Collectors session
+_collectors_page = None
+_collectors_lock = asyncio.Lock()
+
+
+async def _get_collectors_page():
+    """Login to Collectors app once and return a cached page for API calls."""
+    global _collectors_page
+    if _collectors_page is not None:
+        try:
+            await _collectors_page.evaluate("1+1")
+            return _collectors_page
+        except Exception:
+            _collectors_page = None
+
+    import os
+    email = os.getenv("PSA_EMAIL", "")
+    password = os.getenv("PSA_PASSWORD", "")
+    if not email or not password:
+        print("[collectors] No PSA_EMAIL/PSA_PASSWORD in env")
+        return None
+
+    try:
+        from playwright.async_api import async_playwright
+        pw = await async_playwright().start()
+        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
+        ctx = await browser.new_context(
+            user_agent=BROWSER_HEADERS["User-Agent"],
+            viewport={"width": 1440, "height": 900}
+        )
+        page = await ctx.new_page()
+
+        await page.goto("https://app.collectors.com/signin", wait_until="networkidle", timeout=30000)
+        await page.wait_for_timeout(2000)
+        try:
+            await page.locator(".osano-cm-dialog__close").click(timeout=3000)
+            await page.wait_for_timeout(500)
+        except Exception:
+            pass
+
+        await page.locator('input[type="email"], input[name="email"]').first.fill(email)
+        await page.wait_for_timeout(500)
+        await page.locator('button:has-text("Continue")').first.click(timeout=10000)
+        await page.wait_for_timeout(3000)
+        await page.locator('input[type="password"]').first.fill(password)
+        await page.wait_for_timeout(500)
+        await page.evaluate(
+            "document.querySelectorAll('button').forEach(b => { if(b.textContent.trim()==='Verify') b.click() })"
+        )
+        await page.wait_for_timeout(8000)
+
+        if "collection" in page.url:
+            print(f"[collectors] Logged in: {page.url}")
+            _collectors_page = page
+            return page
+        else:
+            print(f"[collectors] Login may have failed, URL: {page.url}")
+            await browser.close()
+            return None
+    except Exception as e:
+        print(f"[collectors] Login error: {e}")
+        return None
+
+
+async def _fetch_collectors_image(cert: str) -> dict:
+    """Get card front/back images via Collectors tRPC API."""
+    async with _collectors_lock:
+        page = await _get_collectors_page()
+    if not page:
+        return {}
+
+    try:
+        hex_input = json.dumps({"certNumber": cert}).encode().hex()
+        result = await page.evaluate(f"""async () => {{
+            try {{
+                const resp = await fetch(
+                    '/collection/api/trpc/search.getCertDetails?batch=1&input={{"0":"{hex_input}"}}',
+                    {{credentials: 'include'}}
+                );
+                if (!resp.ok) return null;
+                return await resp.json();
+            }} catch(e) {{ return null; }}
+        }}""")
+
+        if result and isinstance(result, list) and len(result) > 0:
+            data = result[0].get("result", {}).get("data", {}).get("json", {})
+            front = data.get("frontImageUrl", "")
+            back = data.get("backImageUrl", "")
+            if front:
+                front = front.replace("/small/", "/medium/").replace("/thumbnail/", "/medium/")
+            if back:
+                back = back.replace("/small/", "/medium/").replace("/thumbnail/", "/medium/")
+            return {"front": front, "back": back}
+    except Exception as e:
+        print(f"[collectors] API error for cert {cert}: {e}")
+        global _collectors_page
+        _collectors_page = None
+    return {}
+
+
+async def resolve_card_image(identity: dict) -> dict:
+    """Get card image: Collectors API (PSA) > eBay sold listing.
+    Returns dict with 'front' and optionally 'back' image URLs."""
     cert = identity.get("cert_number", "")
     gc = identity.get("grading_company", "").upper()
 
-    # 1. PSA cert image (direct from PSA, may be blocked by Cloudflare)
+    # 1. Collectors tRPC API — returns real PSA CloudFront images (front + back)
     if gc == "PSA" and cert:
         try:
-            psa_img = await _fetch_psa_cert_image(cert)
-            if psa_img:
-                print(f"[image/psa] Found: {psa_img[:60]}")
-                return psa_img
+            imgs = await _fetch_collectors_image(cert)
+            if imgs.get("front"):
+                print(f"[image/collectors] Found: {imgs['front'][:80]}")
+                return imgs
         except Exception as e:
-            print(f"[image/psa] Error: {e}")
+            print(f"[image/collectors] Error: {e}")
 
-    # 2. eBay sold listing images (most reliable, uses full card details)
+    # 2. eBay sold listing images (fallback for non-PSA or if Collectors fails)
     query = identity.get("query_graded", identity.get("query_clean", ""))
     url = f"https://www.ebay.com/sch/i.html?_nkw={quote_plus(query)}&LH_Sold=1&LH_Complete=1&_ipg=5"
     try:
@@ -193,57 +294,11 @@ async def resolve_card_image(identity: dict) -> str:
                 if not good:
                     good = [m for m in matches if "ebayimg" in m]
                 if good:
-                    return good[0]
+                    return {"front": good[0], "back": ""}
     except Exception as e:
         print(f"[image/ebay] {e}")
 
-    # 3. TCDB fallback (often blocked by Cloudflare, skip if others found)
-    try:
-        from scrapers.tcdb import get_tcdb_card_image
-        tcdb_img = await get_tcdb_card_image(
-            player_name=identity.get("subject", ""),
-            year=identity.get("year", ""),
-            brand=identity.get("brand", ""),
-            card_number=identity.get("card_number", ""),
-            sport="",
-        )
-        if tcdb_img:
-            print(f"[image/tcdb] Found: {tcdb_img[:60]}")
-            return tcdb_img
-    except Exception as e:
-        print(f"[image/tcdb] Error: {e}")
-
-    return ""
-
-
-async def _fetch_psa_cert_image(cert: str) -> str:
-    """Fetch the card image URL from PSA's cert page (CloudFront-hosted)."""
-    try:
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-            resp = await client.get(
-                f"https://www.psacard.com/cert/{cert}",
-                headers=BROWSER_HEADERS
-            )
-            if resp.status_code != 200:
-                return ""
-            # PSA hosts card images on CloudFront - get the first front image (medium quality)
-            imgs = re.findall(
-                r'https://d1htnxwo4o0jhw\.cloudfront\.net/cert/\d+/small/[^"<>\s\\]+\.jpg',
-                resp.text
-            )
-            if imgs:
-                # Use medium size for better quality display
-                return imgs[0].replace("/small/", "/medium/")
-            # Fallback: any cloudfront cert image
-            imgs = re.findall(
-                r'https://d1htnxwo4o0jhw\.cloudfront\.net/cert/[^"<>\s\\]+\.jpg',
-                resp.text
-            )
-            if imgs:
-                return imgs[0]
-    except Exception as e:
-        print(f"[psa-image] Error: {e}")
-    return ""
+    return {"front": "", "back": ""}
 
 
 # ─────────────────────────────────────────────
@@ -566,16 +621,19 @@ async def resolve_card(psa_cert: dict) -> dict:
 
     image_task = resolve_card_image(identity)
     sales_task = resolve_sales_data(identity)
-    image_url, sales_data = await asyncio.gather(image_task, sales_task)
+    image_result, sales_data = await asyncio.gather(image_task, sales_task)
 
+    image_url = image_result.get("front", "") if isinstance(image_result, dict) else (image_result or "")
+    back_image_url = image_result.get("back", "") if isinstance(image_result, dict) else ""
     print(f"[resolver] Image: {image_url[:60] if image_url else 'none'}")
     print(f"[resolver] Sales: {sales_data['stats'].get('total_sales', 0)} from {sales_data['sources_hit']}")
 
     return {
         "identity": identity,
         "image_url": image_url,
+        "back_image_url": back_image_url,
         "sales": sales_data["sales"],
         "stats": sales_data["stats"],
         "sources_hit": sales_data["sources_hit"],
-        "card_identity": identity,  # Expose identity for frontend link building
+        "card_identity": identity,
     }
