@@ -33,6 +33,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── STATIC FILES & ROOT ──
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+@app.get("/")
+async def serve_frontend():
+    return FileResponse("static/index.html")
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # ── IN-MEMORY CACHE (1 hour TTL) ──
 _cache = {}
 CACHE_TTL = 3600  # seconds
@@ -898,14 +908,6 @@ async def ai_analyse(request: Request = None):
         return response.json()
 
 
-# ── STATIC FILES ──
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-async def serve_frontend():
-    return FileResponse("static/index.html")
 
 
 # ── PSA IMAGE PROXY ──
