@@ -24,7 +24,7 @@ from scrapers.sgc import scrape_sgc_cert
 from scrapers.cardladder import search_player, search_cards_by_player, match_card as match_card_ladder
 
 
-app = FastAPI(title="SLABIQ API", version="10.3.0")
+app = FastAPI(title="SLABIQ API", version="10.4.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -395,6 +395,25 @@ async def search_cards(q: str = Query(..., min_length=2, description="Player nam
 
     except Exception as e:
         print(f"[search] 130point error: {e}")
+
+    # Fallback: if 130point returned nothing, try Card Ladder
+    if not results:
+        try:
+            cl_cards = await search_cards_by_player(query, limit=15)
+            if cl_cards:
+                for card in cl_cards:
+                    results.append({
+                        "title": card.get("label", query),
+                        "price": card.get("cl_value", 0),
+                        "date": "",
+                        "image_url": card.get("image", ""),
+                        "grade": card.get("grade", ""),
+                        "player": query,
+                        "source": "Card Ladder",
+                    })
+                print(f"[search] 130point empty, Card Ladder returned {len(cl_cards)} cards")
+        except Exception as e:
+            print(f"[search] Card Ladder fallback error: {e}")
 
     return {"query": query, "results": results[:30], "total": len(results)}
 
@@ -984,7 +1003,7 @@ async def cache_clear():
 # ── HEALTH ──
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "10.3.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
+    return {"status": "ok", "version": "10.4.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
 
 
 @app.get("/debug/sales/{query}")
