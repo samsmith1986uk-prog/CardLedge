@@ -46,7 +46,12 @@ _INDEX_HTML = _INDEX_PATH.read_text() if _INDEX_PATH.exists() else "<html><body>
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
-    return _INDEX_HTML
+    from fastapi.responses import Response
+    return Response(
+        content=_INDEX_HTML,
+        media_type="text/html",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"},
+    )
 
 # ── IN-MEMORY CACHE (1 hour TTL) ──
 _cache = {}
@@ -898,7 +903,7 @@ async def cache_clear():
 # ── HEALTH ──
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "9.0.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
+    return {"status": "ok", "version": "10.0.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
 
 
 # ── AI ANALYST PROXY ──
