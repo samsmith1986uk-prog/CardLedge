@@ -355,101 +355,107 @@ async def resolve_sales_data(identity: dict) -> dict:
 
 
 async def _sales_from_130point(identity: dict) -> list:
-    """130point via back.130point.com POST API."""
+    """130point via back.130point.com POST API.
+    Retries on 429 with exponential backoff."""
     query = identity["query_clean"]
     print(f"[130point] Searching: {query}")
-    try:
-        async with httpx.AsyncClient(timeout=25.0, follow_redirects=True) as client:
-            r = await client.post(
-                "https://back.130point.com/sales/",
-                data={"query": query},
-                headers={
-                    "User-Agent": BROWSER_HEADERS["User-Agent"],
-                    "Accept": "*/*",
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "Referer": "https://130point.com/sales/",
-                    "Origin": "https://130point.com",
-                },
-            )
-            if r.status_code != 200:
-                print(f"[130point] HTTP {r.status_code}, response: {r.text[:200]}")
-                return []
-            if len(r.text) < 500:
-                print(f"[130point] Response too short ({len(r.text)} bytes)")
-                return []
 
-            html = r.text
-            sales = []
-            rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
-            print(f"[130point] Response: {len(r.text)} bytes, {len(rows)} rows")
-
-            for row in rows:
-                # Extract data-price attribute (most reliable)
-                price_attr = re.search(r'data-price="([^"]+)"', row)
-                if not price_attr:
+    for attempt in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=25.0, follow_redirects=True) as client:
+                r = await client.post(
+                    "https://back.130point.com/sales/",
+                    data={"query": query},
+                    headers={
+                        "User-Agent": BROWSER_HEADERS["User-Agent"],
+                        "Accept": "*/*",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Referer": "https://130point.com/sales/",
+                        "Origin": "https://130point.com",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                )
+                if r.status_code == 429:
+                    wait = (attempt + 1) * 3
+                    print(f"[130point] HTTP 429 (rate limited), retry {attempt+1}/3 in {wait}s")
+                    await asyncio.sleep(wait)
                     continue
+                if r.status_code != 200:
+                    print(f"[130point] HTTP {r.status_code}, response: {r.text[:200]}")
+                    return []
+                if len(r.text) < 500:
+                    print(f"[130point] Response too short ({len(r.text)} bytes)")
+                    return []
+                break  # Success, continue to parse
+        except Exception as e:
+            print(f"[130point] attempt {attempt+1} error: {e}")
+            if attempt < 2:
+                await asyncio.sleep(2)
+            continue
+    else:
+        print(f"[130point] All 3 attempts failed")
+        return []
 
-                try:
-                    price = float(price_attr.group(1))
-                except (ValueError, TypeError):
-                    continue
-                if price < 5:
-                    continue
+    # Parse the successful response
+    html = r.text
+    sales = []
+    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
+    print(f"[130point] Response: {len(r.text)} bytes, {len(rows)} rows")
 
-                # Extract title
-                title_m = re.search(r"id='titleText'[^>]*>(?:<a[^>]*>)?(.*?)(?:</a>)?</span>", row, re.DOTALL)
-                title = re.sub(r'<[^>]+>', '', title_m.group(1)).strip() if title_m else ""
+    for row in rows:
+        price_attr = re.search(r'data-price="([^"]+)"', row)
+        if not price_attr:
+            continue
+        try:
+            price = float(price_attr.group(1))
+        except (ValueError, TypeError):
+            continue
+        if price < 5:
+            continue
 
-                # Extract date
-                date_m = re.search(r"id='dateText'[^>]*>(?:<b>Date:</b>)?\s*(.*?)</span>", row, re.DOTALL)
-                date_str = re.sub(r'<[^>]+>', '', date_m.group(1)).strip() if date_m else ""
+        title_m = re.search(r"id='titleText'[^>]*>(?:<a[^>]*>)?(.*?)(?:</a>)?</span>", row, re.DOTALL)
+        title = re.sub(r'<[^>]+>', '', title_m.group(1)).strip() if title_m else ""
 
-                # Extract URL
-                url_m = re.search(r"href='(https://www\.ebay\.com/itm/[^']+)'", row)
-                item_url = url_m.group(1) if url_m else ""
+        date_m = re.search(r"id='dateText'[^>]*>(?:<b>Date:</b>)?\s*(.*?)</span>", row, re.DOTALL)
+        date_str = re.sub(r'<[^>]+>', '', date_m.group(1)).strip() if date_m else ""
 
-                # Extract image
-                img_m = re.search(r"src='(https://i\.ebayimg\.com/[^']+)'", row)
-                image = img_m.group(1) if img_m else ""
-                # Upgrade thumbnail to larger image
-                if image and "s-l150" in image:
-                    image = image.replace("s-l150", "s-l500")
+        url_m = re.search(r"href='(https://www\.ebay\.com/itm/[^']+)'", row)
+        item_url = url_m.group(1) if url_m else ""
 
-                # Extract currency
-                curr_m = re.search(r'data-currency="([^"]+)"', row)
-                currency = curr_m.group(1) if curr_m else "USD"
+        img_m = re.search(r"src='(https://i\.ebayimg\.com/[^']+)'", row)
+        image = img_m.group(1) if img_m else ""
+        if image and "s-l150" in image:
+            image = image.replace("s-l150", "s-l500")
 
-                # Extract sale type
-                sale_type_m = re.search(r'Sale Type:\s*(\w+)', row)
-                sale_type = sale_type_m.group(1) if sale_type_m else ""
+        curr_m = re.search(r'data-currency="([^"]+)"', row)
+        currency = curr_m.group(1) if curr_m else "USD"
 
-                # Extract platform (eBay, Goldin, etc)
-                platform = "eBay"
-                if "Goldin" in row:
-                    platform = "Goldin"
-                elif "Fanatics" in row:
-                    platform = "Fanatics"
-                elif "Heritage" in row:
-                    platform = "Heritage"
-                elif "MySlabs" in row:
-                    platform = "MySlabs"
+        sale_type_m = re.search(r'Sale Type:\s*(\w+)', row)
+        sale_type = sale_type_m.group(1) if sale_type_m else ""
 
-                sales.append({
-                    "price": price,
-                    "currency": currency,
-                    "date": date_str,
-                    "title": title,
-                    "url": item_url,
-                    "image_url": image,
-                    "grade": identity["grade"],
-                    "platform": f"130point ({platform})",
-                    "sale_type": sale_type,
-                })
+        platform = "eBay"
+        if "Goldin" in row:
+            platform = "Goldin"
+        elif "Fanatics" in row:
+            platform = "Fanatics"
+        elif "Heritage" in row:
+            platform = "Heritage"
+        elif "MySlabs" in row:
+            platform = "MySlabs"
 
-            return sales
-    except Exception as e:
-        print(f"[130point] {e}")
-    return []
+        sales.append({
+            "price": price,
+            "currency": currency,
+            "date": date_str,
+            "title": title,
+            "url": item_url,
+            "image_url": image,
+            "grade": identity["grade"],
+            "platform": f"130point ({platform})",
+            "sale_type": sale_type,
+        })
+
+    return sales
 
 
 async def _sales_from_ebay(identity: dict) -> list:

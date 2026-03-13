@@ -219,7 +219,7 @@ async def match_card(subject: str, year: str = "", brand: str = "",
                      card_number: str = "", grade: str = "",
                      grading_company: str = "psa") -> Optional[dict]:
     """Find the best matching Card Ladder card profile for a graded card."""
-    cards = await search_cards_by_player(subject, limit=20)
+    cards = await search_cards_by_player(subject, limit=50)
     if not cards:
         return None
 
@@ -229,24 +229,43 @@ async def match_card(subject: str, year: str = "", brand: str = "",
 
     for card in cards:
         score = 0
+        # Grading company match
         if card.get("grading_company", "").lower() == gc:
-            score += 3
+            score += 2
+        # Year match
         if year and card.get("year") and year[:4] == card["year"][:4]:
-            score += 2
-        if grade and card.get("condition") and grade in card["condition"]:
-            score += 2
-        if card_number and card.get("number") and card_number.lower().strip("#") == card["number"].lower().strip("#"):
             score += 3
+        # Grade match
+        if grade and card.get("condition") and grade in card["condition"]:
+            score += 1
+        # Card number match (very important — differentiates cards within same set)
+        cn_match = False
+        if card_number and card.get("number"):
+            cn1 = card_number.lower().strip("#").strip()
+            cn2 = card["number"].lower().strip("#").strip()
+            if cn1 == cn2:
+                score += 5  # Strong signal
+                cn_match = True
+        # Brand/set match
         if brand and card.get("set"):
             bw = set(brand.lower().split())
             sw = set(card["set"].lower().split())
-            score += min(len(bw & sw), 3)
+            overlap = len(bw & sw)
+            score += min(overlap, 3)
+        # Label contains key words from brand
+        label = (card.get("label") or "").lower()
+        if brand:
+            brand_words = [w for w in brand.lower().split() if len(w) > 3]
+            label_hits = sum(1 for w in brand_words if w in label)
+            score += min(label_hits, 2)
 
         if score > best_score:
             best_score = score
             best_match = card
+            print(f"[cardladder] New best: score={score} cn_match={cn_match} label={card.get('label','')[:50]}")
 
-    if best_match and best_score >= 4:
+    # Require at least year + some other match
+    if best_match and best_score >= 5:
         best_match["match_score"] = best_score
         return best_match
     return None
