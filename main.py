@@ -137,6 +137,13 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
     all_sales = resolved.get("sales", [])
     result["sales_data"] = all_sales
 
+    # Fallback: if no hero image, use first sale thumbnail
+    if result["card_details"] and not result["card_details"].get("image_url"):
+        for sale in all_sales:
+            if sale.get("image_url"):
+                result["card_details"]["image_url"] = sale["image_url"]
+                break
+
     # Step 3: Compute market summary
     stats = resolved.get("stats", {})
     if stats:
