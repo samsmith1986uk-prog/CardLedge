@@ -331,7 +331,7 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .deal-above { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
 .deal-over { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
 
-/* ── PORTFOLIO PANEL ── */
+/* ── VAULT PANEL ── */
 .portfolio-bar { background: var(--dark2); border-top: 1px solid var(--dark3); padding: 8px 24px; display: flex; align-items: center; gap: 16px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; transform: translateY(100%); transition: transform .3s ease; }
 .portfolio-bar.show { transform: translateY(0); }
 .pf-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; color: #fff; }
@@ -342,25 +342,46 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .pf-btn.add { background: var(--orange); color: #fff; }
 .pf-btn.add:hover { background: var(--orange-dark); }
 
-/* Portfolio modal */
+/* Vault modal */
 .pf-modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 300; display: none; align-items: center; justify-content: center; }
 .pf-modal.show { display: flex; }
-.pf-modal-content { background: var(--surface); border-radius: 16px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,.3); }
-.pf-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; }
-.pf-modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+.pf-modal-content { background: var(--surface); border-radius: 16px; width: 90%; max-width: 640px; max-height: 85vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,.3); }
+.pf-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; border-radius: 16px 16px 0 0; }
+.pf-modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
 .pf-close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
-.pf-card-row { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
-.pf-card-info { flex: 1; min-width: 0; }
+.pf-card-row { display: grid; grid-template-columns: 44px 1fr auto auto; gap: 10px; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); transition: background .1s; }
+.pf-card-row:hover { background: var(--bg); }
+.pf-card-thumb { width: 44px; height: 60px; border-radius: 6px; object-fit: cover; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border: 1px solid var(--border); }
+.pf-card-info { min-width: 0; }
 .pf-card-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pf-card-meta { font-size: 10px; color: var(--text-dim); }
+.pf-card-cost { font-size: 9px; color: var(--text-faint); font-family: 'DM Mono', monospace; margin-top: 2px; }
 .pf-card-val { text-align: right; }
 .pf-card-price { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; }
-.pf-card-change { font-size: 10px; }
-.pf-rm { padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; font-size: 10px; }
-.pf-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px 20px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.pf-card-gain { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; }
+.pf-card-gain.up { color: var(--green); }
+.pf-card-gain.down { color: var(--red); }
+.pf-card-gain.flat { color: var(--text-dim); }
+.pf-rm { padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; font-size: 10px; transition: all .15s; }
+.pf-rm:hover { border-color: var(--red); color: var(--red); }
+.pf-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 16px 20px; background: var(--bg); border-bottom: 1px solid var(--border); }
 .pf-sum-item { text-align: center; }
 .pf-sum-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; }
 .pf-sum-lbl { font-size: 8px; color: var(--text-faint); font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+.vault-hlink { position: relative; }
+.vault-hlink .vault-count { background: var(--orange); color: #fff; font-size: 8px; font-weight: 800; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+/* Purchase price dialog */
+.vault-dialog { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 400; display: none; align-items: center; justify-content: center; }
+.vault-dialog.show { display: flex; }
+.vault-dialog-box { background: var(--surface); border-radius: 14px; padding: 24px; width: 340px; box-shadow: 0 16px 48px rgba(0,0,0,.3); text-align: center; }
+.vault-dialog-box h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.vault-dialog-box .vd-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 16px; }
+.vault-dialog-box input { width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 16px; text-align: center; margin-bottom: 12px; outline: none; transition: border-color .15s; }
+.vault-dialog-box input:focus { border-color: var(--orange); }
+.vault-dialog-btns { display: flex; gap: 8px; }
+.vault-dialog-btns button { flex: 1; padding: 10px; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; border: none; }
+.vault-dialog-btns .vd-cancel { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border); }
+.vault-dialog-btns .vd-save { background: var(--orange); color: #fff; }
 
 /* ── CURRENCY SELECTOR ── */
 .curr-sel { padding: 3px 8px; border-radius: 4px; border: 1px solid var(--dark3); background: var(--dark2); color: #ccc; font-family: 'DM Mono', monospace; font-size: 10px; cursor: pointer; margin-left: 8px; }
@@ -409,6 +430,7 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 footer { background: var(--dark); color: #555; text-align: center; padding: 18px 24px; font-size: 10px; letter-spacing: 1px; border-top: 2px solid var(--orange); }
 footer span { color: var(--orange); }
 body.has-portfolio { padding-bottom: 52px; }
+body.vault-dialog-open { overflow: hidden; }
 
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px) {
@@ -485,10 +507,9 @@ body.has-portfolio { padding-bottom: 52px; }
     </div>
   </a>
   <div class="header-links">
+    <button class="hlink vault-hlink" onclick="openPortfolio()" id="vaultHeaderBtn" style="display:none"><div class="hlink-dot" style="background:var(--orange)"></div><span id="vaultHeaderVal">VAULT</span></button>
     <a class="hlink" href="https://www.psacard.com/cert/" target="_blank"><div class="hlink-dot" style="background:#003087"></div>PSA</a>
-    <a class="hlink" href="https://www.beckett.com/grading" target="_blank"><div class="hlink-dot" style="background:#1565c0"></div>BGS</a>
     <a class="hlink" href="https://www.ebay.com/sch/i.html?LH_Sold=1" target="_blank"><div class="hlink-dot" style="background:#e53238"></div>eBay</a>
-    <a class="hlink" href="https://goldin.co" target="_blank"><div class="hlink-dot" style="background:#c9a84c"></div>Goldin</a>
     <a class="hlink" href="https://130point.com/sales/" target="_blank"><div class="hlink-dot" style="background:#555"></div>130pt</a>
     <div class="live-badge" id="liveBadge"><div class="live-dot"></div>LIVE</div>
   </div>
@@ -527,7 +548,7 @@ body.has-portfolio { padding-bottom: 52px; }
   <div class="stat-item"><span class="stat-icon">🤖</span><span class="stat-text"><strong>AI Analyst</strong> Verdict</span></div>
   <div class="stat-item"><span class="stat-icon">📊</span><span class="stat-text"><strong>Grade Compare</strong> PSA 7-10</span></div>
   <div class="stat-item"><span class="stat-icon">📈</span><span class="stat-text"><strong>Momentum</strong> & Efficiency</span></div>
-  <div class="stat-item"><span class="stat-icon">💼</span><span class="stat-text"><strong>Portfolio</strong> Tracker</span></div>
+  <div class="stat-item"><span class="stat-icon">💼</span><span class="stat-text"><strong>The Vault</strong> Tracker</span></div>
   <div class="stat-item"><span class="stat-icon">💰</span><span class="stat-text"><strong>Deal Scores</strong> on Sales</span></div>
   <div class="stat-item"><span class="stat-icon">🌡️</span><span class="stat-text"><strong>Hot/Cold</strong> Indicator</span></div>
   <div class="stat-item"><span class="stat-icon">💱</span><span class="stat-text"><strong>Multi-Currency</strong></span></div>
@@ -568,11 +589,12 @@ body.has-portfolio { padding-bottom: 52px; }
   </div>
 </div>
 
-<!-- PORTFOLIO BAR -->
+<!-- VAULT BAR -->
 <div class="portfolio-bar" id="portfolioBar">
-  <div><div class="pf-lbl">PORTFOLIO</div><div class="pf-val" id="pfTotal">$0</div></div>
+  <div><div class="pf-lbl">THE VAULT</div><div class="pf-val" id="pfTotal">$0</div></div>
   <div class="pf-count" id="pfCount">0 cards</div>
-  <button class="pf-btn" onclick="openPortfolio()">VIEW</button>
+  <div class="pf-count" id="pfReturn" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800"></div>
+  <button class="pf-btn" onclick="openPortfolio()">OPEN VAULT</button>
   <div style="flex:1"></div>
   <select class="curr-sel" id="currSel" onchange="setCurrency(this.value)">
     <option value="USD">USD $</option>
@@ -584,11 +606,11 @@ body.has-portfolio { padding-bottom: 52px; }
   </select>
 </div>
 
-<!-- PORTFOLIO MODAL -->
+<!-- VAULT MODAL -->
 <div class="pf-modal" id="pfModal" onclick="if(event.target===this)closePortfolio()">
   <div class="pf-modal-content">
     <div class="pf-modal-header">
-      <div class="pf-modal-title">My Collection</div>
+      <div class="pf-modal-title">THE VAULT</div>
       <button class="pf-close" onclick="closePortfolio()">✕</button>
     </div>
     <div class="pf-summary" id="pfSummary"></div>
@@ -596,7 +618,20 @@ body.has-portfolio { padding-bottom: 52px; }
   </div>
 </div>
 
-<footer><span>SLABIQ</span> v8 · AI Card Intelligence · PSA · BGS · SGC · eBay · Goldin · 130point · TCDB · Card Ladder</footer>
+<!-- VAULT PURCHASE PRICE DIALOG -->
+<div class="vault-dialog" id="vaultDialog" onclick="if(event.target===this)cancelVaultAdd()">
+  <div class="vault-dialog-box">
+    <h3>Add to Vault</h3>
+    <div class="vd-sub" id="vdCardName"></div>
+    <input type="number" id="vdPrice" placeholder="Purchase price (optional)" step="0.01" min="0" onkeydown="if(event.key==='Enter')confirmVaultAdd()"/>
+    <div class="vault-dialog-btns">
+      <button class="vd-cancel" onclick="cancelVaultAdd()">Skip</button>
+      <button class="vd-save" onclick="confirmVaultAdd()">Add to Vault</button>
+    </div>
+  </div>
+</div>
+
+<footer><span>SLABIQ</span> v10 · AI Card Intelligence · PSA · BGS · SGC · eBay · Goldin · 130point · TCDB · Card Ladder</footer>
 
 <script>
 const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
@@ -1091,10 +1126,12 @@ async function renderFull(data) {
   const clMatch = data.cardladder_match || null;
   const clSales = data.cardladder_sales || [];
 
-  // Store current card data for portfolio
+  // Store current card data for vault
   window._currentCard = {
     cert: data.cert_number, gc, name: card.subject, year: card.year,
     brand: card.brand, grade: card.grade, avgPrice: sum?.avg_price || 0,
+    imageUrl: card.image_url || '', variety: card.variety || '',
+    lastSalePrice: sum?.last_sale_price || sum?.avg_price || 0,
   };
 
   const rarityScore = getRarityScore(card);
@@ -1327,7 +1364,7 @@ async function renderFull(data) {
         </div>
         <div style="flex:1"></div>
         <button class="pf-btn" onclick="toggleWatchlist('${data.cert_number}','${gc}',${lastSalePrice || 0})" id="wlBtn">${isWatched(data.cert_number, gc) ? '★ Watching' : '☆ Watch'}</button>
-        <button class="pf-btn add" onclick="addToPortfolio(window._currentCard)">+ Portfolio</button>
+        <button class="pf-btn add" onclick="showVaultDialog(window._currentCard)">+ VAULT</button>
       </div>
       </div>
     </div>` : ''}
@@ -1956,13 +1993,14 @@ function show(id, v) { document.getElementById(id).style.display = v ? 'block' :
 function setErr(m) { const e = document.getElementById('errBox'); e.style.display = m ? 'block' : 'none'; e.textContent = m; }
 
 // ═══════════════════════════════════════════════════
-// PORTFOLIO TRACKER (localStorage-based, Card Ladder-style)
+// THE VAULT (localStorage-based portfolio with gain/loss tracking)
 // ═══════════════════════════════════════════════════
 const PF_KEY = 'slabiq_portfolio';
 let portfolio = JSON.parse(localStorage.getItem(PF_KEY) || '[]');
 let fxRates = { USD: 1, GBP: 0.79, EUR: 0.92, CAD: 1.36, AUD: 1.53, JPY: 149.5 };
 let currentCurrency = localStorage.getItem('slabiq_currency') || 'USD';
 const CURR_SYMBOLS = { USD: '$', GBP: '£', EUR: '€', CAD: 'C$', AUD: 'A$', JPY: '¥' };
+let _pendingVaultCard = null;
 
 // Load FX rates
 (async () => {
@@ -1992,7 +2030,41 @@ function setCurrency(c) {
   updatePortfolioBar();
 }
 
-function addToPortfolio(card) {
+// Show purchase price dialog before adding
+function showVaultDialog(card) {
+  if (!card || !card.cert) return;
+  const existing = portfolio.find(p => p.cert === card.cert && p.gc === card.gc);
+  if (existing) return; // already in vault
+  _pendingVaultCard = card;
+  document.getElementById('vdCardName').textContent = `${card.name || 'Card'} · ${card.gc} ${card.grade}`;
+  document.getElementById('vdPrice').value = '';
+  document.getElementById('vaultDialog').classList.add('show');
+  document.body.classList.add('vault-dialog-open');
+  setTimeout(() => document.getElementById('vdPrice').focus(), 100);
+}
+
+function cancelVaultAdd() {
+  // "Skip" = add without purchase price
+  if (_pendingVaultCard) {
+    addToVault(_pendingVaultCard, null);
+  }
+  document.getElementById('vaultDialog').classList.remove('show');
+  document.body.classList.remove('vault-dialog-open');
+  _pendingVaultCard = null;
+}
+
+function confirmVaultAdd() {
+  const priceStr = document.getElementById('vdPrice').value;
+  const price = priceStr ? parseFloat(priceStr) : null;
+  if (_pendingVaultCard) {
+    addToVault(_pendingVaultCard, price);
+  }
+  document.getElementById('vaultDialog').classList.remove('show');
+  document.body.classList.remove('vault-dialog-open');
+  _pendingVaultCard = null;
+}
+
+function addToVault(card, purchasePrice) {
   const existing = portfolio.find(p => p.cert === card.cert && p.gc === card.gc);
   if (existing) return;
   portfolio.push({
@@ -2002,9 +2074,12 @@ function addToPortfolio(card) {
     year: card.year,
     brand: card.brand,
     grade: card.grade,
+    variety: card.variety || '',
     avgPrice: card.avgPrice,
+    lastSalePrice: card.lastSalePrice || card.avgPrice || 0,
+    imageUrl: card.imageUrl || '',
     addedAt: new Date().toISOString(),
-    purchasePrice: card.purchasePrice || null,
+    purchasePrice: purchasePrice,
   });
   localStorage.setItem(PF_KEY, JSON.stringify(portfolio));
   updatePortfolioBar();
@@ -2017,19 +2092,50 @@ function removeFromPortfolio(cert, gc) {
   renderPortfolioModal();
 }
 
+function getVaultTotals() {
+  const marketValue = portfolio.reduce((s, p) => s + (p.avgPrice || 0), 0);
+  const totalCost = portfolio.reduce((s, p) => s + (p.purchasePrice || 0), 0);
+  const cardsWithCost = portfolio.filter(p => p.purchasePrice != null && p.purchasePrice > 0);
+  const gainLoss = cardsWithCost.length > 0 ? marketValue - totalCost : null;
+  const returnPct = totalCost > 0 ? ((marketValue - totalCost) / totalCost * 100) : null;
+  return { marketValue, totalCost, gainLoss, returnPct, cardsWithCost: cardsWithCost.length };
+}
+
 function updatePortfolioBar() {
   const bar = document.getElementById('portfolioBar');
+  const hdrBtn = document.getElementById('vaultHeaderBtn');
+  const hdrVal = document.getElementById('vaultHeaderVal');
+
   if (portfolio.length === 0) {
     bar.classList.remove('show');
     document.body.classList.remove('has-portfolio');
+    if (hdrBtn) hdrBtn.style.display = 'none';
     return;
   }
   bar.classList.add('show');
   document.body.classList.add('has-portfolio');
 
-  const total = portfolio.reduce((s, p) => s + (p.avgPrice || 0), 0);
-  document.getElementById('pfTotal').textContent = fmtCurr(total);
+  const { marketValue, returnPct } = getVaultTotals();
+  document.getElementById('pfTotal').textContent = fmtCurr(marketValue);
   document.getElementById('pfCount').textContent = `${portfolio.length} card${portfolio.length !== 1 ? 's' : ''}`;
+
+  // Show return in bottom bar
+  const retEl = document.getElementById('pfReturn');
+  if (retEl && returnPct != null) {
+    const sign = returnPct >= 0 ? '+' : '';
+    retEl.textContent = `${sign}${returnPct.toFixed(1)}%`;
+    retEl.style.color = returnPct >= 0 ? 'var(--green)' : 'var(--red)';
+  } else if (retEl) {
+    retEl.textContent = '';
+  }
+
+  // Show vault button in header
+  if (hdrBtn) {
+    hdrBtn.style.display = 'flex';
+    if (hdrVal) {
+      hdrVal.innerHTML = `VAULT <span class="vault-count">${portfolio.length}</span>`;
+    }
+  }
 }
 
 function openPortfolio() {
@@ -2042,29 +2148,50 @@ function closePortfolio() {
 }
 
 function renderPortfolioModal() {
-  const total = portfolio.reduce((s, p) => s + (p.avgPrice || 0), 0);
-  const avgCard = portfolio.length ? total / portfolio.length : 0;
+  const { marketValue, totalCost, gainLoss, returnPct, cardsWithCost } = getVaultTotals();
+  const avgCard = portfolio.length ? marketValue / portfolio.length : 0;
+
+  const returnHTML = returnPct != null
+    ? `<div class="pf-sum-val" style="color:${returnPct >= 0 ? 'var(--green)' : 'var(--red)'}">${returnPct >= 0 ? '+' : ''}${returnPct.toFixed(1)}%</div>`
+    : `<div class="pf-sum-val" style="color:var(--text-dim)">—</div>`;
 
   document.getElementById('pfSummary').innerHTML = `
-    <div class="pf-sum-item"><div class="pf-sum-val" style="color:var(--orange)">${fmtCurr(total)}</div><div class="pf-sum-lbl">TOTAL VALUE</div></div>
+    <div class="pf-sum-item"><div class="pf-sum-val" style="color:var(--orange)">${fmtCurr(marketValue)}</div><div class="pf-sum-lbl">MARKET VALUE</div></div>
     <div class="pf-sum-item"><div class="pf-sum-val">${portfolio.length}</div><div class="pf-sum-lbl">CARDS</div></div>
-    <div class="pf-sum-item"><div class="pf-sum-val">${fmtCurr(avgCard)}</div><div class="pf-sum-lbl">AVG CARD VALUE</div></div>
+    <div class="pf-sum-item">${returnHTML}<div class="pf-sum-lbl">TOTAL RETURN</div></div>
+    <div class="pf-sum-item"><div class="pf-sum-val">${gainLoss != null ? fmtCurr(Math.abs(gainLoss)) : '—'}</div><div class="pf-sum-lbl">${gainLoss != null && gainLoss >= 0 ? 'PROFIT' : 'LOSS'}</div></div>
   `;
 
   document.getElementById('pfCards').innerHTML = portfolio.length === 0
-    ? '<div style="padding:40px;text-align:center;color:var(--text-dim)">No cards in portfolio yet. Click "Add to Portfolio" on any card result.</div>'
-    : portfolio.map(p => `
-    <div class="pf-card-row">
-      <div class="pf-card-info">
-        <div class="pf-card-name">${escHtml(p.name || 'Unknown')}</div>
-        <div class="pf-card-meta">${escHtml(p.year || '')} · ${escHtml(p.gc || '')} ${escHtml(p.grade || '')} · Cert #${escHtml(p.cert || '')}</div>
-      </div>
-      <div class="pf-card-val">
-        <div class="pf-card-price">${fmtCurr(p.avgPrice)}</div>
-      </div>
-      <button class="pf-rm" onclick="removeFromPortfolio('${p.cert}','${p.gc}')">Remove</button>
-    </div>
-  `).join('');
+    ? '<div style="padding:40px;text-align:center;color:var(--text-dim)">No cards in your vault yet. Search for a card and click "+ VAULT" to add it.</div>'
+    : portfolio.map(p => {
+      const mkt = p.avgPrice || 0;
+      const cost = p.purchasePrice;
+      const hasGain = cost != null && cost > 0;
+      const gain = hasGain ? mkt - cost : null;
+      const gainPct = hasGain && cost > 0 ? ((mkt - cost) / cost * 100) : null;
+      const gainCls = gain != null ? (gain > 0 ? 'up' : gain < 0 ? 'down' : 'flat') : 'flat';
+      const gainText = gainPct != null ? `${gain >= 0 ? '+' : ''}${fmtCurr(Math.abs(gain))} (${gainPct >= 0 ? '+' : ''}${gainPct.toFixed(1)}%)` : '';
+      const thumbSrc = p.imageUrl || '';
+      const thumbHTML = thumbSrc
+        ? `<img class="pf-card-thumb" src="${escHtml(thumbSrc)}" alt="" onerror="this.style.display='none'">`
+        : `<div class="pf-card-thumb" style="display:flex;align-items:center;justify-content:center;font-size:18px;opacity:.2">🃏</div>`;
+
+      return `
+      <div class="pf-card-row">
+        ${thumbHTML}
+        <div class="pf-card-info">
+          <div class="pf-card-name">${escHtml(p.name || 'Unknown')}</div>
+          <div class="pf-card-meta">${escHtml(p.year || '')} ${escHtml(p.brand || '')} · ${escHtml(p.gc || '')} ${escHtml(p.grade || '')} · #${escHtml(p.cert || '')}</div>
+          ${cost != null ? `<div class="pf-card-cost">Cost: ${fmtCurr(cost)}</div>` : ''}
+        </div>
+        <div class="pf-card-val">
+          <div class="pf-card-price">${fmtCurr(mkt)}</div>
+          ${gainText ? `<div class="pf-card-gain ${gainCls}">${gainText}</div>` : ''}
+        </div>
+        <button class="pf-rm" onclick="removeFromPortfolio('${p.cert}','${p.gc}')">✕</button>
+      </div>`;
+    }).join('');
 }
 
 updatePortfolioBar();
