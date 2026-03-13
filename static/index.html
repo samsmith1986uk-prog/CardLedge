@@ -250,8 +250,9 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .news-tag { font-size: 8px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: 1px; }
 
 /* ── SALES ── */
-.sale-row { display: grid; grid-template-columns: 80px 1fr 80px 75px; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; margin-bottom: 5px; transition: border-color .15s; }
+.sale-row { display: grid; grid-template-columns: 40px 80px 1fr 80px 75px; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; margin-bottom: 5px; transition: border-color .15s; }
 .sale-row:hover { border-color: var(--orange); }
+.sale-thumb { width: 36px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
 .sale-src { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; border: 1px solid; text-align: center; text-transform: uppercase; }
 .sale-title { font-size: 10px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sale-date { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-faint); text-align: right; }
@@ -438,7 +439,8 @@ body.has-portfolio { padding-bottom: 52px; }
   .ext-grid { grid-template-columns: 1fr 1fr; }
   .analyst-metrics { grid-template-columns: repeat(3, 1fr); font-size: 12px; }
   .am-val { font-size: 16px; }
-  .sale-row { grid-template-columns: 60px 1fr 65px; }
+  .sale-row { grid-template-columns: 36px 60px 1fr 65px; }
+  .sale-date { display: none; }
   .sale-date { display: none; }
   .sale-src { font-size: 8px; padding: 2px 4px; }
   .sale-price { font-size: 14px; }
@@ -1179,9 +1181,9 @@ async function renderFull(data) {
     <div class="result-hero au">
       <div class="result-stripe"></div>
       <div class="result-body">
-        <div class="card-img">
+        <div class="card-img" ${card.back_image_url ? `onclick="const i=this.querySelector('img');if(i){const f=i.dataset.front,b=i.dataset.back;i.src=i.src===f?b:f}" style="cursor:pointer" title="Click to flip"` : ''}>
           ${card.image_url
-            ? `<img src="${card.image_url}" alt="${card.subject}" onerror="this.parentNode.innerHTML='<div class=card-img-ph>🃏</div>'"/>`
+            ? `<img src="${card.image_url}" data-front="${card.image_url}" data-back="${card.back_image_url || card.image_url}" alt="${card.subject}" onerror="this.parentNode.innerHTML='<div class=card-img-ph>🃏</div>'"/>`
             : '<div class="card-img-ph">🃏</div>'}
         </div>
         <div>
@@ -1370,9 +1372,9 @@ async function renderFull(data) {
     </div>
 
     <!-- PRICE CHART + TREND LINE -->
-    ${sum ? `
+    ${sum && sales.length ? `
     <div class="sc au3">
-      <div class="sc-title">📈 Price History & Trend</div>
+      <div class="sc-title">Price History & Trend</div>
       <div class="chart-tabs">
         <button class="chart-tab active" onclick="switchChartSource('comps', this)">Sold Comps</button>
         ${data.cardladder_sales?.length ? `<button class="chart-tab" onclick="switchChartSource('cardladder', this)">Card Ladder (${data.cardladder_sales.length})</button>` : ''}
@@ -1384,12 +1386,12 @@ async function renderFull(data) {
         <div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--text-dim);opacity:.5"></div>Trend Line</div>
         ${data.cardladder_sales?.length ? `<div class="chart-legend-item"><div class="chart-legend-dot" style="background:#3b82f6"></div>Card Ladder</div>` : ''}
       </div>
-    </div>
+    </div>` : ''}
 
     <!-- CARD LADDER PRICING (if available) -->
     ${data.cardladder_sales?.length > 5 ? `
     <div class="sc au3">
-      <div class="sc-title">📊 Card Ladder Pricing History <span style="font-size:9px;color:var(--text-faint);font-weight:400">${data.cardladder_sales.length} data points</span></div>
+      <div class="sc-title">Card Ladder Pricing History <span style="font-size:9px;color:var(--text-faint);font-weight:400">${data.cardladder_sales.length} data points</span></div>
       <div class="intel-row">
         <div class="intel-card">
           <div class="intel-card-lbl">CL Current Value</div>
@@ -1410,13 +1412,15 @@ async function renderFull(data) {
     </div>` : ''}
 
     <!-- RECENT SALES -->
+    ${sales.length ? `
     <div class="sc au3">
-      <div class="sc-title">🛒 Recent Sales (${sales.length})</div>
+      <div class="sc-title">Recent Sales (${sales.length})</div>
       <div id="salesList">
       ${sales.slice(0, 10).map(s => {
         const k = (s.source || '').split('(')[0].trim();
         const sc = SRC[k] || { c: '#555', bg: '#f5f5f5' };
         return `<a class="sale-row" href="${s.url || '#'}" target="_blank">
+          ${s.image_url ? `<img src="${s.image_url}" class="sale-thumb" onerror="this.style.display='none'"/>` : '<div></div>'}
           <div class="sale-src" style="color:${sc.c};border-color:${sc.c}44;background:${sc.bg}">${s.source}</div>
           <div class="sale-title">${cleanTitle(s.title)}${s.deal_score ? ' ' + dealBadgeHTML(s.deal_score) : ''}</div>
           <div class="sale-date">${fmtDate(s.date)}</div>
@@ -1938,6 +1942,7 @@ window._showAllSales = function(btn) {
     const k = (s.source || '').split('(')[0].trim();
     const sc = SRC[k] || { c: '#555', bg: '#f5f5f5' };
     return `<a class="sale-row" href="${s.url || '#'}" target="_blank">
+      ${s.image_url ? `<img src="${s.image_url}" class="sale-thumb" onerror="this.style.display='none'"/>` : '<div></div>'}
       <div class="sale-src" style="color:${sc.c};border-color:${sc.c}44;background:${sc.bg}">${s.source}</div>
       <div class="sale-title">${cleanTitle(s.title)}${s.deal_score ? ' ' + dealBadgeHTML(s.deal_score) : ''}</div>
       <div class="sale-date">${fmtDate(s.date)}</div>
