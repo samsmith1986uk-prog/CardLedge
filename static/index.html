@@ -435,7 +435,10 @@ body.vault-dialog-open { overflow: hidden; }
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px) {
   header { padding: 0 12px; height: 50px; }
-  .header-links { display: none; }
+  .header-links { display: flex; gap: 2px; }
+  .header-links .hlink:not(.vault-hlink) { display: none; }
+  .vault-hlink { padding: 4px 8px; font-size: 9px; }
+  .live-badge { display: none; }
   .logo-name { font-size: 20px; }
   .hero { padding: 28px 14px 24px; }
   .hero-title { font-size: 32px; }
@@ -443,49 +446,62 @@ body.vault-dialog-open { overflow: hidden; }
   .search-wrap { flex-wrap: wrap; border-radius: 10px; }
   .grader-tabs { width: 100%; border-right: none; border-bottom: 1px solid #eee; justify-content: center; }
   .gtab { height: 40px; font-size: 13px; flex: 1; justify-content: center; }
-  .search-input { height: 46px; font-size: 16px; /* prevent zoom on iOS */ }
+  .search-input { height: 46px; font-size: 16px; }
   .search-btn { height: 46px; width: 100%; font-size: 14px; }
   .search-input-wrap { width: 100%; }
   .mode-row { gap: 8px; }
   .mode-btn { font-size: 10px; padding: 3px 10px; }
   .content { padding: 14px 12px 40px; }
-  .result-body { grid-template-columns: 1fr; text-align: center; }
-  .card-img { margin: 0 auto; }
-  .iq-panel { margin-top: 4px; }
-  .prices { justify-content: center; }
-  .badges { justify-content: center; }
+  .result-body { grid-template-columns: 100px 1fr; gap: 14px; }
+  .card-img { width: 100px; height: 140px; }
+  .iq-panel { grid-column: 1 / -1; margin-top: 4px; }
+  .prices { justify-content: flex-start; }
+  .badges { justify-content: flex-start; }
   .two-col { grid-template-columns: 1fr; }
   .rarity-grid { grid-template-columns: repeat(2, 1fr); }
   .intel-row { grid-template-columns: 1fr; }
-  .player-intel { grid-template-columns: 1fr; }
+  .player-intel { grid-template-columns: 1fr 1fr; }
   .ext-grid { grid-template-columns: 1fr 1fr; }
   .analyst-metrics { grid-template-columns: repeat(3, 1fr); font-size: 12px; }
   .am-val { font-size: 16px; }
-  .sale-row { grid-template-columns: 36px 60px 1fr 65px; }
+  .sale-row { grid-template-columns: 32px 55px 1fr 65px; gap: 6px; padding: 6px 8px; }
+  .sale-thumb { width: 32px; height: 44px; }
   .sale-date { display: none; }
-  .sale-date { display: none; }
-  .sale-src { font-size: 8px; padding: 2px 4px; }
+  .sale-src { font-size: 7px; padding: 2px 3px; }
   .sale-price { font-size: 14px; }
   .sc { padding: 14px 12px; }
   .analyst-wrap { padding: 14px 12px; }
   .analyst-header { flex-wrap: wrap; }
   .analyst-fresh { margin-left: 0; margin-top: 4px; }
-  .card-name { font-size: 24px; }
+  .card-name { font-size: 22px; }
   .val.main { font-size: 26px; }
   .grade-table td { padding: 6px 4px; }
   .grade-table .grade-price { font-size: 16px; }
   .stats-bar { padding: 0 12px; }
-  .stat-item { padding: 8px 12px; }
+  .stat-item { padding: 8px 10px; }
   footer { padding: 14px 12px; }
+  .pf-modal-content { width: 95%; max-height: 90vh; }
+  .pf-card-row { grid-template-columns: 36px 1fr auto auto; gap: 8px; padding: 10px 12px; }
+  .pf-card-thumb { width: 36px; height: 48px; }
+  .pf-summary { grid-template-columns: repeat(2, 1fr); }
+  .vault-dialog-box { width: 90%; margin: 0 16px; }
+  .portfolio-bar { padding: 8px 12px; gap: 10px; }
+  .pf-val { font-size: 16px; }
 }
 
 @media(max-width:480px) {
   .rarity-grid { grid-template-columns: 1fr 1fr; }
   .ext-grid { grid-template-columns: 1fr; }
-  .result-body { padding: 14px 12px; }
+  .result-body { grid-template-columns: 1fr; text-align: center; padding: 14px 12px; }
+  .card-img { margin: 0 auto; width: 120px; height: 168px; }
+  .prices { justify-content: center; }
+  .badges { justify-content: center; }
   .grade-table .grade-price { font-size: 14px; }
   .hero-title { font-size: 28px; }
   .iq-score { font-size: 52px; }
+  .sale-row { grid-template-columns: 1fr 65px; }
+  .sale-thumb { display: none; }
+  .sale-src { display: none; }
 }
 </style>
 </head>
