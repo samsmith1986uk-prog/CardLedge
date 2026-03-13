@@ -319,6 +319,13 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .empty-sub { font-size: 12px; color: var(--text-dim); max-width: 320px; margin: 0 auto 20px; line-height: 1.6; }
 .chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
 .chip { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border2); font-size: 10px; color: var(--text-mid); font-weight: 600; }
+.recent-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 460px; margin: 0 auto; }
+.recent-card { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; box-shadow: var(--shadow-card); }
+.recent-card:hover { border-color: var(--orange); transform: translateY(-1px); }
+.recent-card img { width: 32px; height: 44px; border-radius: 4px; object-fit: cover; }
+.recent-card .rc-name { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+.recent-card .rc-meta { font-size: 9px; color: var(--text-dim); }
+.recent-card .rc-price { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; color: var(--orange); font-variant-numeric: tabular-nums; }
 
 /* ── ANIMATIONS ── */
 @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
@@ -607,6 +614,7 @@ body.vault-dialog-open { overflow: hidden; }
         <span class="chip">Price Trend Lines</span>
         <span class="chip">Buy / Sell / Hold</span>
       </div>
+      <div id="recentLookups" style="margin-top:24px"></div>
     </div>
   </div>
 </div>
@@ -1021,7 +1029,7 @@ async function doLookup() {
 
   } catch (e) {
     clearTimeout(stageTimer); clearInterval(timerInterval);
-    show('loadWrap', false); show('emptyWrap', true);
+    show('loadWrap', false); show('emptyWrap', true); renderRecentLookups();
     if (e.message?.includes('fetch') || e.message?.includes('Failed'))
       setErr('Cannot reach backend. Start your server or enable Demo Mode.');
     else setErr(e.message || 'Unknown error');
@@ -1539,8 +1547,55 @@ async function renderFull(data) {
     fetchGradeComparison(card, gc);
   }
 
+  // Save to recent lookups
+  saveRecentLookup(data, card, sum);
+
   // Fire AI Analyst
   await runAIAnalyst(card, sales, sum, gc, rarityScore, printRun, parallelTier, popRatio, momentum, liquidity);
+}
+
+// ── RECENT LOOKUPS ──
+function saveRecentLookup(data, card, sum) {
+  try {
+    const recent = JSON.parse(localStorage.getItem('slabiq_recent') || '[]');
+    const entry = {
+      cert: data.cert_number,
+      gc: data.grading_company || 'psa',
+      name: card.subject || '',
+      year: card.year || '',
+      grade: card.grade || '',
+      price: sum?.last_sale_price || sum?.avg_price || 0,
+      image: card.image_url || '',
+      ts: Date.now(),
+    };
+    // Remove duplicate
+    const filtered = recent.filter(r => r.cert !== entry.cert);
+    filtered.unshift(entry);
+    localStorage.setItem('slabiq_recent', JSON.stringify(filtered.slice(0, 8)));
+  } catch (e) {}
+}
+
+function renderRecentLookups() {
+  const el = document.getElementById('recentLookups');
+  if (!el) return;
+  try {
+    const recent = JSON.parse(localStorage.getItem('slabiq_recent') || '[]');
+    if (!recent.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:600">Recent Lookups</div>
+      <div class="recent-grid">
+        ${recent.slice(0, 6).map(r => `
+          <div class="recent-card" onclick="document.getElementById('certIn').value='${r.cert}';doLookup()">
+            ${r.image ? `<img src="${r.image}" onerror="this.style.display='none'"/>` : ''}
+            <div>
+              <div class="rc-name">${r.name || 'Cert #' + r.cert}</div>
+              <div class="rc-meta">${[r.year, r.gc?.toUpperCase(), r.grade].filter(Boolean).join(' · ')}</div>
+            </div>
+            ${r.price ? `<div class="rc-price">$${r.price.toLocaleString()}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>`;
+  } catch (e) { el.innerHTML = ''; }
 }
 
 // ── FETCH GRADE COMPARISON FROM BACKEND ──
@@ -2229,6 +2284,7 @@ function renderPortfolioModal() {
 }
 
 updatePortfolioBar();
+renderRecentLookups();
 
 // ═══════════════════════════════════════════════════
 // WATCHLIST / PRICE ALERTS (Card Ladder-style)
