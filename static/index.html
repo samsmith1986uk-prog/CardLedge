@@ -1264,7 +1264,8 @@ async function renderFull(data) {
             : '<div class="card-img-ph">🃏</div>'}
         </div>
         <div>
-          <div class="card-name">${card.subject || 'Unknown Card'}</div>
+          <div class="card-name">${card.subject || (card.error ? gc + ' Cert #' + data.cert_number : 'Unknown Card')}</div>
+          ${card.error ? `<div style="color:var(--yellow);font-size:11px;margin:4px 0 2px;padding:4px 8px;background:var(--yellow-bg);border:1px solid var(--yellow-border);border-radius:4px">${card.error}</div>` : ''}
           <div class="card-set">${[card.year, card.brand, card.variety].filter(Boolean).join(' · ')}</div>
           <div class="card-cert">CERT #${data.cert_number}${card.card_number ? ' · Card #' + card.card_number : ''}${window._lastFetchTime ? ` · <span style="color:var(--text-faint)">${window._lastFetchTime}s</span>` : ''}</div>
           <div class="badges">
