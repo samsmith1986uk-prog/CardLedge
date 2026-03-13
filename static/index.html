@@ -1013,6 +1013,7 @@ async function doLookup() {
 
     show('loadWrap', false);
     show('resultsWrap', true);
+    window._lastFetchTime = totalTime;
     await renderFull(cardData);
 
   } catch (e) {
@@ -1254,7 +1255,7 @@ async function renderFull(data) {
         <div>
           <div class="card-name">${card.subject || 'Unknown Card'}</div>
           <div class="card-set">${[card.year, card.brand, card.variety].filter(Boolean).join(' · ')}</div>
-          <div class="card-cert">CERT #${data.cert_number}${card.card_number ? ' · Card #' + card.card_number : ''}</div>
+          <div class="card-cert">CERT #${data.cert_number}${card.card_number ? ' · Card #' + card.card_number : ''}${window._lastFetchTime ? ` · <span style="color:var(--text-faint)">${window._lastFetchTime}s</span>` : ''}</div>
           <div class="badges">
             <div class="grade-pill ${gc.toLowerCase()}">${gc} ${card.grade || '?'}</div>
             ${card.pop != null ? `<span class="tag tag-grey">POP ${(card.pop || 0).toLocaleString()}${card.pop_higher === 0 ? ' · NONE HIGHER' : ''}</span>` : ''}
