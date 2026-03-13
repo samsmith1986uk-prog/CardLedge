@@ -137,10 +137,10 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
     all_sales = resolved.get("sales", [])
     result["sales_data"] = all_sales
 
-    # Fallback: if no hero image, use first sale thumbnail
+    # Fallback: if no hero image, use highest-relevance sale thumbnail
     if result["card_details"] and not result["card_details"].get("image_url"):
         for sale in all_sales:
-            if sale.get("image_url"):
+            if sale.get("image_url") and sale.get("relevance_score", 0) >= 0.7:
                 result["card_details"]["image_url"] = sale["image_url"]
                 break
 

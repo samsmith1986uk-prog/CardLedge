@@ -193,12 +193,18 @@ async def _ensure_token() -> str:
         return ""
 
 
-def _parse_trpc_response(data) -> dict:
-    """Extract front/back image URLs from tRPC response."""
+def _parse_trpc_response(data, expected_cert: str = "") -> dict:
+    """Extract front/back image URLs from tRPC response.
+    Validates returned cert matches expected cert to prevent wrong-card images."""
     if data and isinstance(data, list) and len(data) > 0:
         info = data[0].get("result", {}).get("data", {}).get("json", {})
-        front = info.get("frontImageUrl", "")
-        back = info.get("backImageUrl", "")
+        # Verify cert number matches exactly
+        returned_cert = str(info.get("certNumber", ""))
+        if expected_cert and returned_cert != expected_cert:
+            print(f"[collectors] CERT MISMATCH: asked for {expected_cert}, got {returned_cert} — rejecting")
+            return {}
+        front = info.get("frontImageUrl") or ""
+        back = info.get("backImageUrl") or ""
         if front:
             front = front.replace("/small/", "/medium/").replace("/thumbnail/", "/medium/")
         if back:
@@ -226,7 +232,7 @@ async def fetch_cert_images(cert: str) -> dict:
         async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
             resp = await client.get(url, headers=headers)
             if resp.status_code == 200:
-                result = _parse_trpc_response(resp.json())
+                result = _parse_trpc_response(resp.json(), cert)
                 if result.get("front"):
                     return result
 
