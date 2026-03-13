@@ -1,27 +1,19 @@
 """
-Card Resolver v3
+Card Resolver v4
 ----------------
-Multi-source card data resolver.
+Multi-source card data resolver. Zero Playwright dependency — runs on Render free tier.
 
-Working sources (tested March 2026):
-  Sales:  130point (back.130point.com API) + eBay (Playwright)
-  Images: eBay (Playwright) > 130point (ebayimg URLs in results)
-
-Non-working sources removed:
-  - Card Ladder: requires login, returns 404
-  - Mavin: JS-rendered, returns empty shell even with Playwright
-  - PriceCharting: wrong category (returns Funko POPs for sports cards)
-
-Install: pip install playwright && playwright install chromium
+Working sources (March 2026):
+  Sales:  130point (back.130point.com POST API) — aggregates eBay/Goldin/Fanatics/Heritage
+  Images: Collectors tRPC API (PSA certs, via httpx + stored cookies)
 """
 
 import httpx
 import re
 import json
 import asyncio
-from typing import Optional, List
+from typing import List
 from urllib.parse import quote_plus
-from difflib import SequenceMatcher
 
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -89,87 +81,16 @@ def _detect_parallel(variety: str, brand: str) -> dict:
 
 
 # ─────────────────────────────────────────────
-# PLAYWRIGHT HELPER
-# ─────────────────────────────────────────────
-
-async def _playwright_get(url: str, wait_until: str = "networkidle", timeout: int = 25000) -> str:
-    """Fetch JS-rendered page using Playwright. Returns HTML string."""
-    try:
-        from playwright.async_api import async_playwright
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
-            ctx = await browser.new_context(
-                user_agent=BROWSER_HEADERS["User-Agent"],
-                viewport={"width": 1280, "height": 800},
-                extra_http_headers={"Accept-Language": "en-US,en;q=0.9"}
-            )
-            page = await ctx.new_page()
-            await page.goto(url, wait_until=wait_until, timeout=timeout)
-            await asyncio.sleep(2)
-            html = await page.content()
-            await browser.close()
-            return html
-    except Exception as e:
-        print(f"[playwright] {url}: {e}")
-        return ""
-
-
-async def _playwright_extract_ebay(url: str) -> list:
-    """Use Playwright to extract eBay sold items via JS evaluation."""
-    try:
-        from playwright.async_api import async_playwright
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
-            ctx = await browser.new_context(
-                user_agent=BROWSER_HEADERS["User-Agent"],
-                viewport={"width": 1280, "height": 800},
-                extra_http_headers={"Accept-Language": "en-US,en;q=0.9"}
-            )
-            page = await ctx.new_page()
-            await page.goto(url, wait_until="networkidle", timeout=30000)
-            await asyncio.sleep(2)
-
-            items = await page.evaluate("""() => {
-                const results = [];
-                const cards = document.querySelectorAll('.srp-results li.s-card, .srp-results li.s-item');
-                for (const card of cards) {
-                    const titleEl = card.querySelector('.s-item__title, [class*="title"]');
-                    const priceEl = card.querySelector('.s-item__price, [class*="price"]');
-                    const dateEl = card.querySelector('.s-item__ended-date, [class*="ended"], [class*="date"]');
-                    const linkEl = card.querySelector('a[href*="ebay.com/itm"]');
-                    const imgEl = card.querySelector('img[src*="ebayimg"]');
-
-                    const title = titleEl?.textContent?.trim() || '';
-                    const priceText = priceEl?.textContent?.trim() || '';
-                    const date = dateEl?.textContent?.trim() || '';
-                    const url = linkEl?.href || '';
-                    const image = imgEl?.src || '';
-
-                    if (title && title !== 'Shop on eBay' && priceText) {
-                        results.push({title, price: priceText, date, url, image});
-                    }
-                }
-                return results;
-            }""")
-            await browser.close()
-            return items
-    except Exception as e:
-        print(f"[playwright/ebay] {e}")
-        return []
-
-
-# ─────────────────────────────────────────────
-# IMAGE RESOLUTION
+# IMAGE RESOLUTION (httpx only — no Playwright)
 # ─────────────────────────────────────────────
 
 async def resolve_card_image(identity: dict) -> dict:
-    """Get card image: Collectors API (PSA) > eBay sold listing.
+    """Get card image via Collectors tRPC API (httpx).
     Returns dict with 'front' and optionally 'back' image URLs."""
     cert = identity.get("cert_number", "")
     gc = identity.get("grading_company", "").upper()
 
-    # 1. Collectors tRPC API — real PSA CloudFront images (front + back)
-    #    Uses httpx with stored cookies (production) or Playwright fallback (local)
+    # Collectors tRPC API — real PSA CloudFront images (front + back)
     if gc == "PSA" and cert:
         try:
             from scrapers.collectors_image import fetch_cert_images
@@ -180,25 +101,8 @@ async def resolve_card_image(identity: dict) -> dict:
         except Exception as e:
             print(f"[image/collectors] Error: {e}")
 
-    # 2. eBay sold listing images (fallback for non-PSA or if Collectors fails)
-    query = identity.get("query_graded", identity.get("query_clean", ""))
-    url = f"https://www.ebay.com/sch/i.html?_nkw={quote_plus(query)}&LH_Sold=1&LH_Complete=1&_ipg=5"
-    try:
-        html = await _playwright_get(url, timeout=20000)
-        if html:
-            for pat in [
-                r'"imageUrl"\s*:\s*"(https://i\.ebayimg\.com/[^"]+)"',
-                r'src="(https://i\.ebayimg\.com/images/g/[^"]+)"',
-                r'src="(https://i\.ebayimg\.com/thumbs/[^"]+)"',
-            ]:
-                matches = re.findall(pat, html)
-                good = [m for m in matches if "s-l" in m and "225" not in m]
-                if not good:
-                    good = [m for m in matches if "ebayimg" in m]
-                if good:
-                    return {"front": good[0], "back": ""}
-    except Exception as e:
-        print(f"[image/ebay] {e}")
+    # Fallback: grab first image from 130point sales results (already fetched via httpx)
+    # This is handled in resolve_card — if sales have image_url, frontend uses those
 
     return {"front": "", "back": ""}
 
@@ -330,11 +234,12 @@ def _parse_date_for_sort(date_str: str) -> str:
 
 
 async def resolve_sales_data(identity: dict) -> dict:
+    # 130point aggregates eBay + Goldin + Fanatics + Heritage + MySlabs
+    # No Playwright needed — pure httpx
     tasks = [
         _sales_from_130point(identity),
-        _sales_from_ebay(identity),
     ]
-    source_names = ["130point", "eBay"]
+    source_names = ["130point"]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     all_sales = []
@@ -463,49 +368,6 @@ async def _sales_from_130point(identity: dict) -> list:
             return sales
     except Exception as e:
         print(f"[130point] {e}")
-    return []
-
-
-async def _sales_from_ebay(identity: dict) -> list:
-    """eBay sold listings via Playwright JS extraction."""
-    url = f"https://www.ebay.com/sch/i.html?_nkw={quote_plus(identity['query_clean'])}&LH_Sold=1&LH_Complete=1&_ipg=50"
-    try:
-        raw_items = await _playwright_extract_ebay(url)
-        if not raw_items:
-            return []
-
-        sales = []
-        for item in raw_items:
-            price_str = item.get("price", "")
-            # Parse price from text like "$1,300.00"
-            price_m = re.search(r'\$([0-9,]+\.?\d{0,2})', price_str)
-            if not price_m:
-                continue
-            price = float(price_m.group(1).replace(",", ""))
-            if price < 5:
-                continue
-
-            # Extract item ID from URL
-            item_id = ""
-            id_m = re.search(r'/itm/(\d+)', item.get("url", ""))
-            if id_m:
-                item_id = id_m.group(1)
-
-            sales.append({
-                "price": price,
-                "currency": "USD",
-                "date": item.get("date", ""),
-                "title": item.get("title", ""),
-                "url": item.get("url", ""),
-                "image_url": item.get("image", ""),
-                "item_id": item_id,
-                "grade": identity["grade"],
-                "platform": "eBay",
-            })
-
-        return sales
-    except Exception as e:
-        print(f"[ebay] {e}")
     return []
 
 

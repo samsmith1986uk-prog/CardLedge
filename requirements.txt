@@ -4,7 +4,6 @@ cloudscraper
 fastapi
 httpx
 lxml
-playwright
 pydantic
 python-dotenv
 python-multipart
