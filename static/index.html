@@ -580,7 +580,8 @@ body.vault-dialog-open { overflow: hidden; }
         <div class="tdot" style="background:#ff5f57"></div>
         <div class="tdot" style="background:#febc2e"></div>
         <div class="tdot" style="background:#28c840"></div>
-        <span style="margin-left:8px;font-family:'DM Mono',monospace;font-size:10px;color:#999">slabiq — intelligence engine v3</span>
+        <span style="margin-left:8px;font-family:'DM Mono',monospace;font-size:10px;color:#999">slabiq — intelligence engine</span>
+        <span id="loadTimer" style="margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;color:#666"></span>
       </div>
       <div class="term-body" id="termBody"></div>
       <div class="prog-wrap">
@@ -979,6 +980,12 @@ async function doLookup() {
   document.getElementById('searchBtn').disabled = true;
 
   const lines = []; let idx = 0; let stageTimer;
+  const startTime = Date.now();
+  const timerEl = document.getElementById('loadTimer');
+  const timerInterval = setInterval(() => {
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    if (timerEl) timerEl.textContent = elapsed + 's';
+  }, 100);
   function tick() {
     if (idx < STAGES.length) {
       lines.push(STAGES[idx]); renderTerm(lines, idx); idx++;
@@ -998,7 +1005,9 @@ async function doLookup() {
       cardData = await r.json();
     }
 
-    clearTimeout(stageTimer);
+    clearTimeout(stageTimer); clearInterval(timerInterval);
+    const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    if (timerEl) timerEl.textContent = totalTime + 's ✓';
     renderTerm(lines, STAGES.length - 1);
     await new Promise(r => setTimeout(r, 300));
 
@@ -1007,7 +1016,7 @@ async function doLookup() {
     await renderFull(cardData);
 
   } catch (e) {
-    clearTimeout(stageTimer);
+    clearTimeout(stageTimer); clearInterval(timerInterval);
     show('loadWrap', false); show('emptyWrap', true);
     if (e.message?.includes('fetch') || e.message?.includes('Failed'))
       setErr('Cannot reach backend. Start your server or enable Demo Mode.');
