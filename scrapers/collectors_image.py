@@ -25,8 +25,16 @@ _lock = asyncio.Lock()
 
 
 def _load_cookies() -> list:
-    """Load cookies from COLLECTORS_COOKIES env var."""
+    """Load cookies from COLLECTORS_COOKIES env var or .env file."""
     raw = os.getenv("COLLECTORS_COOKIES", "")
+    if not raw:
+        # Fallback: python-dotenv may fail with unquoted JSON, read .env directly
+        try:
+            from dotenv import dotenv_values
+            vals = dotenv_values()
+            raw = vals.get("COLLECTORS_COOKIES", "")
+        except Exception:
+            pass
     if not raw:
         return []
     try:
