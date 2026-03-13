@@ -343,6 +343,16 @@ async def resolve_sales_data(identity: dict) -> dict:
         else:
             print(f"[sales/{name}] 0 results")
 
+    # Fallback: if 130point returned nothing, try eBay direct scrape
+    if not all_sales:
+        ebay_sales = await _sales_from_ebay(identity)
+        if ebay_sales:
+            for sale in ebay_sales:
+                sale["source"] = "eBay"
+            all_sales.extend(ebay_sales)
+            sources_hit.append("eBay")
+            print(f"[sales/eBay] fallback: {len(ebay_sales)} sales found")
+
     # Filter irrelevant sales (wrong player, wrong card)
     all_sales = filter_relevant_sales(all_sales, identity)
 
