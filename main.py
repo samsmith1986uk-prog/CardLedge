@@ -919,7 +919,46 @@ async def cache_clear():
 # ── HEALTH ──
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "10.0.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
+    return {"status": "ok", "version": "10.1.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
+
+
+@app.get("/debug/sales/{query}")
+async def debug_sales(query: str):
+    """Debug endpoint: test sales sources directly."""
+    import httpx as hx
+    results = {}
+
+    # Test 130point
+    try:
+        async with hx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            r = await client.post(
+                "https://back.130point.com/sales/",
+                data={"query": query},
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+                    "Accept": "*/*",
+                    "Referer": "https://130point.com/sales/",
+                    "Origin": "https://130point.com",
+                },
+            )
+            results["130point"] = {"status": r.status_code, "length": len(r.text), "has_data": "data-price" in r.text}
+    except Exception as e:
+        results["130point"] = {"error": str(e)}
+
+    # Test eBay
+    try:
+        from urllib.parse import quote_plus
+        ebay_url = f"https://www.ebay.com/sch/i.html?_nkw={quote_plus(query)}&LH_Sold=1&LH_Complete=1"
+        async with hx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            r = await client.get(ebay_url, headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+                "Accept": "text/html",
+            })
+            results["ebay"] = {"status": r.status_code, "length": len(r.text), "has_items": "s-item" in r.text}
+    except Exception as e:
+        results["ebay"] = {"error": str(e)}
+
+    return results
 
 
 # ── AI ANALYST PROXY ──

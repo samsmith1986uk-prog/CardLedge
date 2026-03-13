@@ -309,12 +309,12 @@ def _parse_date_for_sort(date_str: str) -> str:
 
 
 async def resolve_sales_data(identity: dict) -> dict:
-    # 130point aggregates eBay + Goldin + Fanatics + Heritage + MySlabs
-    # No Playwright needed — pure httpx
+    # Try multiple sources in parallel — 130point + eBay direct
     tasks = [
         _sales_from_130point(identity),
+        _sales_from_ebay(identity),
     ]
-    source_names = ["130point"]
+    source_names = ["130point", "eBay"]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     all_sales = []
@@ -443,6 +443,95 @@ async def _sales_from_130point(identity: dict) -> list:
             return sales
     except Exception as e:
         print(f"[130point] {e}")
+    return []
+
+
+async def _sales_from_ebay(identity: dict) -> list:
+    """Scrape eBay sold listings via httpx (no Playwright).
+    Uses eBay's search results HTML page."""
+    query = identity["query_graded"]
+    encoded = quote_plus(query)
+    # LH_Sold=1&LH_Complete=1 = sold items only
+    url = f"https://www.ebay.com/sch/i.html?_nkw={encoded}&LH_Sold=1&LH_Complete=1&_sop=13&rt=nc"
+    print(f"[ebay] Searching: {query}")
+
+    try:
+        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+            r = await client.get(url, headers={
+                "User-Agent": BROWSER_HEADERS["User-Agent"],
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+            })
+            if r.status_code != 200:
+                print(f"[ebay] HTTP {r.status_code}")
+                return []
+
+            html = r.text
+            sales = []
+
+            # Parse eBay search results — each item is in s-item__wrapper
+            items = re.findall(r'<li[^>]*class="s-item[^"]*"[^>]*>(.*?)</li>', html, re.DOTALL)
+            if not items:
+                # Fallback: try finding items in different format
+                items = re.findall(r'<div[^>]*class="s-item__wrapper[^"]*"[^>]*>(.*?)</div>\s*</div>\s*</li>', html, re.DOTALL)
+            print(f"[ebay] Found {len(items)} item blocks")
+
+            for item in items:
+                # Title
+                title_m = re.search(r'<span[^>]*role="heading"[^>]*>(.*?)</span>', item, re.DOTALL)
+                if not title_m:
+                    title_m = re.search(r'class="s-item__title"[^>]*>(?:<span[^>]*>)?(.*?)(?:</span>)?</(?:div|span|h3)', item, re.DOTALL)
+                title = re.sub(r'<[^>]+>', '', title_m.group(1)).strip() if title_m else ""
+                if not title or title.lower().startswith("shop on ebay"):
+                    continue
+
+                # Price
+                price_m = re.search(r'class="s-item__price"[^>]*>\s*(?:<span[^>]*>)?\s*\$?([\d,]+\.?\d*)', item)
+                if not price_m:
+                    continue
+                try:
+                    price = float(price_m.group(1).replace(",", ""))
+                except (ValueError, TypeError):
+                    continue
+                if price < 5:
+                    continue
+
+                # Date
+                date_m = re.search(r'class="s-item__ended-date[^"]*"[^>]*>(.*?)<', item)
+                if not date_m:
+                    date_m = re.search(r'class="s-item__endedDate[^"]*"[^>]*>(.*?)<', item)
+                if not date_m:
+                    date_m = re.search(r'SOLD\s+(\w+\s+\d+,?\s*\d*)', item, re.IGNORECASE)
+                date_str = re.sub(r'<[^>]+>', '', date_m.group(1)).strip() if date_m else ""
+                # Clean up "Sold  Mar 12, 2026" format
+                date_str = re.sub(r'^Sold\s+', '', date_str, flags=re.IGNORECASE).strip()
+
+                # Image
+                img_m = re.search(r'<img[^>]*src="(https://i\.ebayimg\.com/[^"]+)"', item)
+                image = img_m.group(1) if img_m else ""
+                if image:
+                    image = re.sub(r's-l\d+', 's-l500', image)
+
+                # URL
+                url_m = re.search(r'href="(https://www\.ebay\.com/itm/[^"]+)"', item)
+                item_url = url_m.group(1) if url_m else ""
+
+                sales.append({
+                    "price": price,
+                    "currency": "USD",
+                    "date": date_str,
+                    "title": title,
+                    "url": item_url,
+                    "image_url": image,
+                    "grade": identity.get("grade", ""),
+                    "platform": "eBay (sold)",
+                    "sale_type": "auction",
+                })
+
+            print(f"[ebay] Parsed {len(sales)} sales")
+            return sales
+    except Exception as e:
+        print(f"[ebay] Error: {e}")
     return []
 
 
