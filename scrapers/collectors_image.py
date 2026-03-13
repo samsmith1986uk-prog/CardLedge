@@ -2,91 +2,140 @@
 Collectors Image Resolver
 -------------------------
 Fetches PSA card images (front + back) via the Collectors app tRPC API.
-Uses COLLECTORS_COOKIES env var with httpx — no Playwright, no Chromium.
 
-Auto-refreshes expired access tokens using the OAuth refresh token.
-If refresh fails, falls back to Playwright login (local dev only).
+Authentication: Direct Okta API login (httpx, no browser/Playwright needed).
+  1. POST /api/v1/authn → sessionToken
+  2. GET /oauth2/default/v1/authorize (PKCE) → auth code
+  3. POST /oauth2/default/v1/token → access_token + refresh_token
+
+Auto-refreshes tokens. Works on Render free tier (zero browser deps).
 """
 
 import os
 import json
 import asyncio
 import time
+import hashlib
+import base64
+import secrets
 import httpx
+from urllib.parse import urlparse, parse_qs
 
 TRPC_URL = "https://app.collectors.com/collection/api/trpc/search.getCertDetails"
+AUTHN_URL = "https://login.collectors.com/api/v1/authn"
+AUTHORIZE_URL = "https://login.collectors.com/oauth2/default/v1/authorize"
 TOKEN_URL = "https://login.collectors.com/oauth2/default/v1/token"
+REDIRECT_URI = "https://app.collectors.com/handleloginredirect"
 CLIENT_ID = "0oa1gegcbllaryzA1697"
+SCOPES = "customer offline_access openid"
 BROWSER_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-# In-memory cookie state (loaded from env on first use, refreshed as needed)
-_cookies = None
+# Credentials (from env vars)
+_EMAIL = os.getenv("PSA_EMAIL", "sam.smith.1986.uk@icloud.com")
+_PASSWORD = os.getenv("PSA_PASSWORD", "England123!!!")
+
+# In-memory token state
+_access_token = None
+_refresh_token = None
+_token_expiry = 0
 _lock = asyncio.Lock()
+_login_attempts = 0
 
 
-def _load_cookies() -> list:
-    """Load cookies from COLLECTORS_COOKIES env var or .env file."""
-    raw = os.getenv("COLLECTORS_COOKIES", "")
-    if not raw:
-        # Fallback: python-dotenv may fail with unquoted JSON, read .env directly
-        try:
-            from dotenv import dotenv_values
-            vals = dotenv_values()
-            raw = vals.get("COLLECTORS_COOKIES", "")
-        except Exception:
-            pass
-    if not raw:
-        return []
+async def _okta_login() -> bool:
+    """Login via Okta API (pure httpx, no browser). Returns True on success."""
+    global _access_token, _refresh_token, _token_expiry, _login_attempts
+    _login_attempts += 1
+    print(f"[collectors] Okta login attempt #{_login_attempts}...")
+
     try:
-        return json.loads(raw)
-    except (json.JSONDecodeError, TypeError):
-        return []
+        async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
+            # Step 1: Primary authentication
+            auth_resp = await client.post(
+                AUTHN_URL,
+                json={"username": _EMAIL, "password": _PASSWORD},
+                headers={"Content-Type": "application/json", "Accept": "application/json"},
+            )
+            if auth_resp.status_code != 200:
+                print(f"[collectors] Okta authn failed: {auth_resp.status_code} {auth_resp.text[:200]}")
+                return False
+
+            auth_data = auth_resp.json()
+            if auth_data.get("status") != "SUCCESS":
+                print(f"[collectors] Okta authn status: {auth_data.get('status')}")
+                return False
+
+            session_token = auth_data["sessionToken"]
+            print(f"[collectors] Got session token")
+
+            # Step 2: PKCE authorize
+            code_verifier = secrets.token_urlsafe(64)
+            code_challenge = base64.urlsafe_b64encode(
+                hashlib.sha256(code_verifier.encode()).digest()
+            ).rstrip(b"=").decode()
+
+            authz_resp = await client.get(
+                AUTHORIZE_URL,
+                params={
+                    "client_id": CLIENT_ID,
+                    "response_type": "code",
+                    "scope": SCOPES,
+                    "redirect_uri": REDIRECT_URI,
+                    "sessionToken": session_token,
+                    "code_challenge": code_challenge,
+                    "code_challenge_method": "S256",
+                    "state": "slabiq",
+                    "nonce": secrets.token_urlsafe(32),
+                },
+            )
+            location = authz_resp.headers.get("location", "")
+            if "code=" not in location:
+                print(f"[collectors] No auth code in redirect: {location[:120]}")
+                return False
+
+            code = parse_qs(urlparse(location).query)["code"][0]
+            print(f"[collectors] Got auth code")
+
+            # Step 3: Exchange code for tokens
+            token_resp = await client.post(
+                TOKEN_URL,
+                data={
+                    "grant_type": "authorization_code",
+                    "code": code,
+                    "redirect_uri": REDIRECT_URI,
+                    "client_id": CLIENT_ID,
+                    "code_verifier": code_verifier,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+            if token_resp.status_code != 200:
+                print(f"[collectors] Token exchange failed: {token_resp.status_code} {token_resp.text[:200]}")
+                return False
+
+            tokens = token_resp.json()
+            _access_token = tokens.get("access_token", "")
+            _refresh_token = tokens.get("refresh_token", "")
+            expires_in = tokens.get("expires_in", 86400)
+            _token_expiry = time.time() + expires_in - 300  # 5 min buffer
+
+            if _access_token:
+                print(f"[collectors] Login successful! Token expires in {expires_in}s")
+                return True
+
+            print(f"[collectors] No access token in response")
+            return False
+
+    except Exception as e:
+        print(f"[collectors] Okta login error: {e}")
+        return False
 
 
-def _get_cookie_value(cookies: list, name: str) -> str:
-    """Get a specific cookie value by name."""
-    for c in cookies:
-        if c.get("name") == name:
-            return c.get("value", "")
-    return ""
+async def _refresh_access_token() -> bool:
+    """Use refresh token to get new access token. Returns True on success."""
+    global _access_token, _refresh_token, _token_expiry
 
-
-def _set_cookie_value(cookies: list, name: str, value: str, domain: str = "app.collectors.com"):
-    """Update or add a cookie in the list."""
-    for c in cookies:
-        if c.get("name") == name:
-            c["value"] = value
-            return
-    cookies.append({"name": name, "value": value, "domain": domain, "path": "/"})
-
-
-def _build_cookie_header(cookies: list) -> str:
-    """Build Cookie header string from cookie list."""
-    return "; ".join(f"{c['name']}={c['value']}" for c in cookies)
-
-
-def _is_token_expired(cookies: list) -> bool:
-    """Check if the access token is expired or about to expire (5 min buffer)."""
-    token = _get_cookie_value(cookies, "accessToken")
-    if not token:
-        return True
-    try:
-        import base64
-        parts = token.split(".")
-        if len(parts) < 2:
-            return True
-        payload = json.loads(base64.urlsafe_b64decode(parts[1] + "=="))
-        exp = payload.get("exp", 0)
-        return time.time() > (exp - 300)  # 5 minute buffer
-    except Exception:
-        return True
-
-
-async def _refresh_token(cookies: list) -> bool:
-    """Use OAuth refresh token to get a new access token. Returns True on success."""
-    refresh_token = _get_cookie_value(cookies, "refreshToken")
-    if not refresh_token:
-        print("[collectors] No refresh token available")
+    if not _refresh_token:
+        print("[collectors] No refresh token, need full login")
         return False
 
     try:
@@ -95,111 +144,53 @@ async def _refresh_token(cookies: list) -> bool:
                 TOKEN_URL,
                 data={
                     "grant_type": "refresh_token",
-                    "refresh_token": refresh_token,
+                    "refresh_token": _refresh_token,
                     "client_id": CLIENT_ID,
-                    "scope": "customer offline_access openid",
+                    "scope": SCOPES,
                 },
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
             if resp.status_code == 200:
                 data = resp.json()
-                new_access = data.get("access_token", "")
-                new_refresh = data.get("refresh_token", refresh_token)
-                new_id = data.get("id_token", "")
-                if new_access:
-                    _set_cookie_value(cookies, "accessToken", new_access)
-                    _set_cookie_value(cookies, "refreshToken", new_refresh)
-                    if new_id:
-                        _set_cookie_value(cookies, "idToken", new_id)
-                    print(f"[collectors] Token refreshed, expires in {data.get('expires_in', '?')}s")
-                    return True
-            print(f"[collectors] Token refresh failed: {resp.status_code} {resp.text[:200]}")
+                _access_token = data.get("access_token", _access_token)
+                _refresh_token = data.get("refresh_token", _refresh_token)
+                expires_in = data.get("expires_in", 86400)
+                _token_expiry = time.time() + expires_in - 300
+                print(f"[collectors] Token refreshed, expires in {expires_in}s")
+                return True
+            print(f"[collectors] Refresh failed: {resp.status_code} {resp.text[:200]}")
     except Exception as e:
-        print(f"[collectors] Token refresh error: {e}")
+        print(f"[collectors] Refresh error: {e}")
     return False
 
 
-async def _get_cookies() -> list:
-    """Get valid cookies, refreshing token if needed."""
-    global _cookies
+async def _ensure_token() -> str:
+    """Ensure we have a valid access token. Login or refresh as needed."""
+    global _access_token, _token_expiry
+
     async with _lock:
-        if _cookies is None:
-            _cookies = _load_cookies()
+        # Token still valid
+        if _access_token and time.time() < _token_expiry:
+            return _access_token
 
-        if not _cookies:
-            return []
+        # Try refresh first (faster than full login)
+        if _refresh_token:
+            print("[collectors] Token expired, refreshing...")
+            if await _refresh_access_token():
+                return _access_token
 
-        if _is_token_expired(_cookies):
-            print("[collectors] Access token expired, refreshing...")
-            refreshed = await _refresh_token(_cookies)
-            if not refreshed:
-                # Try Playwright login as last resort (local dev only)
-                new_cookies = await _playwright_login()
-                if new_cookies:
-                    _cookies = new_cookies
-                else:
-                    return []
+        # Full login
+        print("[collectors] Full login required...")
+        for attempt in range(3):
+            if await _okta_login():
+                return _access_token
+            if attempt < 2:
+                wait = (attempt + 1) * 5
+                print(f"[collectors] Login failed, retrying in {wait}s...")
+                await asyncio.sleep(wait)
 
-        return _cookies
-
-
-async def _playwright_login() -> list:
-    """Login via Playwright and return cookies. Only works locally with Chromium installed."""
-    email = os.getenv("PSA_EMAIL", "")
-    password = os.getenv("PSA_PASSWORD", "")
-    if not email or not password:
-        print("[collectors] No PSA_EMAIL/PSA_PASSWORD for Playwright fallback")
-        return []
-
-    try:
-        from playwright.async_api import async_playwright
-    except ImportError:
-        print("[collectors] Playwright not installed (expected on Render)")
-        return []
-
-    try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
-            ctx = await browser.new_context(user_agent=BROWSER_UA, viewport={"width": 1440, "height": 900})
-            page = await ctx.new_page()
-
-            await page.goto("https://app.collectors.com/signin", wait_until="networkidle", timeout=30000)
-            await page.wait_for_timeout(2000)
-            try:
-                await page.locator(".osano-cm-dialog__close").click(timeout=3000)
-            except Exception:
-                pass
-
-            await page.locator('input[type="email"], input[name="email"]').first.fill(email)
-            await page.wait_for_timeout(500)
-            await page.locator('button:has-text("Continue")').first.click(timeout=10000)
-            await page.wait_for_timeout(3000)
-            await page.locator('input[type="password"]').first.fill(password)
-            await page.wait_for_timeout(500)
-            await page.evaluate(
-                "document.querySelectorAll('button').forEach(b => { if(b.textContent.trim()==='Verify') b.click() })"
-            )
-            await page.wait_for_timeout(8000)
-
-            if "collection" not in page.url:
-                print(f"[collectors/pw] Login failed: {page.url}")
-                await browser.close()
-                return []
-
-            cookies = await ctx.cookies()
-            essential_names = ["accessToken", "refreshToken", "idToken", "sessionId", "sessionCookie", "env", "cf_clearance"]
-            essential = [
-                {"name": c["name"], "value": c["value"], "domain": c["domain"], "path": c.get("path", "/")}
-                for c in cookies
-                if c["name"] in essential_names and "collectors.com" in c.get("domain", "")
-            ]
-            print(f"[collectors/pw] Logged in. Update COLLECTORS_COOKIES on Render with:")
-            print(json.dumps(essential))
-            await browser.close()
-            return essential
-    except Exception as e:
-        print(f"[collectors/pw] Error: {e}")
-        return []
+        print("[collectors] All login attempts failed")
+        return ""
 
 
 def _parse_trpc_response(data) -> dict:
@@ -217,17 +208,17 @@ def _parse_trpc_response(data) -> dict:
 
 
 async def fetch_cert_images(cert: str) -> dict:
-    """Get PSA card images via Collectors tRPC API (httpx, no Playwright).
-    Auto-refreshes expired tokens. Returns {"front": url, "back": url}."""
-    cookies = await _get_cookies()
-    if not cookies:
+    """Get PSA card images via Collectors tRPC API.
+    Auto-authenticates via Okta. Returns {"front": url, "back": url}."""
+    access_token = await _ensure_token()
+    if not access_token:
         return {"front": "", "back": ""}
 
     hex_input = json.dumps({"certNumber": cert}).encode().hex()
     url = f'{TRPC_URL}?batch=1&input={{"0":"{hex_input}"}}'
     headers = {
         "User-Agent": BROWSER_UA,
-        "Cookie": _build_cookie_header(cookies),
+        "Cookie": f"accessToken={access_token};env=prod",
         "Referer": "https://app.collectors.com/collection",
     }
 
@@ -239,15 +230,19 @@ async def fetch_cert_images(cert: str) -> dict:
                 if result.get("front"):
                     return result
 
-            # If 401/403, try refreshing token once
+            # If 401/403, refresh and retry once
             if resp.status_code in (401, 403):
-                print(f"[collectors] Got {resp.status_code}, attempting token refresh...")
+                print(f"[collectors] Got {resp.status_code}, re-authenticating...")
                 async with _lock:
-                    if await _refresh_token(cookies):
-                        headers["Cookie"] = _build_cookie_header(cookies)
-                resp2 = await client.get(url, headers=headers)
-                if resp2.status_code == 200:
-                    return _parse_trpc_response(resp2.json())
+                    refreshed = await _refresh_access_token()
+                    if not refreshed:
+                        await _okta_login()
+                new_token = _access_token
+                if new_token:
+                    headers["Cookie"] = f"accessToken={new_token};env=prod"
+                    resp2 = await client.get(url, headers=headers)
+                    if resp2.status_code == 200:
+                        return _parse_trpc_response(resp2.json())
 
             print(f"[collectors] Status {resp.status_code} for cert {cert}")
     except Exception as e:
