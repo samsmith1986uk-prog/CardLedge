@@ -109,8 +109,10 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .result-hero { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,.07); margin-bottom: 14px; }
 .result-stripe { height: 4px; background: linear-gradient(90deg, var(--orange), var(--orange-mid)); }
 .result-body { padding: 20px 24px; display: grid; grid-template-columns: 130px 1fr 180px; gap: 20px; align-items: start; }
-.card-img { width: 130px; height: 182px; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,.10); flex-shrink: 0; }
-.card-img img { width: 100%; height: 100%; object-fit: cover; }
+.card-img { width: 130px; height: 182px; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,.10), 0 0 0 1px rgba(255,255,255,.05); flex-shrink: 0; transition: transform .2s ease, box-shadow .2s ease; }
+.card-img:hover { transform: scale(1.03); box-shadow: 0 8px 32px rgba(0,0,0,.15), 0 0 0 1px rgba(255,255,255,.08); }
+.card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
+.card-img:hover img { transform: scale(1.02); }
 .card-img-ph { font-size: 40px; opacity: .15; }
 .card-sport { display: inline-block; background: var(--orange-light); color: var(--orange); border: 1px solid #ffd0b5; border-radius: 4px; padding: 2px 8px; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
 .card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--text); line-height: 1.05; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
@@ -1250,7 +1252,7 @@ async function renderFull(data) {
             <span class="tag" style="color:${parallelTier.color};border-color:${parallelTier.color}44;background:${parallelTier.color}12">${parallelTier.tier}</span>
           </div>
           ${sum ? `<div class="prices">
-            <div class="price-block"><div class="lbl">Last Sale</div><div class="val main">${fmtPrice(lastSalePrice)}</div><div style="font-size:9px;color:var(--text-faint);margin-top:2px">${fmtDate(lastSaleDate)}</div></div>
+            <div class="price-block"><div class="lbl">Last Sale</div><div class="val main">${fmtPrice(lastSalePrice)}${momentum.direction === 'up' ? `<span style="font-size:12px;color:var(--green);margin-left:6px">▲ ${Math.abs(momentum.pct_change || 0).toFixed(1)}%</span>` : momentum.direction === 'down' ? `<span style="font-size:12px;color:var(--red);margin-left:6px">▼ ${Math.abs(momentum.pct_change || 0).toFixed(1)}%</span>` : ''}</div><div style="font-size:9px;color:var(--text-faint);margin-top:2px">${fmtDate(lastSaleDate)}</div></div>
             <div class="price-block"><div class="lbl">Low</div><div class="val lo">${fmtPrice(sum.low_price)}</div></div>
             <div class="price-block"><div class="lbl">High</div><div class="val hi">${fmtPrice(sum.high_price)}</div></div>
             <div class="price-block"><div class="lbl">Median</div><div class="val med">${fmtPrice(sum.median_price)}</div></div>
