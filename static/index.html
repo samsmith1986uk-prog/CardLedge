@@ -1407,6 +1407,7 @@ async function renderFull(data) {
         <div style="flex:1"></div>
         <button class="pf-btn" onclick="toggleWatchlist('${data.cert_number}','${gc}',${lastSalePrice || 0})" id="wlBtn">${isWatched(data.cert_number, gc) ? '★ Watching' : '☆ Watch'}</button>
         <button class="pf-btn add" onclick="showVaultDialog(window._currentCard)">+ VAULT</button>
+        <button class="pf-btn" onclick="navigator.clipboard.writeText(location.origin+'/?gc=${gc}&cert=${data.cert_number}');this.textContent='Copied!';setTimeout(()=>this.textContent='Share',1500)" style="background:var(--dark3)">Share</button>
       </div>
       </div>
     </div>` : ''}
@@ -2366,6 +2367,22 @@ function calcROI(avgPrice) {
   const color = roi > 0 ? 'var(--green)' : roi < 0 ? 'var(--red)' : 'var(--text-dim)';
   result.innerHTML = `<span style="color:${color};font-weight:700">${prefix}${roi}%</span> <span style="font-size:9px;color:var(--text-dim)">(${fmtPrice(avgPrice - cost)} ${roi > 0 ? 'gain' : 'loss'})</span>`;
 }
+
+// ── AUTO-LOOKUP FROM URL PARAMS ──
+(function() {
+  const params = new URLSearchParams(location.search);
+  const cert = params.get('cert');
+  const gc = params.get('gc');
+  if (cert) {
+    if (gc) {
+      const tabs = document.querySelectorAll('.grader-tab');
+      tabs.forEach(t => { t.classList.toggle('active', t.dataset.gc === gc); });
+      grader = gc;
+    }
+    document.getElementById('certIn').value = cert;
+    setTimeout(() => doLookup(), 100);
+  }
+})();
 </script>
 </body>
 </html>
