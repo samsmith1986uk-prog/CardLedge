@@ -137,10 +137,19 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
     all_sales = resolved.get("sales", [])
     result["sales_data"] = all_sales
 
-    # Fallback: if no hero image, use highest-relevance sale thumbnail
+    # Fallback: if no hero image, use sale thumbnail only if title matches variety
     if result["card_details"] and not result["card_details"].get("image_url"):
+        variety = (result["card_details"].get("variety") or "").upper()
+        card_number = result["card_details"].get("card_number", "")
         for sale in all_sales:
-            if sale.get("image_url") and sale.get("relevance_score", 0) >= 0.7:
+            if not sale.get("image_url") or sale.get("relevance_score", 0) < 0.7:
+                continue
+            title_upper = (sale.get("title") or "").upper()
+            # Require card number match AND (variety match or no variety)
+            cn = card_number.strip("#").strip()
+            has_cn = cn and (f"#{cn}" in title_upper or f"#{cn} " in title_upper or f" {cn} " in title_upper)
+            has_variety = not variety or any(v in title_upper for v in variety.split() if len(v) > 3)
+            if has_cn and has_variety:
                 result["card_details"]["image_url"] = sale["image_url"]
                 break
 

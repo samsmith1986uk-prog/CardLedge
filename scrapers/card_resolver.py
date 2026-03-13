@@ -85,12 +85,12 @@ def _detect_parallel(variety: str, brand: str) -> dict:
 # ─────────────────────────────────────────────
 
 async def resolve_card_image(identity: dict) -> dict:
-    """Get card image via Collectors tRPC API (httpx).
+    """Get card image via Collectors tRPC API, then 130point image search.
     Returns dict with 'front' and optionally 'back' image URLs."""
     cert = identity.get("cert_number", "")
     gc = identity.get("grading_company", "").upper()
 
-    # Collectors tRPC API — real PSA CloudFront images (front + back)
+    # Source 1: Collectors tRPC API — real PSA CloudFront images (front + back)
     if gc == "PSA" and cert:
         try:
             from scrapers.collectors_image import fetch_cert_images
@@ -101,10 +101,85 @@ async def resolve_card_image(identity: dict) -> dict:
         except Exception as e:
             print(f"[image/collectors] Error: {e}")
 
-    # Fallback: grab first image from 130point sales results (already fetched via httpx)
-    # This is handled in resolve_card — if sales have image_url, frontend uses those
+    # Source 2: 130point image search — find a sold listing image that matches
+    # the exact card (subject + year + set + variety + card number)
+    img = await _image_from_130point(identity)
+    if img:
+        return {"front": img, "back": ""}
 
     return {"front": "", "back": ""}
+
+
+async def _image_from_130point(identity: dict) -> str:
+    """Search 130point for a sold listing image matching the exact card variant."""
+    subject = identity.get("subject", "")
+    year = identity.get("year", "")
+    brand = identity.get("brand", "")
+    variety = identity.get("variety", "")
+    card_number = identity.get("card_number", "")
+    grade = identity.get("grade", "")
+    gc = identity.get("grading_company", "PSA")
+
+    if not subject:
+        return ""
+
+    # Build a specific query including variety
+    query = f"{subject} {year} {brand} {variety} {card_number} {gc} {grade}".strip()
+    query = re.sub(r'\s+', ' ', query)
+    print(f"[image/130point] Searching: {query}")
+
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            r = await client.post(
+                "https://back.130point.com/sales/",
+                data={"query": query},
+                headers={
+                    "User-Agent": BROWSER_HEADERS["User-Agent"],
+                    "Accept": "*/*",
+                    "Referer": "https://130point.com/sales/",
+                    "Origin": "https://130point.com",
+                },
+            )
+            if r.status_code != 200 or len(r.text) < 500:
+                return ""
+
+            rows = re.findall(r'<tr[^>]*>(.*?)</tr>', r.text, re.DOTALL)
+            cn = card_number.strip("#").strip()
+            variety_words = [w.upper() for w in variety.split() if len(w) > 3] if variety else []
+            subject_upper = subject.upper()
+
+            for row in rows:
+                img_m = re.search(r"src='(https://i\.ebayimg\.com/[^']+)'", row)
+                if not img_m:
+                    continue
+                title_m = re.search(r"id='titleText'[^>]*>(?:<a[^>]*>)?(.*?)(?:</a>)?</span>", row, re.DOTALL)
+                title = re.sub(r'<[^>]+>', '', title_m.group(1)).strip().upper() if title_m else ""
+                if not title:
+                    continue
+
+                # Must contain subject last name
+                name_words = subject_upper.split()
+                last_name = name_words[-1] if name_words else ""
+                if last_name and last_name not in title:
+                    continue
+
+                # Must contain card number
+                if cn and f"#{cn}" not in title and f" {cn} " not in title and not title.endswith(f" {cn}"):
+                    continue
+
+                # Must contain variety keywords (if any)
+                if variety_words and not all(vw in title for vw in variety_words):
+                    continue
+
+                img = img_m.group(1)
+                img = img.replace("s-l140", "s-l500").replace("s-l150", "s-l500")
+                print(f"[image/130point] Match: {title[:70]} -> {img[:60]}")
+                return img
+
+            print(f"[image/130point] No exact variant match in {len(rows)} results")
+    except Exception as e:
+        print(f"[image/130point] Error: {e}")
+    return ""
 
 
 # ─────────────────────────────────────────────
