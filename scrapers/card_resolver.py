@@ -309,12 +309,12 @@ def _parse_date_for_sort(date_str: str) -> str:
 
 
 async def resolve_sales_data(identity: dict) -> dict:
-    # Try multiple sources in parallel — 130point + eBay direct
+    # Try 130point (primary sales source)
+    # eBay direct scraping rarely works (503 from most server IPs)
     tasks = [
         _sales_from_130point(identity),
-        _sales_from_ebay(identity),
     ]
-    source_names = ["130point", "eBay"]
+    source_names = ["130point"]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # If 130point returned nothing, try with a simpler query
@@ -372,9 +372,9 @@ async def _sales_from_130point(identity: dict) -> list:
     query = identity["query_clean"]
     print(f"[130point] Searching: {query}")
 
-    for attempt in range(3):
+    for attempt in range(2):
         try:
-            async with httpx.AsyncClient(timeout=25.0, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
                 r = await client.post(
                     "https://back.130point.com/sales/",
                     data={"query": query},
@@ -389,7 +389,7 @@ async def _sales_from_130point(identity: dict) -> list:
                 )
                 if r.status_code == 429:
                     wait = (attempt + 1) * 2
-                    print(f"[130point] HTTP 429 (rate limited), retry {attempt+1}/3 in {wait}s")
+                    print(f"[130point] HTTP 429 (rate limited), retry {attempt+1}/2 in {wait}s")
                     await asyncio.sleep(wait)
                     continue
                 if r.status_code != 200:
@@ -401,11 +401,11 @@ async def _sales_from_130point(identity: dict) -> list:
                 break  # Success, continue to parse
         except Exception as e:
             print(f"[130point] attempt {attempt+1} error: {e}")
-            if attempt < 2:
+            if attempt < 1:
                 await asyncio.sleep(2)
             continue
     else:
-        print(f"[130point] All 3 attempts failed")
+        print(f"[130point] All retry attempts failed")
         return []
 
     # Parse the successful response
