@@ -56,57 +56,39 @@ async def _scrape_sgc_page(client: httpx.AsyncClient, cert_number: str) -> Optio
             except Exception:
                 pass
 
-        # Regex extraction from page
+        # SGC is an Angular SPA — check if page has actual card data or just the shell
+        if '<sgc-web>' in html and 'application/ld+json' not in html:
+            # SPA shell only, no server-rendered data
+            print(f"[sgc] Page is SPA shell only for cert {cert_number}")
+            return None
+
+        # Try meta tags first (most reliable)
         def extract(pattern, default=""):
             m = re.search(pattern, html, re.IGNORECASE | re.DOTALL)
             return m.group(1).strip() if m else default
 
-        subject = extract(r'(?:player|subject|name)["\s:]*(?:</[^>]+>)?\s*([^<]+)', '')
-        year = extract(r'(?:year)["\s:]*(?:</[^>]+>)?\s*(\d{4})', '')
-        brand = extract(r'(?:set|brand|manufacturer)["\s:]*(?:</[^>]+>)?\s*([^<]+)', '')
-        grade = extract(r'(?:grade|score)["\s:]*(?:</[^>]+>)?\s*([\d.]+)', '')
-        card_number = extract(r'(?:card\s*#|number)["\s:]*(?:</[^>]+>)?\s*#?(\w+)', '')
-        image = extract(r'<img[^>]*src="(https://[^"]*(?:sgc|gosgc)[^"]*\.(jpg|png|webp))"', '')
+        og_title = extract(r'<meta[^>]*property="og:title"[^>]*content="([^"]+)"')
+        og_image = extract(r'<meta[^>]*property="og:image"[^>]*content="([^"]+)"')
 
-        if not subject and not grade:
-            # Try meta tags
-            subject = extract(r'<meta[^>]*property="og:title"[^>]*content="([^"]+)"')
-            if subject:
-                # Parse title like "1993 Topps #98 Derek Jeter SGC 10"
-                parts = re.match(r'(\d{4})\s+(.+?)\s+#(\S+)\s+(.+?)\s+SGC\s+([\d.]+)', subject)
-                if parts:
-                    return {
-                        "cert_number": cert_number,
-                        "grading_company": "SGC",
-                        "grade": parts.group(5),
-                        "subject": parts.group(4),
-                        "year": parts.group(1),
-                        "brand": parts.group(2),
-                        "card_number": parts.group(3),
-                        "variety": "",
-                        "category": "Sports",
-                        "image_url": image or extract(r'<meta[^>]*property="og:image"[^>]*content="([^"]+)"'),
-                        "pop": 0,
-                        "pop_higher": None,
-                        "source": "SGC page scrape",
-                    }
-
-        if subject or grade:
-            return {
-                "cert_number": cert_number,
-                "grading_company": "SGC",
-                "grade": grade,
-                "subject": subject,
-                "year": year,
-                "brand": brand,
-                "card_number": card_number,
-                "variety": "",
-                "category": "Sports",
-                "image_url": image,
-                "pop": 0,
-                "pop_higher": None,
-                "source": "SGC page scrape",
-            }
+        if og_title:
+            # Parse title like "1993 Topps #98 Derek Jeter SGC 10"
+            parts = re.match(r'(\d{4})\s+(.+?)\s+#(\S+)\s+(.+?)\s+SGC\s+([\d.]+)', og_title)
+            if parts:
+                return {
+                    "cert_number": cert_number,
+                    "grading_company": "SGC",
+                    "grade": parts.group(5),
+                    "subject": parts.group(4),
+                    "year": parts.group(1),
+                    "brand": parts.group(2),
+                    "card_number": parts.group(3),
+                    "variety": "",
+                    "category": "Sports",
+                    "image_url": og_image or "",
+                    "pop": 0,
+                    "pop_higher": None,
+                    "source": "SGC page scrape",
+                }
 
         return None
 

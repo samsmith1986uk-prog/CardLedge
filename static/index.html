@@ -1258,7 +1258,7 @@ async function renderFull(data) {
             <div class="price-block"><div class="lbl">Median</div><div class="val med">${fmtPrice(sum.median_price)}</div></div>
           </div>` : (clMatch && clMatch.current_value ? `<div class="prices">
             <div class="price-block"><div class="lbl">Card Ladder Value</div><div class="val main">${fmtPrice(clMatch.current_value)}</div></div>
-          </div>` : '<div style="color:var(--text-dim);font-size:12px;margin-top:6px">Searching for sales data…</div>')}
+          </div>` : (playerIndex ? `<div style="color:var(--text-dim);font-size:12px;margin-top:6px">No exact comp sales found · See player index below</div>` : '<div style="color:var(--text-dim);font-size:12px;margin-top:6px">Searching for sales data…</div>'))}
         </div>
         <div class="iq-panel" id="iqPanel">
           <div class="iq-label-top">SlabIQ Score</div>

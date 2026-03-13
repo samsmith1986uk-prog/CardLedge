@@ -14,6 +14,36 @@ from typing import Optional, List
 
 FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/cardladder-71d53/databases/(default)/documents"
 
+# Words that should NOT be title-cased
+_ROMAN = {"II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"}
+_SUFFIXES = {"Jr.", "Jr", "Sr.", "Sr"}
+_PRESERVE = _ROMAN | _SUFFIXES
+
+
+def _smart_title(name: str) -> str:
+    """Title-case a name but preserve Roman numerals, suffixes, and prefixes like Le/Mc/De."""
+    prefixes = {"Mc", "Mac", "Le", "De", "La", "Di", "Van", "Von", "Al", "El", "O'"}
+    words = name.split()
+    result = []
+    for w in words:
+        upper = w.upper()
+        # Preserve Roman numerals / suffixes
+        if upper in {s.upper() for s in _PRESERVE}:
+            # Find the canonical form
+            for canon in _PRESERVE:
+                if canon.upper() == upper:
+                    result.append(canon)
+                    break
+            continue
+        wt = w.title()
+        # Check for prefixes (e.g. LeBron, McDonald, DeGrom)
+        for pfx in prefixes:
+            if upper.startswith(pfx.upper()) and len(w) > len(pfx):
+                wt = pfx + w[len(pfx):].title()
+                break
+        result.append(wt)
+    return " ".join(result)
+
 
 def _val(field):
     """Extract a Python value from a Firestore field."""
@@ -144,34 +174,12 @@ async def get_player_index(player_name: str) -> Optional[dict]:
 
 async def search_player(player_name: str) -> Optional[dict]:
     """Try multiple name formats to find a player on Card Ladder."""
-    # Build candidate names
-    candidates = [player_name]
-
-    # Title case
-    titled = player_name.title()
-    if titled not in candidates:
-        candidates.append(titled)
-
-    # Handle names like "LeBRON JAMES" -> "LeBron James"
-    # Split into words, title-case each but preserve known prefixes
-    prefixes = {"Mc", "Mac", "Le", "De", "La", "Di", "Van", "Von", "Al", "El", "O'"}
-    words = player_name.split()
-    smart_titled = []
-    for w in words:
-        wt = w.title()
-        # Check for prefixes (e.g. LeBron, McDonald, DeGrom)
-        for pfx in prefixes:
-            if w.upper().startswith(pfx.upper()) and len(w) > len(pfx):
-                wt = pfx + w[len(pfx):].title()
-                break
-        smart_titled.append(wt)
-    smart = " ".join(smart_titled)
-    if smart not in candidates:
-        candidates.append(smart)
-
-    # Original upper
-    if player_name.upper() not in candidates:
-        candidates.append(player_name.upper())
+    seen = set()
+    candidates = []
+    for name in [player_name, _smart_title(player_name), player_name.title(), player_name.upper()]:
+        if name not in seen:
+            seen.add(name)
+            candidates.append(name)
 
     for name in candidates:
         result = await get_player_index(name)
@@ -184,8 +192,9 @@ async def search_cards_by_player(player_name: str, limit: int = 10, light: bool 
     """Search Card Ladder for cards by player name.
     light=True returns only metadata fields (faster, for matching)."""
     url = f"{FIRESTORE_BASE}:runQuery"
-    # Try title case first (CL stores names in title case), then original
-    for name in [player_name.title(), player_name]:
+    # Try smart title case first (CL stores names in title case), then original
+    names = list(dict.fromkeys([_smart_title(player_name), player_name.title(), player_name]))
+    for name in names:
         query = {
             "structuredQuery": {
                 "from": [{"collectionId": "cards"}],
@@ -240,6 +249,7 @@ async def match_card(subject: str, year: str = "", brand: str = "",
     gc = grading_company.lower()
     best_match = None
     best_score = 0
+    best_cn_match = False
 
     for card in cards:
         score = 0
@@ -276,10 +286,11 @@ async def match_card(subject: str, year: str = "", brand: str = "",
         if score > best_score:
             best_score = score
             best_match = card
+            best_cn_match = cn_match
             print(f"[cardladder] New best: score={score} cn_match={cn_match} label={card.get('label','')[:50]}")
 
-    # Require at least year + some other match
-    if best_match and best_score >= 5:
+    # Require card_number match OR strong brand+year match (6+)
+    if best_match and best_score >= 5 and (best_score >= 6 or best_cn_match):
         # Fetch full card document with daily sales data
         card_id = best_match.get("card_id") or best_match.get("slug")
         if card_id and not best_match.get("all_sales"):
