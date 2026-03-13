@@ -357,6 +357,7 @@ async def resolve_sales_data(identity: dict) -> dict:
 async def _sales_from_130point(identity: dict) -> list:
     """130point via back.130point.com POST API."""
     query = identity["query_clean"]
+    print(f"[130point] Searching: {query}")
     try:
         async with httpx.AsyncClient(timeout=25.0, follow_redirects=True) as client:
             r = await client.post(
@@ -370,12 +371,17 @@ async def _sales_from_130point(identity: dict) -> list:
                     "Origin": "https://130point.com",
                 },
             )
-            if r.status_code != 200 or len(r.text) < 500:
+            if r.status_code != 200:
+                print(f"[130point] HTTP {r.status_code}, response: {r.text[:200]}")
+                return []
+            if len(r.text) < 500:
+                print(f"[130point] Response too short ({len(r.text)} bytes)")
                 return []
 
             html = r.text
             sales = []
             rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL)
+            print(f"[130point] Response: {len(r.text)} bytes, {len(rows)} rows")
 
             for row in rows:
                 # Extract data-price attribute (most reliable)
@@ -457,10 +463,25 @@ async def _sales_from_ebay(identity: dict) -> list:
 
     try:
         async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+            # Get cookies from homepage first
+            try:
+                await client.get("https://www.ebay.com", headers={
+                    "User-Agent": BROWSER_HEADERS["User-Agent"],
+                    "Accept": "text/html",
+                })
+            except Exception:
+                pass
+
             r = await client.get(url, headers={
                 "User-Agent": BROWSER_HEADERS["User-Agent"],
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.ebay.com/",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
             })
             if r.status_code != 200:
                 print(f"[ebay] HTTP {r.status_code}")

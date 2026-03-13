@@ -249,6 +249,59 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
                 if cl_sales:
                     result["cardladder_sales"] = cl_sales[:100]  # Up to 100 data points
                     print(f"[cardladder] {len(cl_sales)} sales history points for chart")
+
+                # FALLBACK: If no sales from 130point/eBay, use Card Ladder daily sales
+                if not result["sales_data"] and cl_sales:
+                    print(f"[cardladder] No primary sales — using {len(cl_sales)} Card Ladder sales as fallback")
+                    cl_label = cl_card.get("label", "")
+                    for cs in cl_sales[:30]:
+                        result["sales_data"].append({
+                            "price": cs.get("price", 0),
+                            "currency": "USD",
+                            "date": cs.get("date", ""),
+                            "title": cl_label or f"{subject} {card.get('year','')} {card.get('brand','')}",
+                            "url": "",
+                            "image_url": cl_card.get("image", ""),
+                            "grade": card.get("grade", ""),
+                            "platform": "Card Ladder",
+                            "source": "Card Ladder",
+                            "sale_type": "aggregated",
+                            "relevance_score": 0.95,
+                        })
+                    # Recompute market summary from CL sales
+                    cl_prices = [s["price"] for s in result["sales_data"] if s.get("price", 0) > 5]
+                    if cl_prices:
+                        cl_ps = sorted(cl_prices)
+                        n = len(cl_ps)
+                        result["market_summary"] = {
+                            "avg_price": round(sum(cl_ps) / n, 2),
+                            "median_price": round(cl_ps[n // 2], 2),
+                            "low_price": min(cl_ps),
+                            "high_price": max(cl_ps),
+                            "last_sale_price": result["sales_data"][0]["price"],
+                            "last_sale_date": result["sales_data"][0].get("date", ""),
+                            "total_sales_found": n,
+                            "sources_checked": 1,
+                            "sources": ["Card Ladder"],
+                        }
+                        # Recompute analytics with new sales
+                        try:
+                            result["momentum"] = _compute_momentum(result["sales_data"])
+                            result["liquidity"] = _compute_liquidity(result["sales_data"])
+                            result["investment"] = _compute_investment_metrics(
+                                result["sales_data"], result["market_summary"],
+                                result["momentum"], result["liquidity"],
+                                result.get("card_details", {}),
+                            )
+                        except Exception:
+                            pass
+
+                # FALLBACK: Use CL image if we still have no hero image
+                if result["card_details"] and not result["card_details"].get("image_url"):
+                    cl_img = cl_card.get("image", "")
+                    if cl_img:
+                        result["card_details"]["image_url"] = cl_img
+                        print(f"[cardladder] Using CL image: {cl_img[:60]}")
     except Exception as e:
         print(f"[analytics] cardladder error: {e}")
 
