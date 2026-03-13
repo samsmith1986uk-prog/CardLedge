@@ -317,6 +317,18 @@ async def resolve_sales_data(identity: dict) -> dict:
     source_names = ["130point", "eBay"]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
+    # If 130point returned nothing, try with a simpler query
+    if (isinstance(results[0], Exception) or not results[0]):
+        simple_query = identity.get("query_short", "")
+        if simple_query and simple_query != identity.get("query_clean", ""):
+            simple_identity = dict(identity)
+            simple_identity["query_clean"] = simple_query + " " + identity.get("grading_company", "") + " " + identity.get("grade", "")
+            print(f"[sales] Retrying 130point with simpler query: {simple_identity['query_clean']}")
+            retry = await _sales_from_130point(simple_identity)
+            if isinstance(retry, list) and retry:
+                results = list(results)
+                results[0] = retry
+
     all_sales = []
     sources_hit = []
     for name, result in zip(source_names, results):

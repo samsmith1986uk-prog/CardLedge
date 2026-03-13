@@ -180,11 +180,12 @@ async def search_player(player_name: str) -> Optional[dict]:
     return None
 
 
-async def search_cards_by_player(player_name: str, limit: int = 10) -> List[dict]:
-    """Search Card Ladder for cards by player name."""
+async def search_cards_by_player(player_name: str, limit: int = 10, light: bool = False) -> List[dict]:
+    """Search Card Ladder for cards by player name.
+    light=True returns only metadata fields (faster, for matching)."""
     url = f"{FIRESTORE_BASE}:runQuery"
-    # Try exact name first, then title case
-    for name in [player_name, player_name.title()]:
+    # Try title case first (CL stores names in title case), then original
+    for name in [player_name.title(), player_name]:
         query = {
             "structuredQuery": {
                 "from": [{"collectionId": "cards"}],
@@ -198,6 +199,17 @@ async def search_cards_by_player(player_name: str, limit: int = 10) -> List[dict
                 "limit": limit,
             }
         }
+        # For light queries, only fetch fields needed for matching
+        if light:
+            query["structuredQuery"]["select"] = {
+                "fields": [
+                    {"fieldPath": "player"}, {"fieldPath": "label"}, {"fieldPath": "year"},
+                    {"fieldPath": "set"}, {"fieldPath": "number"}, {"fieldPath": "condition"},
+                    {"fieldPath": "gradingCompany"}, {"fieldPath": "cardId"}, {"fieldPath": "slug"},
+                    {"fieldPath": "image"}, {"fieldPath": "pop"}, {"fieldPath": "numSales"},
+                    {"fieldPath": "category"}, {"fieldPath": "variation"},
+                ]
+            }
         try:
             async with httpx.AsyncClient(timeout=15) as client:
                 resp = await client.post(url, json=query)
@@ -209,6 +221,7 @@ async def search_cards_by_player(player_name: str, limit: int = 10) -> List[dict
                         if doc:
                             cards.append(_parse_card(doc))
                     if cards:
+                        print(f"[cardladder] Found {len(cards)} cards for '{name}'")
                         return cards
         except Exception as e:
             print(f"[cardladder] card search error: {e}")
@@ -219,7 +232,8 @@ async def match_card(subject: str, year: str = "", brand: str = "",
                      card_number: str = "", grade: str = "",
                      grading_company: str = "psa") -> Optional[dict]:
     """Find the best matching Card Ladder card profile for a graded card."""
-    cards = await search_cards_by_player(subject, limit=50)
+    # Use light query for matching (much faster — no dailySales data)
+    cards = await search_cards_by_player(subject, limit=50, light=True)
     if not cards:
         return None
 
@@ -266,6 +280,29 @@ async def match_card(subject: str, year: str = "", brand: str = "",
 
     # Require at least year + some other match
     if best_match and best_score >= 5:
+        # Fetch full card document with daily sales data
+        card_id = best_match.get("card_id") or best_match.get("slug")
+        if card_id and not best_match.get("all_sales"):
+            try:
+                full_card = await get_card_by_id(card_id)
+                if full_card:
+                    full_card["match_score"] = best_score
+                    return full_card
+            except Exception as e:
+                print(f"[cardladder] Full card fetch error: {e}")
         best_match["match_score"] = best_score
         return best_match
+    return None
+
+
+async def get_card_by_id(card_id: str) -> Optional[dict]:
+    """Fetch a single Card Ladder card document by ID."""
+    url = f"{FIRESTORE_BASE}/cards/{card_id}"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(url)
+            if resp.status_code == 200:
+                return _parse_card(resp.json())
+    except Exception as e:
+        print(f"[cardladder] get_card error: {e}")
     return None
