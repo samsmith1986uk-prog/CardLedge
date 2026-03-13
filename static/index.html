@@ -1472,7 +1472,7 @@ async function renderFull(data) {
     <!-- RECENT SALES -->
     ${sales.length ? `
     <div class="sc au3">
-      <div class="sc-title">Recent Sales (${sales.length})</div>
+      <div class="sc-title">Recent Sales (${sales.length})${sales.every(s => s.source === 'Card Ladder') ? ' <span style="font-size:9px;color:var(--text-faint);font-weight:400;font-family:DM Mono,monospace;letter-spacing:0">via Card Ladder</span>' : ''}</div>
       <div id="salesList">
       ${sales.slice(0, 10).map(s => {
         const k = (s.source || '').split('(')[0].trim();
