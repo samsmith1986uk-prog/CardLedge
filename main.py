@@ -984,7 +984,7 @@ async def cache_clear():
 # ── HEALTH ──
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "10.1.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
+    return {"status": "ok", "version": "10.2.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
 
 
 @app.get("/debug/sales/{query}")
