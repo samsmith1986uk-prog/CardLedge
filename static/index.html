@@ -1587,7 +1587,7 @@ function renderRecentLookups() {
       <div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:600">Recent Lookups</div>
       <div class="recent-grid">
         ${recent.slice(0, 6).map(r => `
-          <div class="recent-card" onclick="document.getElementById('certIn').value='${r.cert}';doLookup()">
+          <div class="recent-card" onclick="grader='${(r.gc||'psa').toLowerCase()}';document.querySelectorAll('.gtab').forEach(t=>t.classList.toggle('active',t.textContent.trim().toLowerCase()===grader));document.getElementById('certIn').value='${r.cert}';doLookup()">
             ${r.image ? `<img src="${r.image}" onerror="this.style.display='none'"/>` : ''}
             <div>
               <div class="rc-name">${r.name || 'Cert #' + r.cert}</div>
