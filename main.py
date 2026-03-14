@@ -329,6 +329,21 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
     except Exception as e:
         print(f"[analytics] cardladder error: {e}")
 
+    # Data quality indicator
+    has_sales = len(result.get("sales_data", [])) > 0
+    has_cl_match = result.get("cardladder_match") is not None
+    has_player_index = result.get("player_index") is not None
+    sources = resolved.get("sources_hit", [])
+    result["data_quality"] = {
+        "sales_source": sources[0] if sources else ("Card Ladder" if has_cl_match else "none"),
+        "sales_count": len(result.get("sales_data", [])),
+        "has_card_ladder": has_cl_match,
+        "has_player_index": has_player_index,
+        "confidence": "high" if has_sales and len(result.get("sales_data", [])) >= 5 else
+                      "medium" if has_sales or has_cl_match else
+                      "low" if has_player_index else "none",
+    }
+
     _cache_set(ck, result)
     return result
 
@@ -1081,7 +1096,7 @@ async def market_movers():
 # ── HEALTH ──
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "10.4.0", "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
+    return {"status": "ok", "version": APP_VERSION, "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
 
 
 @app.get("/debug/sales/{query}")
