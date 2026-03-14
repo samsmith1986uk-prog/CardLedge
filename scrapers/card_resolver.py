@@ -245,6 +245,51 @@ def _compute_title_relevance(title: str, identity: dict) -> float:
         if re.search(grade_pattern, title_upper):
             bonus += 0.1
 
+    # Variety/parallel matching — critical for differentiating Copper Prizm vs Silver Prizm etc.
+    variety = identity.get("variety", "").upper()
+    if variety:
+        # Named parallels that distinguish cards (not generic brand terms)
+        generic_variety = {"PRIZM", "CHROME", "SELECT", "OPTIC", "MOSAIC", "TOPPS", "PANINI",
+                          "BASE", "HOOPS", "PREMIUM", "STOCK", "UPDATE", "RATED", "ROOKIE"}
+        variety_words = [w for w in variety.split() if len(w) > 2 and w not in generic_variety]
+        if variety_words:
+            var_hits = sum(1 for w in variety_words if w in title_upper)
+            if var_hits == len(variety_words):
+                bonus += 0.2  # Full variety match — strong signal
+            elif var_hits > 0:
+                bonus += 0.1  # Partial match
+            else:
+                # Variety keywords not found in title — penalize
+                # Check if title has a DIFFERENT named parallel (even worse)
+                other_parallels = ["SILVER", "GOLD", "COPPER", "RED", "BLUE", "GREEN", "ORANGE",
+                                   "PINK", "PURPLE", "BLACK", "WHITE", "DISCO", "TIGER", "CAMO",
+                                   "MOJO", "HYPER", "NEON", "FAST BREAK", "ICE", "HOLO",
+                                   "SHIMMER", "WAVE", "LASER", "SNAKESKIN", "SCOPE",
+                                   "NET MARVELS", "RETRO", "MARBLE", "GENESIS", "VELOCITY"]
+                title_has_other = any(p in title_upper for p in other_parallels if p not in variety.upper())
+                if title_has_other:
+                    bonus -= 0.8  # Wrong parallel — reject
+                else:
+                    bonus -= 0.3  # Variety not mentioned — moderate penalty
+
+    # Brand/set mismatch: if cert says "PANINI SELECT" and title says "PANINI PRIZM", penalize
+    if brand:
+        # Extract the key set name (last word of brand, ignoring manufacturer)
+        brand_set_words = [w for w in brand.split() if w not in ("PANINI", "TOPPS", "UPPER", "DECK", "BOWMAN")]
+        if brand_set_words:
+            key_set = brand_set_words[-1]  # e.g., "SELECT" from "PANINI SELECT"
+            if len(key_set) > 3 and key_set not in title_upper:
+                # Title doesn't mention the set name — check if it mentions a different set
+                other_sets = ["PRIZM", "SELECT", "OPTIC", "MOSAIC", "CHRONICLES", "DONRUSS",
+                              "HOOPS", "CONTENDERS", "FLUX", "ABSOLUTE", "SCORE", "PRESTIGE",
+                              "NATIONAL TREASURES", "SPECTRA", "IMMACULATE", "CROWN ROYALE",
+                              "ILLUSIONS", "OBSIDIAN", "LEAF", "SAGE", "HERITAGE", "FINEST",
+                              "CHROME", "TOPPS", "BOWMAN", "FLEER", "SKYBOX", "UPPER DECK"]
+                for other in other_sets:
+                    if other != key_set and other in title_upper:
+                        bonus -= 0.5  # Different set entirely
+                        break
+
     return min(1.0, name_score * 0.5 + bonus + 0.3)  # base 0.3 for having name match
 
 
