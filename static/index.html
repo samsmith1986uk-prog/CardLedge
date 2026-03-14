@@ -270,6 +270,7 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 /* ── SALES ── */
 .sale-row { display: grid; grid-template-columns: 40px 80px 1fr 80px 75px; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; margin-bottom: 5px; transition: border-color .15s; }
 .sale-row:hover { border-color: var(--orange); }
+.sale-related { opacity: 0.6; border-style: dashed; }
 .sale-thumb { width: 36px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
 .sale-src { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; border: 1px solid; text-align: center; text-transform: uppercase; }
 .sale-title { font-size: 10px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1108,12 +1109,25 @@ function fmtPrice(p) {
 
 // ── OUTLIER FILTER ──
 function filterOutlierSales(sales) {
-  const prices = sales.filter(s => s.price && s.price > 5).map(s => s.price).sort((a,b) => a - b);
-  if (prices.length < 3) return { filtered: sales, stats: null };
+  // Only use exact matches (not "related") for price stats
+  const exactSales = sales.filter(s => !s.related);
+  const prices = exactSales.filter(s => s.price && s.price > 5).map(s => s.price).sort((a,b) => a - b);
+  if (prices.length < 3) {
+    // If too few exact matches, use all sales for stats
+    const allPrices = sales.filter(s => s.price && s.price > 5).map(s => s.price).sort((a,b) => a - b);
+    if (!allPrices.length) return { filtered: sales, stats: null };
+    const n = allPrices.length;
+    return { filtered: sales, stats: {
+      avg_price: Math.round(allPrices.reduce((a,b) => a+b, 0) / n * 100) / 100,
+      median_price: allPrices[Math.floor(n / 2)],
+      low_price: allPrices[0], high_price: allPrices[n - 1],
+      total_sales: n, outliers_removed: 0,
+    }};
+  }
   const median = prices[Math.floor(prices.length / 2)];
   const cap = median * 10;
   const filtered = sales.filter(s => !s.price || s.price <= cap);
-  const fp = filtered.filter(s => s.price && s.price > 5).map(s => s.price).sort((a,b) => a - b);
+  const fp = filtered.filter(s => s.price && s.price > 5 && !s.related).map(s => s.price).sort((a,b) => a - b);
   if (!fp.length) return { filtered: sales, stats: null };
   const n = fp.length;
   return {
@@ -1526,10 +1540,11 @@ async function renderFull(data) {
       ${sales.slice(0, 10).map(s => {
         const k = (s.source || '').split('(')[0].trim();
         const sc = SRC[k] || { c: '#555', bg: '#f5f5f5' };
-        return `<a class="sale-row" href="${s.url || '#'}" target="_blank">
+        const isRelated = s.related;
+        return `<a class="sale-row${isRelated ? ' sale-related' : ''}" href="${s.url || '#'}" target="_blank">
           ${s.image_url ? `<img src="${s.image_url}" class="sale-thumb" onerror="this.style.display='none'"/>` : '<div></div>'}
           <div class="sale-src" style="color:${sc.c};border-color:${sc.c}44;background:${sc.bg}">${s.source}</div>
-          <div class="sale-title">${cleanTitle(s.title)}${s.deal_score ? ' ' + dealBadgeHTML(s.deal_score) : ''}</div>
+          <div class="sale-title">${cleanTitle(s.title)}${isRelated ? ' <span style="font-size:9px;color:var(--text-faint);background:var(--border);padding:1px 5px;border-radius:3px;margin-left:4px">related</span>' : ''}${s.deal_score && !isRelated ? ' ' + dealBadgeHTML(s.deal_score) : ''}</div>
           <div class="sale-date">${fmtDate(s.date)}</div>
           <div class="sale-price">${fmtPrice(s.price)}</div>
         </a>`;
