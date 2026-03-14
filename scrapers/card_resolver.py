@@ -364,43 +364,44 @@ def _parse_date_for_sort(date_str: str) -> str:
 
 
 async def resolve_sales_data(identity: dict) -> dict:
-    # Run two 130point queries in parallel: specific + broad
-    # This is faster than sequential retry when the first query returns few results
-    gc = identity.get("grading_company", "")
-    grade = identity.get("grade", "")
-    short_query = identity.get("query_short", "")
-    variety = identity.get("variety", "")
+    # Try primary query first, then broader if needed (sequential to avoid rate limits)
+    primary_sales = await _sales_from_130point(identity)
+    if isinstance(primary_sales, Exception):
+        primary_sales = []
 
-    broad_query = f"{short_query} {variety} {gc} {grade}".strip() if variety else f"{short_query} {gc} {grade}".strip()
-    broad_query = re.sub(r'\s+', ' ', broad_query)
-
-    tasks = [_sales_from_130point(identity)]
-    if broad_query != identity.get("query_clean", ""):
-        broad_id = dict(identity)
-        broad_id["query_clean"] = broad_query
-        tasks.append(_sales_from_130point(broad_id))
-
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    # Merge results from both queries
     all_sales = []
     sources_hit = []
-    seen_urls = set()
-    for i, result in enumerate(results):
-        if isinstance(result, Exception):
-            print(f"[sales/130point-{i}] exception: {result}")
-        elif isinstance(result, list) and result:
-            for sale in result:
-                sale["source"] = "130point"
-                url = sale.get("url", "")
-                if url not in seen_urls:
-                    seen_urls.add(url)
-                    all_sales.append(sale)
-            if "130point" not in sources_hit:
-                sources_hit.append("130point")
-            print(f"[sales/130point-{i}] {len(result)} sales found")
-        else:
-            print(f"[sales/130point-{i}] 0 results")
+    if primary_sales:
+        for sale in primary_sales:
+            sale["source"] = "130point"
+        all_sales.extend(primary_sales)
+        sources_hit.append("130point")
+        print(f"[sales/130point] {len(primary_sales)} sales found")
+    else:
+        print(f"[sales/130point] 0 results")
+
+    # If few results, try broader query (player + year + variety + gc)
+    if len(all_sales) < 3:
+        gc = identity.get("grading_company", "")
+        grade = identity.get("grade", "")
+        short_query = identity.get("query_short", "")
+        variety = identity.get("variety", "")
+        broad_query = f"{short_query} {variety} {gc} {grade}".strip()
+        broad_query = re.sub(r'\s+', ' ', broad_query)
+        if broad_query != identity.get("query_clean", ""):
+            broad_id = dict(identity)
+            broad_id["query_clean"] = broad_query
+            print(f"[sales] Retrying with broader query: {broad_query}")
+            broad_sales = await _sales_from_130point(broad_id)
+            if isinstance(broad_sales, list) and broad_sales:
+                seen_urls = {s.get("url") for s in all_sales if s.get("url")}
+                for sale in broad_sales:
+                    sale["source"] = "130point"
+                    if sale.get("url") not in seen_urls:
+                        all_sales.append(sale)
+                if "130point" not in sources_hit:
+                    sources_hit.append("130point")
+                print(f"[sales/130point-broad] {len(broad_sales)} sales found")
 
     # Fallback: if 130point returned nothing, try eBay direct scrape
     if not all_sales:
@@ -493,7 +494,7 @@ async def _sales_from_130point(identity: dict) -> list:
                     },
                 )
                 if r.status_code == 429:
-                    wait = (attempt + 1) * 2
+                    wait = (attempt + 1) * 3
                     print(f"[130point] HTTP 429 (rate limited), retry {attempt+1}/2 in {wait}s")
                     await asyncio.sleep(wait)
                     continue
