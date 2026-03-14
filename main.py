@@ -24,7 +24,7 @@ from scrapers.sgc import scrape_sgc_cert
 from scrapers.cardladder import search_player, search_cards_by_player, match_card as match_card_ladder
 
 
-APP_VERSION = "10.5.4"
+APP_VERSION = "10.5.5"
 app = FastAPI(title="SLABIQ API", version=APP_VERSION)
 
 app.add_middleware(

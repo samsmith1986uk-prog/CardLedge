@@ -271,16 +271,22 @@ def _compute_title_relevance(title: str, identity: dict) -> float:
             else:
                 # Variety keywords not found in title — penalize
                 # Check if title has a DIFFERENT named parallel (even worse)
-                other_parallels = ["SILVER", "GOLD", "COPPER", "RED", "BLUE", "GREEN", "ORANGE",
+                named_parallels = ["SILVER", "GOLD", "COPPER", "RED", "BLUE", "GREEN", "ORANGE",
                                    "PINK", "PURPLE", "BLACK", "WHITE", "DISCO", "TIGER", "CAMO",
                                    "MOJO", "HYPER", "NEON", "FAST BREAK", "ICE", "HOLO",
                                    "SHIMMER", "WAVE", "LASER", "SNAKESKIN", "SCOPE",
                                    "NET MARVELS", "RETRO", "MARBLE", "GENESIS", "VELOCITY"]
-                title_has_other = any(p in title_upper for p in other_parallels if p not in variety.upper())
+                title_has_other = any(p in title_upper for p in named_parallels if p not in variety.upper())
                 if title_has_other:
-                    bonus -= 0.8  # Wrong parallel — reject
+                    bonus -= 0.9  # Wrong parallel — reject
                 else:
-                    bonus -= 0.3  # Variety not mentioned — moderate penalty
+                    # Our cert IS a named parallel but title doesn't mention it
+                    # This is likely a base card — significant price difference
+                    is_named_parallel = any(p in variety.upper() for p in named_parallels)
+                    if is_named_parallel:
+                        bonus -= 0.9  # Named parallel missing from title — likely base card, big price difference
+                    else:
+                        bonus -= 0.3  # Generic variety not mentioned — moderate penalty
 
     # Brand/set mismatch: if cert says "PANINI SELECT" and title says "PANINI PRIZM", penalize
     if brand:
@@ -319,14 +325,24 @@ def filter_relevant_sales(sales: List[dict], identity: dict, threshold: float = 
             print(f"[filter] Rejected (score={score:.2f}): {title[:80]}")
 
     if not filtered and sales:
-        # If we filtered everything out, keep the best matches
-        scored = [(s, _compute_title_relevance(s.get("title", ""), identity)) for s in sales]
-        scored.sort(key=lambda x: x[1], reverse=True)
-        # Keep top 5 even if below threshold
-        for s, score in scored[:5]:
-            s["relevance_score"] = round(score, 2)
-            filtered.append(s)
-        print(f"[filter] All below threshold, kept top {len(filtered)}")
+        # If we filtered everything out, check if this is a named parallel
+        # For named parallels, don't show wrong-variant sales (price difference too large)
+        variety = identity.get("variety", "").upper()
+        named_parallels = {"SILVER", "GOLD", "COPPER", "RED", "BLUE", "GREEN", "ORANGE",
+                          "PINK", "PURPLE", "BLACK", "WHITE", "DISCO", "TIGER", "CAMO",
+                          "MOJO", "HYPER", "NEON", "NET MARVELS", "RETRO", "MARBLE"}
+        is_named = any(p in variety for p in named_parallels) if variety else False
+        if not is_named:
+            # For base/generic cards, keep top 5 as related
+            scored = [(s, _compute_title_relevance(s.get("title", ""), identity)) for s in sales]
+            scored.sort(key=lambda x: x[1], reverse=True)
+            for s, score in scored[:5]:
+                s["relevance_score"] = round(score, 2)
+                s["related"] = True
+                filtered.append(s)
+            print(f"[filter] All below threshold, kept top {len(filtered)} as related")
+        else:
+            print(f"[filter] All below threshold, named parallel '{variety}' — showing 0 (no wrong-variant sales)")
 
     print(f"[filter] Kept {len(filtered)}/{len(sales)} sales (threshold={threshold})")
     return filtered

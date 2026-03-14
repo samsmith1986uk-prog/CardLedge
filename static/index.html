@@ -1207,11 +1207,12 @@ async function renderFull(data) {
   const clSales = data.cardladder_sales || [];
 
   // Store current card data for vault
+  const clValue = clMatch?.current_value || (playerIndex?.key_card?.value) || 0;
   window._currentCard = {
     cert: data.cert_number, gc, name: card.subject, year: card.year,
-    brand: card.brand, grade: card.grade, avgPrice: sum?.avg_price || 0,
+    brand: card.brand, grade: card.grade, avgPrice: sum?.avg_price || clValue,
     imageUrl: card.image_url || '', variety: card.variety || '',
-    lastSalePrice: sum?.last_sale_price || sum?.avg_price || 0,
+    lastSalePrice: sum?.last_sale_price || sum?.avg_price || clValue,
   };
 
   const rarityScore = getRarityScore(card);
@@ -1320,7 +1321,11 @@ async function renderFull(data) {
             <div class="price-block"><div class="lbl">Median</div><div class="val med">${fmtPrice(sum.median_price)}</div></div>
           </div>` : (clMatch && clMatch.current_value ? `<div class="prices">
             <div class="price-block"><div class="lbl">Card Ladder Value</div><div class="val main">${fmtPrice(clMatch.current_value)}</div></div>
-          </div>` : (playerIndex ? `<div style="color:var(--text-dim);font-size:12px;margin-top:6px">No exact comp sales found · See player index below</div>` : `<div style="color:var(--text-dim);font-size:12px;margin-top:6px">No comp sales available yet · <a href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent((card.subject||'')+' '+(card.year||'')+' '+(card.brand||'')+' '+(card.variety||'')+' '+gc+' '+card.grade)}&LH_Sold=1&LH_Complete=1" target="_blank" style="color:var(--orange);text-decoration:underline">Check eBay</a></div>`))}
+          </div>` : (playerIndex && playerIndex.key_card && playerIndex.key_card.value ? `<div class="prices">
+            <div class="price-block"><div class="lbl">Key Card Value</div><div class="val main">${fmtPrice(playerIndex.key_card.value)}</div><div style="font-size:9px;color:var(--text-faint);margin-top:2px">${playerIndex.key_card.label || 'via Card Ladder'}</div></div>
+            <div class="price-block"><div class="lbl">Index</div><div class="val">${fmtPrice(playerIndex.daily_index)}</div></div>
+          </div>
+          <div style="color:var(--text-dim);font-size:11px;margin-top:4px">No exact comp sales found · Price shown is Card Ladder index key card · <a href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent((card.subject||'')+' '+(card.year||'')+' '+(card.brand||'')+' '+(card.variety||'')+' '+gc+' '+card.grade)}&LH_Sold=1&LH_Complete=1" target="_blank" style="color:var(--orange);text-decoration:underline">Check eBay</a></div>` : (playerIndex ? `<div style="color:var(--text-dim);font-size:12px;margin-top:6px">No exact comp sales found · See player index below · <a href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent((card.subject||'')+' '+(card.year||'')+' '+(card.brand||'')+' '+(card.variety||'')+' '+gc+' '+card.grade)}&LH_Sold=1&LH_Complete=1" target="_blank" style="color:var(--orange);text-decoration:underline">Check eBay</a></div>` : `<div style="color:var(--text-dim);font-size:12px;margin-top:6px">No comp sales available yet · <a href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent((card.subject||'')+' '+(card.year||'')+' '+(card.brand||'')+' '+(card.variety||'')+' '+gc+' '+card.grade)}&LH_Sold=1&LH_Complete=1" target="_blank" style="color:var(--orange);text-decoration:underline">Check eBay</a></div>`)))}
         </div>
         <div class="iq-panel" id="iqPanel">
           <div class="iq-label-top">SlabIQ Score</div>
