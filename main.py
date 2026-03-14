@@ -24,7 +24,7 @@ from scrapers.sgc import scrape_sgc_cert
 from scrapers.cardladder import search_player, search_cards_by_player, match_card as match_card_ladder
 
 
-APP_VERSION = "10.5.6"
+APP_VERSION = "10.5.7"
 app = FastAPI(title="SLABIQ API", version=APP_VERSION)
 
 app.add_middleware(
@@ -126,6 +126,9 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
         else:
             card_details = {"cert_number": cert_number, "grade": "", "error": "Unknown grading company"}
         result["card_details"] = card_details
+        # Surface cert lookup errors (e.g. PSA 429 rate limit)
+        if card_details and card_details.get("error"):
+            result["errors"].append(f"Cert lookup: {card_details['error']}")
     except Exception as e:
         result["errors"].append(f"Card details fetch failed: {str(e)}")
 
@@ -344,7 +347,12 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
                       "low" if has_player_index else "none",
     }
 
-    _cache_set(ck, result)
+    # Don't cache if cert lookup failed (e.g. PSA 429) — allow retry
+    card = result.get("card_details") or {}
+    if card.get("error"):
+        print(f"[cache] Skipping cache — cert lookup error: {card.get('error')}")
+    else:
+        _cache_set(ck, result)
     return result
 
 

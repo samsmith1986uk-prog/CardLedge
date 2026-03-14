@@ -84,6 +84,11 @@ async def scrape_psa_cert(cert_number: str) -> dict:
                         "pop_higher": c.get("PopulationHigher", 0),
                         "source": "PSA API",
                     }
-            return {"cert_number": cert, "grading_company": "PSA", "error": f"HTTP {resp.status_code}", "grade": "", "subject": ""}
+            error_msg = f"HTTP {resp.status_code}"
+            if resp.status_code == 429:
+                error_msg = "PSA API rate limit reached — try again in a few minutes"
+            elif resp.status_code == 401:
+                error_msg = "PSA API authentication failed"
+            return {"cert_number": cert, "grading_company": "PSA", "error": error_msg, "grade": "", "subject": ""}
         except Exception as e:
             return {"cert_number": cert, "grading_company": "PSA", "error": str(e), "grade": "", "subject": ""}
