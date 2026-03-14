@@ -1010,6 +1010,48 @@ async def cache_clear():
     return {"status": "cleared"}
 
 
+# ── MARKET MOVERS ──
+_movers_cache = {"data": None, "ts": 0}
+
+@app.get("/market/movers")
+async def market_movers():
+    """Get top market movers from Card Ladder player indexes."""
+    now = time.time()
+    if _movers_cache["data"] and now - _movers_cache["ts"] < 1800:  # 30 min cache
+        return _movers_cache["data"]
+
+    # Curated list of popular players to check
+    players = [
+        "Patrick Mahomes II", "Victor Wembanyama", "Shohei Ohtani",
+        "Anthony Edwards", "LeBron James", "Luka Doncic",
+        "Jayson Tatum", "Lamar Jackson", "Mike Trout",
+        "Lionel Messi", "Travis Kelce", "Ja Morant",
+    ]
+    tasks = [search_player(p) for p in players]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    movers = []
+    for player_name, result in zip(players, results):
+        if isinstance(result, dict) and result.get("total_value"):
+            pct_data = result.get("pct_change", {})
+            pct = pct_data.get("weekly") or pct_data.get("monthly") or pct_data.get("daily") or 0
+            key_card = result.get("key_card", {})
+            movers.append({
+                "name": player_name.split()[-1] if len(player_name.split()) > 1 else player_name,
+                "full_name": player_name,
+                "value": result.get("total_value", 0),
+                "pct_change": round(pct, 1) if pct else 0,
+                "key_card_value": key_card.get("value", 0) if key_card else 0,
+            })
+
+    # Sort by absolute pct change (biggest movers first)
+    movers.sort(key=lambda m: abs(m.get("pct_change", 0)), reverse=True)
+    response = {"movers": movers, "updated": int(now)}
+    _movers_cache["data"] = response
+    _movers_cache["ts"] = now
+    return response
+
+
 # ── HEALTH ──
 @app.get("/health")
 async def health():

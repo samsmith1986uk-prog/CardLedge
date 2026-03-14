@@ -39,6 +39,19 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #2acc6a; animation: pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
+/* ── MARKET TICKER ── */
+.ticker-bar { background: var(--dark); border-bottom: 1px solid #333; overflow: hidden; height: 28px; display: flex; align-items: center; position: relative; }
+.ticker-label { background: var(--orange); color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 800; letter-spacing: 2px; padding: 0 10px; height: 100%; display: flex; align-items: center; text-transform: uppercase; flex-shrink: 0; z-index: 1; }
+.ticker-track { display: flex; animation: tickerScroll 40s linear infinite; white-space: nowrap; }
+.ticker-item { display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; font-size: 11px; color: #999; font-family: 'DM Mono', monospace; border-right: 1px solid #333; height: 28px; }
+.ticker-name { color: #ccc; font-weight: 500; }
+.ticker-val { font-weight: 600; }
+.ticker-chg { font-size: 9px; font-weight: 700; }
+.ticker-chg.up { color: #2acc6a; }
+.ticker-chg.down { color: #ff4d4d; }
+@keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@media(max-width:768px) { .ticker-bar { height: 24px; } .ticker-item { font-size: 9px; padding: 0 10px; } .ticker-label { font-size: 8px; padding: 0 6px; } }
+
 /* ── HERO ── */
 .hero { background: var(--dark); padding: 40px 24px 36px; text-align: center; position: relative; overflow: hidden; }
 .hero::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 50%, #ff620008 0%, transparent 60%), radial-gradient(circle at 80% 50%, #ff620006 0%, transparent 60%); pointer-events: none; }
@@ -109,16 +122,16 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .prog-labels { display: flex; justify-content: space-between; margin-top: 5px; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dim); }
 
 /* ── RESULT HERO ── */
-.result-hero { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,.07); margin-bottom: 14px; }
-.result-stripe { height: 4px; background: linear-gradient(90deg, var(--orange), var(--orange-mid)); }
-.result-body { padding: 20px 24px; display: grid; grid-template-columns: 130px 1fr 180px; gap: 20px; align-items: start; }
-.card-img { width: 130px; height: 182px; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,.10), 0 0 0 1px rgba(255,255,255,.05); flex-shrink: 0; transition: transform .2s ease, box-shadow .2s ease; }
-.card-img:hover { transform: scale(1.03); box-shadow: 0 8px 32px rgba(0,0,0,.15), 0 0 0 1px rgba(255,255,255,.08); }
+.result-hero { background: linear-gradient(135deg, var(--surface) 0%, #faf8f5 100%); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-card), 0 4px 24px rgba(0,0,0,.06); margin-bottom: 14px; }
+.result-stripe { height: 5px; background: linear-gradient(90deg, var(--orange), var(--orange-mid), #ff3e00); }
+.result-body { padding: 24px 28px; display: grid; grid-template-columns: 160px 1fr 180px; gap: 24px; align-items: start; }
+.card-img { width: 160px; height: 224px; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(0,0,0,.12), 0 0 0 1px rgba(255,255,255,.05); flex-shrink: 0; transition: transform .2s ease, box-shadow .2s ease; }
+.card-img:hover { transform: scale(1.04) rotate(-0.5deg); box-shadow: 0 12px 40px rgba(0,0,0,.18), 0 0 0 1px rgba(255,255,255,.08); }
 .card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
-.card-img:hover img { transform: scale(1.02); }
-.card-img-ph { font-size: 40px; opacity: .15; }
+.card-img:hover img { transform: scale(1.03); }
+.card-img-ph { font-size: 48px; opacity: .12; }
 .card-sport { display: inline-block; background: var(--orange-light); color: var(--orange); border: 1px solid #ffd0b5; border-radius: 4px; padding: 2px 8px; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-.card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--text); line-height: 1.05; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+.card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 900; color: var(--text); line-height: 1.05; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
 .card-set { font-size: 12px; color: var(--text-mid); margin-bottom: 2px; }
 .card-cert { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-faint); margin-bottom: 12px; }
 .badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
@@ -464,8 +477,8 @@ body.vault-dialog-open { overflow: hidden; }
   .mode-row { gap: 8px; }
   .mode-btn { font-size: 10px; padding: 3px 10px; }
   .content { padding: 14px 12px 40px; }
-  .result-body { grid-template-columns: 100px 1fr; gap: 14px; }
-  .card-img { width: 100px; height: 140px; }
+  .result-body { grid-template-columns: 120px 1fr; gap: 14px; }
+  .card-img { width: 120px; height: 168px; }
   .iq-panel { grid-column: 1 / -1; margin-top: 4px; }
   .prices { justify-content: flex-start; }
   .badges { justify-content: flex-start; }
@@ -542,6 +555,13 @@ body.vault-dialog-open { overflow: hidden; }
     <div class="live-badge" id="liveBadge"><div class="live-dot"></div>LIVE</div>
   </div>
 </header>
+
+<div class="ticker-bar" id="tickerBar">
+  <div class="ticker-label">MOVERS</div>
+  <div class="ticker-track" id="tickerTrack">
+    <div class="ticker-item"><span class="ticker-name">Loading market data</span><span class="ticker-chg up">...</span></div>
+  </div>
+</div>
 
 <section class="hero">
   <div class="hero-inner">
@@ -2368,6 +2388,30 @@ function calcROI(avgPrice) {
   const color = roi > 0 ? 'var(--green)' : roi < 0 ? 'var(--red)' : 'var(--text-dim)';
   result.innerHTML = `<span style="color:${color};font-weight:700">${prefix}${roi}%</span> <span style="font-size:9px;color:var(--text-dim)">(${fmtPrice(avgPrice - cost)} ${roi > 0 ? 'gain' : 'loss'})</span>`;
 }
+
+// ── MARKET MOVERS TICKER ──
+(async function loadTicker() {
+  try {
+    const r = await fetch(`${API}/market/movers`, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) throw new Error('fetch failed');
+    const data = await r.json();
+    const movers = data.movers || [];
+    if (!movers.length) return;
+    const track = document.getElementById('tickerTrack');
+    if (!track) return;
+    const items = movers.map(m => {
+      const chgCls = m.pct_change > 0 ? 'up' : m.pct_change < 0 ? 'down' : '';
+      const chgPrefix = m.pct_change > 0 ? '+' : '';
+      const val = m.value >= 1e9 ? (m.value/1e9).toFixed(1)+'B' : m.value >= 1e6 ? (m.value/1e6).toFixed(1)+'M' : m.value >= 1e3 ? (m.value/1e3).toFixed(0)+'K' : m.value;
+      return `<div class="ticker-item"><span class="ticker-name">${m.name}</span><span class="ticker-val">$${val}</span><span class="ticker-chg ${chgCls}">${chgPrefix}${m.pct_change}%</span></div>`;
+    }).join('');
+    // Duplicate for seamless scroll
+    track.innerHTML = items + items;
+  } catch (e) {
+    const bar = document.getElementById('tickerBar');
+    if (bar) bar.style.display = 'none';
+  }
+})();
 
 // ── AUTO-LOOKUP FROM URL PARAMS ──
 (function() {
