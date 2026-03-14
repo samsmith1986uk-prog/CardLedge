@@ -281,15 +281,25 @@ async def match_card(subject: str, year: str = "", brand: str = "",
         card_variation = (card.get("variation") or "").lower()
         card_label = (card.get("label") or "").lower()
         if variety:
-            vw = [w for w in variety.lower().split() if len(w) > 2]
-            # Check both the variation field and label for variety keywords
-            var_hits = sum(1 for w in vw if w in card_variation or w in card_label)
-            if var_hits:
-                score += min(var_hits * 2, 4)  # Up to 4 points for variety match
-            else:
-                score -= 2  # Penalize cards that DON'T match the variety
-        elif card_variation and card_variation not in ("base", ""):
-            # Card has a variation but cert doesn't specify one — slight penalty
+            # Filter out generic brand words that appear across many variants
+            generic = {"prizm", "chrome", "select", "optic", "mosaic", "topps", "panini",
+                       "base", "hoops", "premium", "stock", "update"}
+            vw = [w for w in variety.lower().split() if len(w) > 2 and w not in generic]
+            if vw:
+                var_hits = sum(1 for w in vw if w in card_variation or w in card_label)
+                if var_hits == len(vw):
+                    score += 4  # Full variety match — very confident
+                elif var_hits > 0:
+                    score += 1  # Partial match
+                else:
+                    # Only penalize if CL card has a different named variation
+                    if card_variation and card_variation not in ("base", "field level base", ""):
+                        score -= 3  # CL card is a different parallel
+                    # If CL card is "Base" and cert is a named parallel, heavy penalty
+                    elif card_variation in ("base", "field level base"):
+                        score -= 4  # Base card vs named parallel — different product
+        elif card_variation and card_variation.lower() not in ("base", "field level base", ""):
+            # Cert has no variety but CL card is a parallel — slight penalty
             score -= 1
 
         # Label contains key words from brand
@@ -304,6 +314,20 @@ async def match_card(subject: str, year: str = "", brand: str = "",
             best_match = card
             best_cn_match = cn_match
             print(f"[cardladder] New best: score={score} cn_match={cn_match} label={card.get('label','')[:50]}")
+
+    # Extra check: if cert has a specific variety, verify the best match includes it
+    variety = kwargs.get("variety", "")
+    if variety and best_match:
+        generic = {"prizm", "chrome", "select", "optic", "mosaic", "topps", "panini",
+                   "base", "hoops", "premium", "stock", "update"}
+        vw = [w for w in variety.lower().split() if len(w) > 2 and w not in generic]
+        if vw:
+            best_var = (best_match.get("variation") or "").lower()
+            best_lbl = (best_match.get("label") or "").lower()
+            any_hit = any(w in best_var or w in best_lbl for w in vw)
+            if not any_hit:
+                print(f"[cardladder] Rejecting match: variety '{variety}' not found in '{best_match.get('variation','')}'")
+                return None
 
     # Require card_number match OR strong brand+year match (6+)
     if best_match and best_score >= 5 and (best_score >= 6 or best_cn_match):
