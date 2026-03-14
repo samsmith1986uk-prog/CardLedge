@@ -24,7 +24,7 @@ from scrapers.sgc import scrape_sgc_cert
 from scrapers.cardladder import search_player, search_cards_by_player, match_card as match_card_ladder
 
 
-APP_VERSION = "10.5.7"
+APP_VERSION = "10.5.8"
 app = FastAPI(title="SLABIQ API", version=APP_VERSION)
 
 app.add_middleware(
@@ -54,9 +54,12 @@ async def serve_frontend():
         headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"},
     )
 
-# ── IN-MEMORY CACHE (1 hour TTL) ──
+# ── IN-MEMORY CACHE ──
 _cache = {}
 CACHE_TTL = 7200  # 2 hours — cache good results longer since 130point rate limits
+# Separate cert cache — PSA cert data is static (grade/pop don't change often)
+_cert_cache = {}
+CERT_CACHE_TTL = 86400  # 24 hours — cert details rarely change
 
 
 def _cache_key(gc: str, cert: str) -> str:
@@ -115,16 +118,28 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
         "errors": []
     }
 
-    # Step 1: Get card details from grading company
+    # Step 1: Get card details from grading company (with 24h cert cache)
+    cert_ck = f"cert:{grading_company}:{cert_number}"
+    cached_cert = _cert_cache.get(cert_ck)
+    if cached_cert and time.time() - cached_cert["ts"] < CERT_CACHE_TTL:
+        card_details = cached_cert["data"]
+        print(f"[cert-cache] HIT for {cert_ck}")
+    else:
+        card_details = None
     try:
-        if grading_company == "PSA":
-            card_details = await scrape_psa_cert(cert_number)
-        elif grading_company == "BGS":
-            card_details = await scrape_beckett_cert(cert_number)
-        elif grading_company == "SGC":
-            card_details = await scrape_sgc_cert(cert_number)
-        else:
-            card_details = {"cert_number": cert_number, "grade": "", "error": "Unknown grading company"}
+        if not card_details:
+            if grading_company == "PSA":
+                card_details = await scrape_psa_cert(cert_number)
+            elif grading_company == "BGS":
+                card_details = await scrape_beckett_cert(cert_number)
+            elif grading_company == "SGC":
+                card_details = await scrape_sgc_cert(cert_number)
+            else:
+                card_details = {"cert_number": cert_number, "grade": "", "error": "Unknown grading company"}
+            # Cache successful cert lookups for 24h
+            if card_details and card_details.get("subject") and not card_details.get("error"):
+                _cert_cache[cert_ck] = {"data": card_details, "ts": time.time()}
+                print(f"[cert-cache] STORED {cert_ck}: {card_details.get('subject','')}")
         result["card_details"] = card_details
         # Surface cert lookup errors (e.g. PSA 429 rate limit)
         if card_details and card_details.get("error"):
@@ -1034,7 +1049,9 @@ async def cache_stats():
     """Return cache statistics."""
     now = time.time()
     active = sum(1 for v in _cache.values() if now - v["ts"] < CACHE_TTL)
-    return {"total_entries": len(_cache), "active": active, "ttl_seconds": CACHE_TTL}
+    cert_active = sum(1 for v in _cert_cache.values() if now - v["ts"] < CERT_CACHE_TTL)
+    return {"total_entries": len(_cache), "active": active, "ttl_seconds": CACHE_TTL,
+            "cert_cache": {"total": len(_cert_cache), "active": cert_active, "ttl_seconds": CERT_CACHE_TTL}}
 
 
 @app.delete("/cache/clear")
@@ -1104,7 +1121,7 @@ async def market_movers():
 # ── HEALTH ──
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": APP_VERSION, "cache_entries": len(_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
+    return {"status": "ok", "version": APP_VERSION, "cache_entries": len(_cache), "cert_cache_entries": len(_cert_cache), "frontend": "loaded" if len(_INDEX_HTML) > 100 else "missing"}
 
 
 @app.get("/debug/sales/{query}")
