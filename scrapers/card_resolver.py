@@ -39,6 +39,16 @@ def build_card_identity(psa_cert: dict) -> dict:
     cert_number = psa_cert.get("cert_number", "")
     parallel = _detect_parallel(variety, brand)
 
+    # Simplify brand for search queries — remove manufacturer name and filler words
+    brand_search = brand
+    for prefix in ["PANINI ", "TOPPS ", "UPPER DECK ", "FLEER ", "BOWMAN "]:
+        if brand_search.upper().startswith(prefix):
+            brand_search = brand_search[len(prefix):]
+            break
+    # Remove filler words
+    brand_search = re.sub(r'\b(NBA|NFL|MLB|NHL|PREMIUM|STOCK)\b', '', brand_search, flags=re.IGNORECASE).strip()
+    brand_search = re.sub(r'\s+', ' ', brand_search)
+
     return {
         "subject": subject,
         "year": year,
@@ -51,8 +61,8 @@ def build_card_identity(psa_cert: dict) -> dict:
         "parallel": parallel,
         "query_short": f"{subject} {year} {card_number}".strip(),
         "query_full": f"{subject} {year} {brand} #{card_number} {variety}".strip(),
-        "query_graded": f"{subject} {year} {brand} {card_number} {gc} {grade}".strip(),
-        "query_clean": f"{subject} {year} {brand} {card_number} {gc} {grade}".strip(),
+        "query_graded": f"{subject} {year} {brand_search} {card_number} {gc} {grade}".strip(),
+        "query_clean": f"{subject} {year} {brand_search} {card_number} {gc} {grade}".strip(),
     }
 
 def _detect_parallel(variety: str, brand: str) -> dict:
