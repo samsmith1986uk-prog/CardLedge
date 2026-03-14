@@ -1,6 +1,7 @@
 """PSA Scraper - clean version using api.psacard.com"""
 import httpx
 import os
+import re
 
 def _load_token():
     env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
@@ -12,6 +13,39 @@ def _load_token():
     except Exception:
         pass
     return os.getenv("PSA_API_TOKEN", "")
+
+def _extract_variety_from_brand(brand: str, variety: str) -> tuple:
+    """If PSA puts the variety in the brand field, split them.
+    Returns (clean_brand, variety)."""
+    if variety:
+        return brand, variety
+    if not brand:
+        return brand, variety
+
+    # Known variety patterns that PSA sometimes embeds in brand
+    variety_patterns = [
+        # Color parallels
+        r'\b(COPPER|SILVER|GOLD|RED|BLUE|GREEN|ORANGE|PINK|PURPLE|BLACK|WHITE)\s+(PRIZM|CHROME|WAVE|SHIMMER|ICE)\b',
+        r'\b(DISCO|TIGER|CAMO|MOJO|HYPER|NEON|HOLO|SCOPE|SNAKESKIN|VELOCITY|GENESIS|MARBLE)\b',
+        # Named parallels
+        r'\b(RETRO NET MARVELS|NET MARVELS|FAST BREAK|LAZER|LASER)\b',
+        # Numbered parallels
+        r'\b(COPPER)\s+PRIZM\b',
+        # Insert sets often merged into brand
+        r'\b(RATED ROOKIE|DOWNTOWN|KABOOM|CASE HIT)\b',
+    ]
+
+    brand_upper = brand.upper()
+    for pat in variety_patterns:
+        m = re.search(pat, brand_upper)
+        if m:
+            matched = m.group(0)
+            # Remove the variety from brand
+            clean_brand = brand[:m.start()].strip() + ' ' + brand[m.end():].strip()
+            clean_brand = re.sub(r'\s+', ' ', clean_brand).strip()
+            return clean_brand, matched
+    return brand, variety
+
 
 async def scrape_psa_cert(cert_number: str) -> dict:
     cert = cert_number.strip()
@@ -31,6 +65,9 @@ async def scrape_psa_cert(cert_number: str) -> dict:
                 if c:
                     grade_raw = c.get("CardGrade", "")
                     cn = cert.zfill(8)
+                    raw_brand = c.get("Brand", "")
+                    raw_variety = c.get("Variety", "")
+                    clean_brand, variety = _extract_variety_from_brand(raw_brand, raw_variety)
                     return {
                         "cert_number": cert,
                         "grading_company": "PSA",
@@ -38,8 +75,8 @@ async def scrape_psa_cert(cert_number: str) -> dict:
                         "full_grade": grade_raw,
                         "subject": c.get("Subject", ""),
                         "year": c.get("Year", ""),
-                        "brand": c.get("Brand", ""),
-                        "variety": c.get("Variety", ""),
+                        "brand": clean_brand,
+                        "variety": variety,
                         "card_number": c.get("CardNumber", ""),
                         "category": c.get("Category", ""),
                         "image_url": "",
