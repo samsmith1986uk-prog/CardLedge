@@ -139,7 +139,7 @@ async def _image_from_130point(identity: dict) -> str:
     print(f"[image/130point] Searching: {query}")
 
     try:
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=6, follow_redirects=True) as client:
             r = await client.post(
                 "https://back.130point.com/sales/",
                 data={"query": query},
@@ -458,43 +458,31 @@ async def _sales_from_130point(identity: dict) -> list:
     query = identity["query_clean"]
     print(f"[130point] Searching: {query}")
 
-    for attempt in range(2):
-        try:
-            async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
-                r = await client.post(
-                    "https://back.130point.com/sales/",
-                    data={"query": query},
-                    headers={
-                        "User-Agent": BROWSER_HEADERS["User-Agent"],
-                        "Accept": "*/*",
-                        "Accept-Language": "en-US,en;q=0.9",
-                        "Referer": "https://130point.com/sales/",
-                        "Origin": "https://130point.com",
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                )
-                if r.status_code == 429:
-                    if attempt == 0:
-                        print(f"[130point] HTTP 429 (rate limited), retry in 3s")
-                        await asyncio.sleep(3)
-                        continue
-                    else:
-                        print(f"[130point] HTTP 429 on retry — giving up")
-                        return []
-                if r.status_code != 200:
-                    print(f"[130point] HTTP {r.status_code}, response: {r.text[:200]}")
-                    return []
-                if len(r.text) < 500:
-                    print(f"[130point] Response too short ({len(r.text)} bytes)")
-                    return []
-                break  # Success, continue to parse
-        except Exception as e:
-            print(f"[130point] attempt {attempt+1} error: {e}")
-            if attempt < 1:
-                await asyncio.sleep(2)
-            continue
-    else:
-        print(f"[130point] All retry attempts failed")
+    try:
+        async with httpx.AsyncClient(timeout=6.0, follow_redirects=True) as client:
+            r = await client.post(
+                "https://back.130point.com/sales/",
+                data={"query": query},
+                headers={
+                    "User-Agent": BROWSER_HEADERS["User-Agent"],
+                    "Accept": "*/*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Referer": "https://130point.com/sales/",
+                    "Origin": "https://130point.com",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            )
+            if r.status_code == 429:
+                print(f"[130point] HTTP 429 (rate limited)")
+                return []
+            if r.status_code != 200:
+                print(f"[130point] HTTP {r.status_code}")
+                return []
+            if len(r.text) < 500:
+                print(f"[130point] Response too short ({len(r.text)} bytes)")
+                return []
+    except Exception as e:
+        print(f"[130point] error: {e}")
         return []
 
     # Parse the successful response
