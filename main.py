@@ -24,7 +24,8 @@ from scrapers.sgc import scrape_sgc_cert
 from scrapers.cardladder import search_player, search_cards_by_player, match_card as match_card_ladder
 
 
-app = FastAPI(title="SLABIQ API", version="10.4.0")
+APP_VERSION = "10.5.0"
+app = FastAPI(title="SLABIQ API", version=APP_VERSION)
 
 app.add_middleware(
     CORSMiddleware,
@@ -76,6 +77,11 @@ def _cache_set(key: str, data: dict):
         oldest = min(_cache, key=lambda k: _cache[k]["ts"])
         del _cache[oldest]
     _cache[key] = {"data": data, "ts": time.time()}
+
+
+@app.get("/version")
+async def version():
+    return {"version": APP_VERSION}
 
 
 # ── MAIN LOOKUP ──
