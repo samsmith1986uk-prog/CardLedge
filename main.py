@@ -449,6 +449,13 @@ async def search_players(q: str = Query(..., min_length=2, description="Player n
     """Search for a player and get their cards with real pricing data from Card Ladder."""
     player_name = q.strip()
 
+    # Check cache (10 min TTL for player searches)
+    ck = f"player:{player_name.lower()}"
+    cached = _cache_get(ck)
+    if cached:
+        cached["_cached"] = True
+        return cached
+
     # Parallel: Card Ladder player index + cards + 130point search
     cl_player_task = search_player(player_name)
     cl_cards_task = search_cards_by_player(player_name, limit=15)
@@ -460,13 +467,15 @@ async def search_players(q: str = Query(..., min_length=2, description="Player n
     # Sort cards by num_sales descending (most traded first)
     cl_cards.sort(key=lambda c: c.get("num_sales", 0), reverse=True)
 
-    return {
+    response = {
         "query": player_name,
         "player_index": player_index,
         "cards": cl_cards[:15],
         "total_cards": player_index.get("total_cards", 0) if player_index else len(cl_cards),
         "source": "Card Ladder",
     }
+    _cache_set(ck, response)
+    return response
 
 
 # ── GRADE COMPARISON ──
