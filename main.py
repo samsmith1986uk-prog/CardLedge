@@ -136,6 +136,7 @@ async def lookup_card(grading_company: str, cert_number: str, include_sales: boo
                 subject, card.get("year", ""), card.get("brand", ""),
                 card.get("card_number", ""), card.get("grade", ""),
                 grading_company.lower(),
+                variety=card.get("variety", ""),
             ),
         ]
 

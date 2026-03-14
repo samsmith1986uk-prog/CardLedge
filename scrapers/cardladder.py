@@ -239,7 +239,7 @@ async def search_cards_by_player(player_name: str, limit: int = 10, light: bool 
 
 async def match_card(subject: str, year: str = "", brand: str = "",
                      card_number: str = "", grade: str = "",
-                     grading_company: str = "psa") -> Optional[dict]:
+                     grading_company: str = "psa", **kwargs) -> Optional[dict]:
     """Find the best matching Card Ladder card profile for a graded card."""
     # Use light query for matching (much faster — no dailySales data)
     cards = await search_cards_by_player(subject, limit=50, light=True)
@@ -276,8 +276,24 @@ async def match_card(subject: str, year: str = "", brand: str = "",
             sw = set(card["set"].lower().split())
             overlap = len(bw & sw)
             score += min(overlap, 3)
+        # Variety/parallel match (critical for differentiating base vs prizm/chrome etc.)
+        variety = kwargs.get("variety", "")
+        card_variation = (card.get("variation") or "").lower()
+        card_label = (card.get("label") or "").lower()
+        if variety:
+            vw = [w for w in variety.lower().split() if len(w) > 2]
+            # Check both the variation field and label for variety keywords
+            var_hits = sum(1 for w in vw if w in card_variation or w in card_label)
+            if var_hits:
+                score += min(var_hits * 2, 4)  # Up to 4 points for variety match
+            else:
+                score -= 2  # Penalize cards that DON'T match the variety
+        elif card_variation and card_variation not in ("base", ""):
+            # Card has a variation but cert doesn't specify one — slight penalty
+            score -= 1
+
         # Label contains key words from brand
-        label = (card.get("label") or "").lower()
+        label = card_label
         if brand:
             brand_words = [w for w in brand.lower().split() if len(w) > 3]
             label_hits = sum(1 for w in brand_words if w in label)

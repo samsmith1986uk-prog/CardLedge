@@ -346,6 +346,16 @@ async def resolve_sales_data(identity: dict) -> dict:
     # Fallback: if 130point returned nothing, try eBay direct scrape
     if not all_sales:
         ebay_sales = await _sales_from_ebay(identity)
+        # If graded query returned nothing, try shorter query
+        if not ebay_sales:
+            short_query = identity.get("query_short", "")
+            gc = identity.get("grading_company", "PSA")
+            grade = identity.get("grade", "")
+            if short_query:
+                short_identity = dict(identity)
+                short_identity["query_graded"] = f"{short_query} {gc} {grade}".strip()
+                print(f"[ebay] Retrying with shorter query: {short_identity['query_graded']}")
+                ebay_sales = await _sales_from_ebay(short_identity)
         if ebay_sales:
             for sale in ebay_sales:
                 sale["source"] = "eBay"
