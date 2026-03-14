@@ -1034,7 +1034,8 @@ async def market_movers():
     for player_name, result in zip(players, results):
         if isinstance(result, dict) and result.get("total_value"):
             pct_data = result.get("pct_change", {})
-            pct = pct_data.get("weekly") or pct_data.get("monthly") or pct_data.get("daily") or 0
+            pct_raw = pct_data.get("weekly") or pct_data.get("monthly") or pct_data.get("daily") or 0
+            pct = pct_raw * 100  # Convert decimal to percentage
             key_card = result.get("key_card", {})
             movers.append({
                 "name": player_name.split()[-1] if len(player_name.split()) > 1 else player_name,
