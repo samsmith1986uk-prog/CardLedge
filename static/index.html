@@ -377,9 +377,9 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .pf-modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; display: flex; align-items: center; gap: 10px; color: #fff; }
 .pf-close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #ffffff20; background: #ffffff10; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: #fff; transition: background .15s; }
 .pf-close:hover { background: #ffffff20; }
-.pf-card-row { display: grid; grid-template-columns: 44px 1fr auto auto; gap: 10px; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); transition: background .1s; }
+.pf-card-row { display: grid; grid-template-columns: 48px 1fr auto auto; gap: 12px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); transition: background .15s; }
 .pf-card-row:hover { background: var(--bg); }
-.pf-card-thumb { width: 44px; height: 60px; border-radius: 6px; object-fit: cover; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border: 1px solid var(--border); }
+.pf-card-thumb { width: 48px; height: 66px; border-radius: 6px; object-fit: cover; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
 .pf-card-info { min-width: 0; }
 .pf-card-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pf-card-meta { font-size: 10px; color: var(--text-dim); }
@@ -2322,7 +2322,7 @@ function renderPortfolioModal() {
         ${thumbHTML}
         <div class="pf-card-info">
           <div class="pf-card-name">${escHtml(p.name || 'Unknown')}</div>
-          <div class="pf-card-meta">${escHtml(p.year || '')} ${escHtml(p.brand || '')} · ${escHtml(p.gc || '')} ${escHtml(p.grade || '')} · #${escHtml(p.cert || '')}</div>
+          <div class="pf-card-meta">${escHtml(p.year || '')} ${escHtml(p.brand || '')}${p.variety ? ' · ' + escHtml(p.variety) : ''} · ${escHtml(p.gc || '')} ${escHtml(p.grade || '')} · #${escHtml(p.cert || '')}</div>
           ${cost != null ? `<div class="pf-card-cost">Cost: ${fmtCurr(cost)}</div>` : ''}
         </div>
         <div class="pf-card-val">
