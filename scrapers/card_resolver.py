@@ -236,6 +236,13 @@ def _compute_title_relevance(title: str, identity: dict) -> float:
         cn_clean = card_number.strip("#").strip()
         if cn_clean and (f"#{cn_clean}" in title or f"#{cn_clean} " in title or f" {cn_clean} " in title):
             bonus += 0.15
+        elif cn_clean:
+            # Check if title has a DIFFERENT card number (e.g., #62 vs #71)
+            cn_in_title = re.findall(r'#([\w-]+)', title)
+            cn_nums = [c.lstrip('0') or '0' for c in cn_in_title]
+            cn_target = cn_clean.lstrip('0') or '0'
+            if cn_in_title and cn_target not in cn_nums:
+                bonus -= 1.0  # Different card number — different card entirely
 
     brand = identity.get("brand", "").upper()
     if brand:
@@ -251,9 +258,25 @@ def _compute_title_relevance(title: str, identity: dict) -> float:
     grade = identity.get("grade", "")
     if grade and gc:
         # Match "PSA 10" or "BGS 8.5" pattern
-        grade_pattern = f"{gc}\\s*{re.escape(grade)}"
+        grade_pattern = f"{gc}\\s*{re.escape(grade)}(?![\\d.])"  # Don't match PSA 10 in "PSA 100"
         if re.search(grade_pattern, title_upper):
-            bonus += 0.1
+            bonus += 0.15
+        else:
+            # Check if title has a DIFFERENT grade — prices vary hugely by grade
+            wrong_grade = re.search(f"{gc}\\s*(\\d+\\.?\\d*)", title_upper)
+            if wrong_grade:
+                other_grade = wrong_grade.group(1)
+                if other_grade != grade:
+                    try:
+                        diff = abs(float(grade) - float(other_grade))
+                        if diff >= 4:
+                            bonus -= 1.2  # PSA 10 vs PSA 4 — completely different value
+                        elif diff >= 2:
+                            bonus -= 0.8  # PSA 10 vs PSA 8 — significant price difference
+                        elif diff >= 1:
+                            bonus -= 0.4  # PSA 10 vs PSA 9 — moderate price difference
+                    except ValueError:
+                        bonus -= 0.4  # Can't parse — moderate penalty
 
     # Variety/parallel matching — critical for differentiating Copper Prizm vs Silver Prizm etc.
     variety = identity.get("variety", "").upper()

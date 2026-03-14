@@ -259,9 +259,20 @@ async def match_card(subject: str, year: str = "", brand: str = "",
         # Year match
         if year and card.get("year") and year[:4] == card["year"][:4]:
             score += 3
-        # Grade match
-        if grade and card.get("condition") and grade in card["condition"]:
-            score += 1
+        # Grade match — critical for high-value cards
+        card_condition = card.get("condition", "")
+        if grade and card_condition:
+            if grade in card_condition:
+                score += 2  # Exact grade match
+            else:
+                # Penalize large grade mismatches — price differs hugely by grade
+                import re
+                cert_grade_num = re.search(r'(\d+\.?\d*)', grade)
+                card_grade_num = re.search(r'(\d+\.?\d*)', card_condition)
+                if cert_grade_num and card_grade_num:
+                    diff = abs(float(cert_grade_num.group(1)) - float(card_grade_num.group(1)))
+                    if diff >= 4:
+                        score -= 8  # PSA 10 vs PSA 4 — reject entirely
         # Card number match (very important — differentiates cards within same set)
         cn_match = False
         if card_number and card.get("number"):
@@ -328,6 +339,21 @@ async def match_card(subject: str, year: str = "", brand: str = "",
             if not any_hit:
                 print(f"[cardladder] Rejecting match: variety '{variety}' not found in '{best_match.get('variation','')}'")
                 return None
+
+    # If we have a card number, prefer the card number match over higher-scoring wrong card
+    if card_number and best_match and not best_cn_match:
+        # Check if there's a card number match with acceptable score
+        for card in cards:
+            cn1 = card_number.lower().strip("#").strip()
+            cn2 = (card.get("number") or "").lower().strip("#").strip()
+            if cn1 == cn2 and cn1:
+                # Check grade match
+                card_cond = card.get("condition", "")
+                if grade and grade in card_cond:
+                    print(f"[cardladder] Overriding with exact cn+grade match: {card.get('label','')[:50]}")
+                    best_match = card
+                    best_cn_match = True
+                    break
 
     # Require card_number match OR strong brand+year match (6+)
     if best_match and best_score >= 5 and (best_score >= 6 or best_cn_match):
