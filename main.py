@@ -1043,12 +1043,14 @@ async def market_movers():
     if _movers_cache["data"] and now - _movers_cache["ts"] < 1800:  # 30 min cache
         return _movers_cache["data"]
 
-    # Curated list of popular players to check
+    # Curated list of popular players/characters across sports + TCG
     players = [
         "Patrick Mahomes II", "Victor Wembanyama", "Shohei Ohtani",
         "Anthony Edwards", "LeBron James", "Luka Doncic",
         "Jayson Tatum", "Lamar Jackson", "Mike Trout",
         "Lionel Messi", "Travis Kelce", "Ja Morant",
+        "Michael Jordan", "Connor McDavid",
+        "Charizard", "Pikachu", "Monkey D. Luffy",
     ]
     tasks = [search_player(p) for p in players]
     results = await asyncio.gather(*tasks, return_exceptions=True)
