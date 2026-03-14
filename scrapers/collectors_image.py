@@ -31,8 +31,8 @@ SCOPES = "customer offline_access openid"
 BROWSER_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
 # Credentials (from env vars)
-_EMAIL = os.getenv("PSA_EMAIL", "sam.smith.1986.uk@icloud.com")
-_PASSWORD = os.getenv("PSA_PASSWORD", "England123!!!")
+_EMAIL = os.getenv("PSA_EMAIL", "")
+_PASSWORD = os.getenv("PSA_PASSWORD", "")
 
 # In-memory token state
 _access_token = None
