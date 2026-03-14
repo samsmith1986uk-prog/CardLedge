@@ -1024,6 +1024,18 @@ async def cache_clear():
 # ── MARKET MOVERS ──
 _movers_cache = {"data": None, "ts": 0}
 
+_SUFFIXES = {"II", "III", "IV", "V", "Jr.", "Jr", "Sr.", "Sr"}
+def _short_name(full_name: str) -> str:
+    """Get a short display name: last name (skipping suffixes like II, Jr.)."""
+    parts = full_name.split()
+    if len(parts) <= 1:
+        return full_name
+    # Find last non-suffix word
+    for i in range(len(parts) - 1, 0, -1):
+        if parts[i] not in _SUFFIXES:
+            return parts[i]
+    return parts[-1]
+
 @app.get("/market/movers")
 async def market_movers():
     """Get top market movers from Card Ladder player indexes."""
@@ -1049,7 +1061,7 @@ async def market_movers():
             pct = pct_raw * 100  # Convert decimal to percentage
             key_card = result.get("key_card", {})
             movers.append({
-                "name": player_name.split()[-1] if len(player_name.split()) > 1 else player_name,
+                "name": _short_name(player_name),
                 "full_name": player_name,
                 "value": result.get("total_value", 0),
                 "pct_change": round(pct, 1) if pct else 0,
