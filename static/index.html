@@ -371,9 +371,10 @@ header { background: var(--dark); border-bottom: 3px solid var(--orange); height
 .pf-modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 300; display: none; align-items: center; justify-content: center; }
 .pf-modal.show { display: flex; }
 .pf-modal-content { background: var(--surface); border-radius: 16px; width: 90%; max-width: 640px; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-modal); }
-.pf-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; border-radius: 16px 16px 0 0; }
-.pf-modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
-.pf-close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.pf-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: linear-gradient(135deg, var(--dark) 0%, #2a2a2a 100%); z-index: 1; border-radius: 16px 16px 0 0; }
+.pf-modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; display: flex; align-items: center; gap: 10px; color: #fff; }
+.pf-close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #ffffff20; background: #ffffff10; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: #fff; transition: background .15s; }
+.pf-close:hover { background: #ffffff20; }
 .pf-card-row { display: grid; grid-template-columns: 44px 1fr auto auto; gap: 10px; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); transition: background .1s; }
 .pf-card-row:hover { background: var(--bg); }
 .pf-card-thumb { width: 44px; height: 60px; border-radius: 6px; object-fit: cover; background: linear-gradient(145deg, #f0ece4, #e4dfd6); border: 1px solid var(--border); }
@@ -660,8 +661,13 @@ body.vault-dialog-open { overflow: hidden; }
 <div class="pf-modal" id="pfModal" onclick="if(event.target===this)closePortfolio()">
   <div class="pf-modal-content">
     <div class="pf-modal-header">
-      <div class="pf-modal-title">THE VAULT</div>
-      <button class="pf-close" onclick="closePortfolio()">✕</button>
+      <div class="pf-modal-title"><span style="color:var(--orange)">THE</span> VAULT</div>
+      <div style="display:flex;gap:4px;align-items:center">
+        <select onchange="setCurrency(this.value)" style="background:#ffffff15;border:1px solid #ffffff20;color:#ccc;padding:3px 8px;border-radius:6px;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer" id="currSelect">
+          <option value="USD">USD $</option><option value="GBP">GBP £</option><option value="EUR">EUR €</option><option value="CAD">CAD C$</option><option value="AUD">AUD A$</option><option value="JPY">JPY ¥</option>
+        </select>
+        <button class="pf-close" onclick="closePortfolio()">✕</button>
+      </div>
     </div>
     <div class="pf-summary" id="pfSummary"></div>
     <div id="pfCards"></div>
@@ -2251,6 +2257,8 @@ function updatePortfolioBar() {
 
 function openPortfolio() {
   document.getElementById('pfModal').classList.add('show');
+  const cs = document.getElementById('currSelect');
+  if (cs) cs.value = currentCurrency;
   renderPortfolioModal();
 }
 
