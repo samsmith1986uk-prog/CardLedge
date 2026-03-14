@@ -1,4 +1,5 @@
 """PSA Scraper - clean version using api.psacard.com"""
+import asyncio
 import httpx
 import os
 import re
@@ -59,6 +60,11 @@ async def scrape_psa_cert(cert_number: str) -> dict:
     async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
         try:
             resp = await client.get(url, headers=headers)
+            # Retry once on 429 after brief delay
+            if resp.status_code == 429:
+                print(f"[psa] 429 rate limit, retrying in 2s...")
+                await asyncio.sleep(2)
+                resp = await client.get(url, headers=headers)
             if resp.status_code == 200:
                 data = resp.json()
                 c = data.get("PSACert", {})

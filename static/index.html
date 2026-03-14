@@ -1307,7 +1307,7 @@ async function renderFull(data) {
         </div>
         <div>
           <div class="card-name">${card.subject || (card.error ? gc + ' Cert #' + data.cert_number : 'Unknown Card')}</div>
-          ${card.error ? `<div style="color:var(--yellow);font-size:11px;margin:4px 0 2px;padding:4px 8px;background:var(--yellow-bg);border:1px solid var(--yellow-border);border-radius:4px">${card.error}</div>` : ''}
+          ${card.error ? `<div style="color:var(--yellow);font-size:11px;margin:4px 0 2px;padding:4px 8px;background:var(--yellow-bg);border:1px solid var(--yellow-border);border-radius:4px">${card.error} <a href="#" onclick="event.preventDefault();document.getElementById('certInput').value='${data.cert_number}';document.getElementById('lookupBtn').click()" style="color:var(--orange);text-decoration:underline;margin-left:6px">Retry</a></div>` : ''}
           <div class="card-set">${[card.year, card.brand, card.variety].filter(Boolean).join(' · ')}</div>
           <div class="card-cert">CERT #${data.cert_number}${card.card_number ? ' · Card #' + card.card_number : ''}${window._lastFetchTime ? ` · <span style="color:var(--text-faint)">${window._lastFetchTime}s</span>` : ''}${data.data_quality ? ` · <span style="color:${{high:'var(--green)',medium:'var(--yellow)',low:'var(--text-dim)',none:'var(--red)'}[data.data_quality.confidence] || 'var(--text-dim)'};font-weight:600">${data.data_quality.confidence.toUpperCase()} CONFIDENCE</span>` : ''}</div>
           <div class="badges">
