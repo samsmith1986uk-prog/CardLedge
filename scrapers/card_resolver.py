@@ -354,47 +354,43 @@ def _parse_date_for_sort(date_str: str) -> str:
 
 
 async def resolve_sales_data(identity: dict) -> dict:
-    # Try 130point (primary sales source)
-    # eBay direct scraping rarely works (503 from most server IPs)
-    tasks = [
-        _sales_from_130point(identity),
-    ]
-    source_names = ["130point"]
+    # Run two 130point queries in parallel: specific + broad
+    # This is faster than sequential retry when the first query returns few results
+    gc = identity.get("grading_company", "")
+    grade = identity.get("grade", "")
+    short_query = identity.get("query_short", "")
+    variety = identity.get("variety", "")
+
+    broad_query = f"{short_query} {variety} {gc} {grade}".strip() if variety else f"{short_query} {gc} {grade}".strip()
+    broad_query = re.sub(r'\s+', ' ', broad_query)
+
+    tasks = [_sales_from_130point(identity)]
+    if broad_query != identity.get("query_clean", ""):
+        broad_id = dict(identity)
+        broad_id["query_clean"] = broad_query
+        tasks.append(_sales_from_130point(broad_id))
+
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    # If 130point returned few results, try with a simpler query
-    first_result = results[0] if not isinstance(results[0], Exception) else []
-    if not first_result or (isinstance(first_result, list) and len(first_result) < 3):
-        variety = identity.get("variety", "")
-        simple_query = identity.get("query_short", "")
-        gc = identity.get("grading_company", "")
-        grade = identity.get("grade", "")
-        # Include variety in simple retry for parallel cards
-        retry_query = f"{simple_query} {variety} {gc} {grade}".strip()
-        if retry_query != identity.get("query_clean", ""):
-            simple_identity = dict(identity)
-            simple_identity["query_clean"] = retry_query
-            print(f"[sales] Retrying 130point with broader query: {retry_query}")
-            retry = await _sales_from_130point(simple_identity)
-            if isinstance(retry, list) and retry:
-                existing = first_result if isinstance(first_result, list) else []
-                merged = existing + [s for s in retry if s not in existing]
-                results = list(results)
-                results[0] = merged
-
+    # Merge results from both queries
     all_sales = []
     sources_hit = []
-    for name, result in zip(source_names, results):
+    seen_urls = set()
+    for i, result in enumerate(results):
         if isinstance(result, Exception):
-            print(f"[sales/{name}] exception: {result}")
+            print(f"[sales/130point-{i}] exception: {result}")
         elif isinstance(result, list) and result:
             for sale in result:
-                sale["source"] = name
-            all_sales.extend(result)
-            sources_hit.append(name)
-            print(f"[sales/{name}] {len(result)} sales found")
+                sale["source"] = "130point"
+                url = sale.get("url", "")
+                if url not in seen_urls:
+                    seen_urls.add(url)
+                    all_sales.append(sale)
+            if "130point" not in sources_hit:
+                sources_hit.append("130point")
+            print(f"[sales/130point-{i}] {len(result)} sales found")
         else:
-            print(f"[sales/{name}] 0 results")
+            print(f"[sales/130point-{i}] 0 results")
 
     # Fallback: if 130point returned nothing, try eBay direct scrape
     if not all_sales:
@@ -445,7 +441,9 @@ async def resolve_sales_data(identity: dict) -> dict:
 
     all_sales.sort(key=lambda x: _parse_date_for_sort(x.get("date", "")), reverse=True)
 
-    prices = [s["price"] for s in all_sales if s.get("price") and s["price"] > 5]
+    # Stats use only exact matches (not "related" sales) for accurate pricing
+    exact_sales = [s for s in all_sales if not s.get("related")]
+    prices = [s["price"] for s in (exact_sales or all_sales) if s.get("price") and s["price"] > 5]
     stats = {}
     if prices:
         ps = sorted(prices)
