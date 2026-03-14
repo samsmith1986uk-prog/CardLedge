@@ -56,7 +56,7 @@ async def serve_frontend():
 
 # ── IN-MEMORY CACHE (1 hour TTL) ──
 _cache = {}
-CACHE_TTL = 3600  # seconds
+CACHE_TTL = 7200  # 2 hours — cache good results longer since 130point rate limits
 
 
 def _cache_key(gc: str, cert: str) -> str:
