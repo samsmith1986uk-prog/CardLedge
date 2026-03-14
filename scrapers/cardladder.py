@@ -259,6 +259,8 @@ async def match_card(subject: str, year: str = "", brand: str = "",
         # Year match
         if year and card.get("year") and year[:4] == card["year"][:4]:
             score += 3
+        elif year and card.get("year") and year[:4] != card["year"][:4]:
+            score -= 2  # Wrong year — different product entirely
         # Grade match — critical for high-value cards
         card_condition = card.get("condition", "")
         if grade and card_condition:
