@@ -403,31 +403,11 @@ async def resolve_sales_data(identity: dict) -> dict:
                     sources_hit.append("130point")
                 print(f"[sales/130point-broad] {len(broad_sales)} sales found")
 
-    # Fallback: if 130point returned nothing, try eBay direct scrape
-    if not all_sales:
-        ebay_sales = await _sales_from_ebay(identity)
-        # If graded query returned nothing, try shorter query
-        if not ebay_sales:
-            short_query = identity.get("query_short", "")
-            gc = identity.get("grading_company", "PSA")
-            grade = identity.get("grade", "")
-            if short_query:
-                short_identity = dict(identity)
-                short_identity["query_graded"] = f"{short_query} {gc} {grade}".strip()
-                print(f"[ebay] Retrying with shorter query: {short_identity['query_graded']}")
-                ebay_sales = await _sales_from_ebay(short_identity)
-        if ebay_sales:
-            for sale in ebay_sales:
-                sale["source"] = "eBay"
-            all_sales.extend(ebay_sales)
-            sources_hit.append("eBay")
-            print(f"[sales/eBay] fallback: {len(ebay_sales)} sales found")
-
     # Filter irrelevant sales (wrong player, wrong card)
     all_sales = filter_relevant_sales(all_sales, identity)
 
-    # If after filtering we have too few sales, try broader search with just player + year + gc
-    if len(all_sales) < 5:
+    # If zero results after filtering, try broader search with just player + year + gc
+    if len(all_sales) == 0:
         subject = identity.get("subject", "")
         year = identity.get("year", "")
         gc = identity.get("grading_company", "")
@@ -480,7 +460,7 @@ async def _sales_from_130point(identity: dict) -> list:
 
     for attempt in range(2):
         try:
-            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
                 r = await client.post(
                     "https://back.130point.com/sales/",
                     data={"query": query},
@@ -494,10 +474,13 @@ async def _sales_from_130point(identity: dict) -> list:
                     },
                 )
                 if r.status_code == 429:
-                    wait = (attempt + 1) * 3
-                    print(f"[130point] HTTP 429 (rate limited), retry {attempt+1}/2 in {wait}s")
-                    await asyncio.sleep(wait)
-                    continue
+                    if attempt == 0:
+                        print(f"[130point] HTTP 429 (rate limited), retry in 3s")
+                        await asyncio.sleep(3)
+                        continue
+                    else:
+                        print(f"[130point] HTTP 429 on retry — giving up")
+                        return []
                 if r.status_code != 200:
                     print(f"[130point] HTTP {r.status_code}, response: {r.text[:200]}")
                     return []
