@@ -51,8 +51,8 @@ def build_card_identity(psa_cert: dict) -> dict:
         "parallel": parallel,
         "query_short": f"{subject} {year} {card_number}".strip(),
         "query_full": f"{subject} {year} {brand} #{card_number} {variety}".strip(),
-        "query_graded": f"{subject} {year} {brand} {card_number} {gc} {grade}".strip(),
-        "query_clean": f"{subject} {year} {brand} {card_number} {gc} {grade}".strip(),
+        "query_graded": f"{subject} {year} {brand} {variety} {card_number} {gc} {grade}".strip(),
+        "query_clean": f"{subject} {year} {brand} {variety} {card_number} {gc} {grade}".strip(),
     }
 
 def _detect_parallel(variety: str, brand: str) -> dict:
@@ -317,17 +317,25 @@ async def resolve_sales_data(identity: dict) -> dict:
     source_names = ["130point"]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    # If 130point returned nothing, try with a simpler query
-    if (isinstance(results[0], Exception) or not results[0]):
+    # If 130point returned few results, try with a simpler query
+    first_result = results[0] if not isinstance(results[0], Exception) else []
+    if not first_result or (isinstance(first_result, list) and len(first_result) < 3):
+        variety = identity.get("variety", "")
         simple_query = identity.get("query_short", "")
-        if simple_query and simple_query != identity.get("query_clean", ""):
+        gc = identity.get("grading_company", "")
+        grade = identity.get("grade", "")
+        # Include variety in simple retry for parallel cards
+        retry_query = f"{simple_query} {variety} {gc} {grade}".strip()
+        if retry_query != identity.get("query_clean", ""):
             simple_identity = dict(identity)
-            simple_identity["query_clean"] = simple_query + " " + identity.get("grading_company", "") + " " + identity.get("grade", "")
-            print(f"[sales] Retrying 130point with simpler query: {simple_identity['query_clean']}")
+            simple_identity["query_clean"] = retry_query
+            print(f"[sales] Retrying 130point with broader query: {retry_query}")
             retry = await _sales_from_130point(simple_identity)
             if isinstance(retry, list) and retry:
+                existing = first_result if isinstance(first_result, list) else []
+                merged = existing + [s for s in retry if s not in existing]
                 results = list(results)
-                results[0] = retry
+                results[0] = merged
 
     all_sales = []
     sources_hit = []
