@@ -419,6 +419,32 @@ async def resolve_sales_data(identity: dict) -> dict:
     # Filter irrelevant sales (wrong player, wrong card)
     all_sales = filter_relevant_sales(all_sales, identity)
 
+    # If after filtering we have too few sales AND cert has a variety, try broader search
+    # This gets same-set sales (e.g., Select base when looking for Select Copper Prizm)
+    if len(all_sales) < 5 and identity.get("variety"):
+        subject = identity.get("subject", "")
+        year = identity.get("year", "")
+        brand = identity.get("brand", "")
+        cn = identity.get("card_number", "")
+        gc = identity.get("grading_company", "")
+        grade = identity.get("grade", "")
+        # Search for same card without variety
+        broad_query = f"{subject} {year} {brand} {cn} {gc} {grade}".strip()
+        broad_identity = dict(identity)
+        broad_identity["query_clean"] = re.sub(r'\s+', ' ', broad_query)
+        print(f"[sales] Few results after filter ({len(all_sales)}), trying without variety: {broad_query}")
+        broad_sales = await _sales_from_130point(broad_identity)
+        if isinstance(broad_sales, list) and broad_sales:
+            # Filter these too, but mark as "related" (same card, different parallel)
+            broad_filtered = filter_relevant_sales(broad_sales, identity, threshold=0.50)
+            existing_urls = {s.get("url") for s in all_sales if s.get("url")}
+            for sale in broad_filtered:
+                if sale.get("url") not in existing_urls:
+                    sale["source"] = "130point"
+                    sale["related"] = True  # Flag as related but not exact match
+                    all_sales.append(sale)
+            print(f"[sales] Added {len(broad_filtered)} related sales from broader search")
+
     all_sales.sort(key=lambda x: _parse_date_for_sort(x.get("date", "")), reverse=True)
 
     prices = [s["price"] for s in all_sales if s.get("price") and s["price"] > 5]
