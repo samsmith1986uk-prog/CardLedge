@@ -73,6 +73,11 @@ def _cache_get(key: str):
 
 
 def _cache_set(key: str, data: dict):
+    # Don't cache results with 0 sales — likely rate-limited, try again next time
+    sales = data.get("sales_data", [])
+    if not sales and data.get("card_details", {}).get("subject"):
+        print(f"[cache] Skipping cache for {key} — 0 sales (likely rate limited)")
+        return
     if len(_cache) > 500:
         oldest = min(_cache, key=lambda k: _cache[k]["ts"])
         del _cache[oldest]
